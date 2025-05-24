@@ -1,29 +1,34 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.cpp                                           :+:      :+:    :+:   */
+/*   server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/05/20 15:59:00 by tafocked          #+#    #+#             */
-/*   Updated: 2025/05/24 14:01:28 by tafocked         ###   ########.fr       */
+/*   Created: 2025/05/24 14:01:39 by tafocked          #+#    #+#             */
+/*   Updated: 2025/05/24 15:24:11 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+#pragma once
 #include <iostream>
+#include <string>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 
-int main(int argc, char **argv)
+class server
 {
-	if (argc < 2)
-	{
-		std::cerr << "Error: No configuration file provided." << std::endl;
-		return (1);
-	}
-	if (argc > 2)
-	{
-		std::cerr << "Error: Too many arguments provided." << std::endl;
-		return (1);
-	}
-	runServer();
-	return (0);
-}
+	private:
+		int socket_fd;
+		struct sockaddr_in sin;
+	protected:
+
+	public:
+	server(int port);
+	~server();
+
+
+
+};
+
