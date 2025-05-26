@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 15:59:00 by tafocked          #+#    #+#             */
-/*   Updated: 2025/05/26 16:56:28 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/05/26 19:38:16 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,26 +33,7 @@ int main(int argc, char **argv)
 	try
 	{
 		server serv(5000);
-		int client_fd;
-		char *buffer = new char[1024]; // Buffer for receiving data, not used in this example
-		if (!buffer)
-		{
-			std::cerr << "Memory allocation failed." << std::endl;
-			return (1);
-		}
-		while (true)
-		{
-			client_fd = accept(serv.get_socket_fd(), NULL, NULL); // Accept incoming connections
-			if (client_fd < 0)
-			{
-				std::cerr << "Error accepting connection." << std::endl;
-				continue; // Continue to accept next connection
-			}
-			std::cout << "Client connected." << std::endl;
-			send(client_fd, "HTTP/1.1 200 OK\r\n", 50, 0); // Send a simple HTTP response
-			recv(client_fd, buffer, 1024, 0); // Receive data from the client (not used here)
-			close(client_fd); // Close the client socket after handling
-		}
+		serv.polling(); // Start polling for incoming connections
 	}
 	catch (const std::exception &e)
 	{

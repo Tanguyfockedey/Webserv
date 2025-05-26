@@ -6,34 +6,38 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:01:39 by tafocked          #+#    #+#             */
-/*   Updated: 2025/05/26 16:16:24 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/05/26 19:46:56 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 #include <iostream>
-#include <string>
 #include <unistd.h>
+#include <fcntl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <poll.h>
+#include <vector>
+#include <errno.h>
+#include <string.h>
 
 class server
 {
 	private:
-		int socket_fd;
-		struct sockaddr_in sin;
-		
+		int _socket_fd;
+		struct sockaddr_in _sin;
+		std::vector<struct pollfd> _poll_fds;
 	protected:
 
 	public:
 		server(int port);
-		server(const server &copy); // Disable copy constructor
 		~server();
 
-		server &operator=(const server &copy); // Disable copy assignment operator
-
-		void sockaddr_init(uint16_t port, uint32_t addr);
-		int get_socket_fd() const { return socket_fd; }
-
+		int get_socket_fd() const { return _socket_fd; }
+		
+		void init_socket(uint16_t port, uint32_t addr);
+		void polling();
+		void add_client();
+		void read_request(int client_fd);
 };
 
