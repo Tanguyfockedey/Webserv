@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 15:59:00 by tafocked          #+#    #+#             */
-/*   Updated: 2025/05/26 19:38:16 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/05/27 15:06:34 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,10 +30,11 @@ int main(int argc, char **argv)
 	// }
 	(void)argc; // To avoid unused parameter warning
 	(void)argv; // To avoid unused parameter warning
+	
 	try
 	{
-		server serv(5000);
-		serv.polling(); // Start polling for incoming connections
+		server server(5000);
+		server.polling(); // Start polling for incoming connections
 	}
 	catch (const std::exception &e)
 	{

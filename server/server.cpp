@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:00:55 by tafocked          #+#    #+#             */
-/*   Updated: 2025/05/26 19:52:36 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/05/27 16:58:29 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,9 +22,8 @@ server::~server()
 {
 	std::cout << "Server destructor called." << std::endl;
 	if (_socket_fd >= 0)
-	{
 		close(_socket_fd);
-	}
+		//more to close !
 }
 
 void server::init_socket(uint16_t port, uint32_t addr)
@@ -59,7 +58,7 @@ void server::polling()
 {
 	while (true)
 	{
-		int poll_count = poll(_poll_fds.data(), _poll_fds.size(), 2000); // Wait for events on the socket
+		int poll_count = poll(_poll_fds.data(), _poll_fds.size(), 2000);
 		if (poll_count < 0)
 		{
 			std::cerr << "Polling error: " << strerror(errno) << std::endl;
@@ -69,7 +68,6 @@ void server::polling()
 		for (size_t i = 0; i < _poll_fds.size(); ++i)
 		{
 			if (_poll_fds[i].revents & POLLIN)
-
 			{
 				if (i == 0)
 					add_client();
@@ -101,13 +99,27 @@ void server::add_client()
 
 void server::read_request(int client_fd)
 {
-	char buffer[1024];
-	ssize_t bytes_read = read(client_fd, buffer, sizeof(buffer) - 1); // Read data from the client
+	char buffer[5];
+	ssize_t bytes_read = read(client_fd, buffer, sizeof(buffer) - 1);
 	if (bytes_read < 0)
 	{
 		std::cerr << "Error reading from client: " << strerror(errno) << std::endl;
-		return; // Return if reading fails
+		return;
 	}
-	buffer[bytes_read] = '\0'; // Null-terminate the buffer
-	std::cout << "Received request: " << buffer << std::endl; // Print the received request
+	buffer[bytes_read] = '\0';
+	std::cout << "Received request: " << buffer << std::endl;
+	if (bytes_read == 0)
+	{
+		std::cout << "Client disconnected." << std::endl;
+		close(client_fd);
+		for (size_t i = 0; i < _poll_fds.size(); ++i)
+		{
+			if (_poll_fds[i].fd == client_fd)
+			{
+				_poll_fds.erase(_poll_fds.begin() + i);
+				break;
+			}
+		}
+		return;
+	}
 }
