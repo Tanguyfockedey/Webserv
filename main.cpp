@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 15:59:00 by tafocked          #+#    #+#             */
-/*   Updated: 2025/05/27 18:19:24 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/05/27 19:24:44 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,18 +28,18 @@ int main(int argc, char **argv)
 	// 	std::cerr << "Error: Too many arguments provided." << std::endl;
 	// 	return (1);
 	// }
-	(void)argc; // To avoid unused parameter warning
-	(void)argv; // To avoid unused parameter warning
+	(void)argc;
+	(void)argv;
 	
 	try
 	{
 		server* myserver = new server(5000);
-		myserver->polling(); // Start polling for incoming connections
+		myserver->polling();
 	}
 	catch (const std::exception &e)
 	{
 		std::cerr << "Exception: " << e.what() << std::endl;
-		std::cerr << strerror(errno) << std::endl; // Print the error number
+		std::cerr << strerror(errno) << std::endl;
 		return (1);
 	}
 	return (0);
