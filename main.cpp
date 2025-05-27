@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 15:59:00 by tafocked          #+#    #+#             */
-/*   Updated: 2025/05/27 15:06:34 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/05/27 18:19:24 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,8 +33,8 @@ int main(int argc, char **argv)
 	
 	try
 	{
-		server server(5000);
-		server.polling(); // Start polling for incoming connections
+		server* myserver = new server(5000);
+		myserver->polling(); // Start polling for incoming connections
 	}
 	catch (const std::exception &e)
 	{
