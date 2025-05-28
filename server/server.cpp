@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:00:55 by tafocked          #+#    #+#             */
-/*   Updated: 2025/05/28 19:07:32 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/05/28 19:13:47 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,9 @@ server::server(uint16_t* port, uint32_t addr, std::string server_name): _server_
 {
 	init_socket(port, addr);
 	std::cout << "Server '" << _server_name << "' is listening on port " << port << std::endl;
+	for (size_t i = 0; port[i]; i++)
+		std::cout << port[i] << (port[i + 1] ? ", " : "");
+	std::cout << std::endl;
 }
 
 server::~server()
