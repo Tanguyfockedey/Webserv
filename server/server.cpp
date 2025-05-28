@@ -6,16 +6,25 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:00:55 by tafocked          #+#    #+#             */
-/*   Updated: 2025/05/27 18:11:23 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/05/28 19:07:32 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "server.hpp"
 
-server::server(int port)
+server::server(uint16_t* port, uint32_t addr): _server_name("DefaultServer")
 {
-	init_socket(port, INADDR_ANY);
-	std::cout << "Server is listening on port " << port << std::endl;
+	init_socket(port, addr);
+	std::cout << "Server '" << _server_name << "' is listening on port(s) : ";
+	for (size_t i = 0; port[i]; i++)
+		std::cout << port[i] << (port[i + 1] ? ", " : "");
+	std::cout << std::endl;
+}
+
+server::server(uint16_t* port, uint32_t addr, std::string server_name): _server_name(server_name)
+{
+	init_socket(port, addr);
+	std::cout << "Server '" << _server_name << "' is listening on port " << port << std::endl;
 }
 
 server::~server()
@@ -29,34 +38,41 @@ server::~server()
 			std::cout << "Closed socket fd: " << _poll_fds[i].fd << std::endl;
 		}
 		_poll_fds.clear();
+		_sin.clear();
 	}
 }
 
-void server::init_socket(uint16_t port, uint32_t addr)
+void server::init_socket(uint16_t* port, uint32_t addr)
 {
-	_sin.sin_family = AF_INET;
-	_sin.sin_port = htons(port);
-	_sin.sin_addr.s_addr = htonl(addr);
-
 	pollfd socket_fd;
-	_poll_fds.push_back(socket_fd);
-	_poll_fds[0].events = POLLIN;
-	_poll_fds[0].revents = 0;
-
-	if ((_poll_fds[0].fd = socket(_sin.sin_family, SOCK_STREAM, 0)) < 0)
+	sockaddr_in sin;
+	
+	for (uint16_t i = 0; port[i]; ++i)
+	{
+		_sin.push_back(sin);
+		_sin[i].sin_family = AF_INET;
+		_sin[i].sin_port = htons(port[i]);
+		_sin[i].sin_addr.s_addr = htonl(addr);
+		
+		_poll_fds.push_back(socket_fd);
+		_poll_fds[i].events = POLLIN;
+		_poll_fds[i].revents = 0;
+		
+		if ((_poll_fds[i].fd = socket(_sin[i].sin_family, SOCK_STREAM, 0)) < 0)
 		throw std::runtime_error("Socket creation failed");
-
-	if (bind(_poll_fds[0].fd, (struct sockaddr *)&_sin, sizeof(_sin)) < 0)
+		
+		if (bind(_poll_fds[i].fd, (struct sockaddr *)&_sin[i], sizeof(_sin[i])) < 0)
 		throw std::runtime_error("Socket binding failed");
-
-	if (listen(_poll_fds[0].fd, 10) < 0)
+		
+		if (listen(_poll_fds[i].fd, 10) < 0)
 		throw std::runtime_error("Socket listening failed");
-
-	if (fcntl(_poll_fds[0].fd, F_SETFL, O_NONBLOCK) < 0)
+		
+		if (fcntl(_poll_fds[i].fd, F_SETFL, O_NONBLOCK) < 0)
 		throw std::runtime_error("Setting socket to non-blocking mode failed");
-
-	// if (setsockopt(socket_fd.fd, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) == -1) // Set socket options to allow reuse of the address
-	// 	throw std::runtime_error("Setting socket options failed");
+		
+		// if (setsockopt(socket_fd.fd, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) == -1) // Set socket options to allow reuse of the address
+		// 	throw std::runtime_error("Setting socket options failed");
+	}
 }
 
 void server::polling()
@@ -74,8 +90,8 @@ void server::polling()
 		{
 			if (_poll_fds[i].revents & POLLIN)
 			{
-				if (i == 0)
-					add_client();
+				if (i < _sin.size())
+					add_client(i);
 				else
 					read_request(_poll_fds[i].fd);
 			}
@@ -87,10 +103,10 @@ void server::polling()
 	}
 }
 
-void server::add_client()
+void server::add_client(int i)
 {
 	pollfd new_client;
-	new_client.fd = accept(_poll_fds[0].fd, NULL, NULL);
+	new_client.fd = accept(_poll_fds[i].fd, NULL, NULL);
 	if (new_client.fd < 0)
 	{
 		std::cerr << "Error accepting new client: " << strerror(errno) << std::endl;
@@ -125,6 +141,5 @@ void server::read_request(int client_fd)
 				break;
 			}
 		}
-		return;
 	}
 }
