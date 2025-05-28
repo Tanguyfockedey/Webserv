@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 15:59:00 by tafocked          #+#    #+#             */
-/*   Updated: 2025/05/28 18:23:02 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/05/28 19:07:53 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,7 @@ int main(int argc, char **argv)
 	(void)argc;
 	(void)argv;
 	
-	uint16_t port[] = {8000, 8001, 8002, 8003, 0};
+	uint16_t port[] = {8000, 8001, 0};
 
 	try
 	{

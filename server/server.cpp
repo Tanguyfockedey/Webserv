@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:00:55 by tafocked          #+#    #+#             */
-/*   Updated: 2025/05/28 18:27:39 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/05/28 19:07:32 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,30 +38,30 @@ server::~server()
 			std::cout << "Closed socket fd: " << _poll_fds[i].fd << std::endl;
 		}
 		_poll_fds.clear();
+		_sin.clear();
 	}
 }
 
 void server::init_socket(uint16_t* port, uint32_t addr)
 {
 	pollfd socket_fd;
-	struct sockaddr_in sin;
-
-	_nb_ports = 0;
-	sin.sin_family = AF_INET;
+	sockaddr_in sin;
 	
 	for (uint16_t i = 0; port[i]; ++i)
 	{
-		sin.sin_port = htons(port[i]);
-		sin.sin_addr.s_addr = htonl(addr);
+		_sin.push_back(sin);
+		_sin[i].sin_family = AF_INET;
+		_sin[i].sin_port = htons(port[i]);
+		_sin[i].sin_addr.s_addr = htonl(addr);
 		
 		_poll_fds.push_back(socket_fd);
 		_poll_fds[i].events = POLLIN;
 		_poll_fds[i].revents = 0;
 		
-		if ((_poll_fds[i].fd = socket(sin.sin_family, SOCK_STREAM, 0)) < 0)
+		if ((_poll_fds[i].fd = socket(_sin[i].sin_family, SOCK_STREAM, 0)) < 0)
 		throw std::runtime_error("Socket creation failed");
 		
-		if (bind(_poll_fds[i].fd, (struct sockaddr *)&sin, sizeof(sin)) < 0)
+		if (bind(_poll_fds[i].fd, (struct sockaddr *)&_sin[i], sizeof(_sin[i])) < 0)
 		throw std::runtime_error("Socket binding failed");
 		
 		if (listen(_poll_fds[i].fd, 10) < 0)
@@ -72,8 +72,6 @@ void server::init_socket(uint16_t* port, uint32_t addr)
 		
 		// if (setsockopt(socket_fd.fd, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) == -1) // Set socket options to allow reuse of the address
 		// 	throw std::runtime_error("Setting socket options failed");
-	
-		_nb_ports++;
 	}
 }
 
@@ -92,8 +90,8 @@ void server::polling()
 		{
 			if (_poll_fds[i].revents & POLLIN)
 			{
-				if (i < _nb_ports)
-					add_client();
+				if (i < _sin.size())
+					add_client(i);
 				else
 					read_request(_poll_fds[i].fd);
 			}
@@ -105,10 +103,10 @@ void server::polling()
 	}
 }
 
-void server::add_client()
+void server::add_client(int i)
 {
 	pollfd new_client;
-	new_client.fd = accept(_poll_fds[0].fd, NULL, NULL);
+	new_client.fd = accept(_poll_fds[i].fd, NULL, NULL);
 	if (new_client.fd < 0)
 	{
 		std::cerr << "Error accepting new client: " << strerror(errno) << std::endl;
