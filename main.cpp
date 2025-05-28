@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 15:59:00 by tafocked          #+#    #+#             */
-/*   Updated: 2025/05/27 19:24:44 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/05/28 18:23:02 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,9 +31,11 @@ int main(int argc, char **argv)
 	(void)argc;
 	(void)argv;
 	
+	uint16_t port[] = {8000, 8001, 8002, 8003, 0};
+
 	try
 	{
-		server* myserver = new server(5000);
+		server* myserver = new server(port, INADDR_ANY);
 		myserver->polling();
 	}
 	catch (const std::exception &e)
