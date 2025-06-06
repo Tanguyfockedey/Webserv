@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:00:55 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/06 17:48:29 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/06 17:54:53 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -160,7 +160,7 @@ void Server::send_request(pollfd &poll)
 {
 	char buffer[32] = "Hello this is a test response\n\r";
 	/*	besoin de réécrire la fonction. Il faut quélle aille voir dans un tableau
-		si il y a une requete a envoyer, quelle envoie ce quélle peut, et mette le tableau a jour */
+		si il y a une requete a envoyer, quelle envoie ce qu'elle peut, et mette le tableau a jour */
 	write(poll.fd, buffer, 32);
 	poll.events ^= POLLOUT;
 }
