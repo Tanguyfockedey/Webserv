@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:01:39 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/05 19:46:46 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/06 17:01:59 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,8 +17,8 @@
 class Server
 {
 	private:
-		std::vector<struct sockaddr_in> _sin;
-		std::vector<struct pollfd> _poll_fds;
+		std::vector<struct sockaddr_in> _sin; //list of socket adresses
+		std::vector<struct pollfd> _poll_fds; //fd's to poll
 		std::string _server_name;
 		
 	protected:
@@ -36,6 +36,6 @@ class Server
 		void init_socket(uint16_t* port, uint32_t addr);
 		void polling();
 		void add_client(int i);
-		void read_request(int client_fd);
+		void read_request(pollfd &poll);
+		void send_request(pollfd &poll);
 };
-

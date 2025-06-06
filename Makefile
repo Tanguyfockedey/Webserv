@@ -6,13 +6,13 @@
 #    By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/04/20 16:37:10 by tafocked          #+#    #+#              #
-#    Updated: 2025/06/05 18:42:07 by tafocked         ###   ########.fr        #
+#    Updated: 2025/06/06 14:23:42 by tafocked         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 NAME	= webserv
 
-FILES	= main.cpp \
+FILES	= *.cpp \
 		server/Server.cpp \
 		server/Cluster.cpp \
 		config/Config.cpp \
