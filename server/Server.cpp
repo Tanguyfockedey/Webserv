@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:00:55 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/06 16:57:20 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/06 17:48:29 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -131,7 +131,7 @@ void Server::add_client(int i)
 
 void Server::read_request(pollfd &poll)
 {
-	char buffer[5];
+	char buffer[2];
 	ssize_t bytes_read = read(poll.fd, buffer, sizeof(buffer) - 1);
 	if (bytes_read < 0)
 	{
@@ -158,9 +158,9 @@ void Server::read_request(pollfd &poll)
 
 void Server::send_request(pollfd &poll)
 {
-	char buffer[100] = "Hello this is a test response\n";
-
-	int ret = write(poll.fd, buffer, sizeof(buffer) - 1);
-	if (ret)
-		poll.events ^= POLLOUT;
+	char buffer[32] = "Hello this is a test response\n\r";
+	/*	besoin de réécrire la fonction. Il faut quélle aille voir dans un tableau
+		si il y a une requete a envoyer, quelle envoie ce quélle peut, et mette le tableau a jour */
+	write(poll.fd, buffer, 32);
+	poll.events ^= POLLOUT;
 }
