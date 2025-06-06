@@ -1,36 +1,31 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.cpp                                           :+:      :+:    :+:   */
+/*   webserv.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/05/20 15:59:00 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/06 17:54:32 by tafocked         ###   ########.fr       */
+/*   Created: 2025/06/05 19:39:13 by tafocked          #+#    #+#             */
+/*   Updated: 2025/06/05 20:29:48 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "webserv.hpp"
-#include "server/Cluster.hpp"
+#pragma once
 
+// C Standard Library
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <string.h>
 
-int main(int argc, char **argv)
-{
-	(void)argc;
-	(void)argv;
+// C++ Standard Library
+#include <iostream>
 
-	try
-	{
-		Cluster cluster;
-		cluster.init_cluster();
-		cluster.run_servers();
+// Network
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <poll.h>
 
-	}
-	catch (const std::exception &e)
-	{
-		std::cerr << "Exception: " << e.what() << std::endl;
-		std::cerr << strerror(errno) << std::endl;
-		return (1);
-	}
-	return (0);
-}
+// Containers
+#include <algorithm>
+#include <vector>
