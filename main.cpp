@@ -6,14 +6,12 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 15:59:00 by tafocked          #+#    #+#             */
-/*   Updated: 2025/05/28 19:07:53 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/05 21:16:20 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <iostream>
-#include "server/server.hpp"
-#include <errno.h>
-#include  <string.h>
+#include "webserv.hpp"
+#include "server/Cluster.hpp"
 
 
 int main(int argc, char **argv)
@@ -31,12 +29,16 @@ int main(int argc, char **argv)
 	(void)argc;
 	(void)argv;
 	
-	uint16_t port[] = {8000, 8001, 0};
+	// uint16_t ports1[] = {8000, 8001, 8002, 0};
+	// uint16_t ports2[] = {8080, 8081, 8082, 0};
+	// uint16_t ports3[] = {9000, 9001, 9002, 0};
 
 	try
 	{
-		server* myserver = new server(port, INADDR_ANY);
-		myserver->polling();
+		Cluster cluster;
+		cluster.init_cluster();
+		cluster.run_servers();
+
 	}
 	catch (const std::exception &e)
 	{

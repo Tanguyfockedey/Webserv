@@ -1,36 +1,44 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   server.cpp                                         :+:      :+:    :+:   */
+/*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:00:55 by tafocked          #+#    #+#             */
-/*   Updated: 2025/05/28 19:13:47 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/06 14:09:56 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "server.hpp"
+#include "Server.hpp"
 
-server::server(uint16_t* port, uint32_t addr): _server_name("DefaultServer")
+Server::Server(uint16_t* port, uint32_t addr): _server_name("DefaultServer")
 {
 	init_socket(port, addr);
 	std::cout << "Server '" << _server_name << "' is listening on port(s) : ";
 	for (size_t i = 0; port[i]; i++)
-		std::cout << port[i] << (port[i + 1] ? ", " : "");
-	std::cout << std::endl;
+	{
+		if (port[i + 1])
+			std::cout << port[i] << ", ";
+		else
+			std::cout << port[i] << std::endl;
+	}
 }
 
-server::server(uint16_t* port, uint32_t addr, std::string server_name): _server_name(server_name)
+Server::Server(uint16_t* port, uint32_t addr, std::string server_name): _server_name(server_name)
 {
 	init_socket(port, addr);
-	std::cout << "Server '" << _server_name << "' is listening on port " << port << std::endl;
+	std::cout << "Server '" << _server_name << "' is listening on port(s) : ";
 	for (size_t i = 0; port[i]; i++)
-		std::cout << port[i] << (port[i + 1] ? ", " : "");
-	std::cout << std::endl;
+	{
+		if (port[i + 1])
+			std::cout << port[i] << ", ";
+		else
+			std::cout << port[i] << std::endl;
+	}
 }
 
-server::~server()
+Server::~Server()
 {
 	std::cout << "Server destructor called." << std::endl;
 	for (size_t i = 0; i < _poll_fds.size(); ++i)
@@ -45,7 +53,7 @@ server::~server()
 	}
 }
 
-void server::init_socket(uint16_t* port, uint32_t addr)
+void Server::init_socket(uint16_t* port, uint32_t addr)
 {
 	pollfd socket_fd;
 	sockaddr_in sin;
@@ -73,20 +81,23 @@ void server::init_socket(uint16_t* port, uint32_t addr)
 		if (fcntl(_poll_fds[i].fd, F_SETFL, O_NONBLOCK) < 0)
 		throw std::runtime_error("Setting socket to non-blocking mode failed");
 		
-		// if (setsockopt(socket_fd.fd, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) == -1) // Set socket options to allow reuse of the address
+		// const int opt = 1;
+		// const int* optval = &opt;
+		// if (setsockopt(socket_fd.fd, SOL_SOCKET, SO_REUSEADDR, optval, sizeof(int)) == -1) // Set socket options to allow reuse of the address
 		// 	throw std::runtime_error("Setting socket options failed");
 	}
 }
 
-void server::polling()
+void Server::polling()
 {
-	while (true)
-	{
+	// while (true)
+	// {
 		int poll_count = poll(_poll_fds.data(), _poll_fds.size(), 2000);
 		if (poll_count < 0)
 		{
 			std::cerr << "Polling error: " << strerror(errno) << std::endl;
-			continue;
+			// continue;
+			return;
 		}
 		std::cout << "Polling returned " << poll_count << " events." << std::endl;
 		for (size_t i = 0; i < _poll_fds.size(); ++i)
@@ -103,10 +114,10 @@ void server::polling()
 				std::cout << "Socket " << _poll_fds[i].fd << " is ready for writing." << std::endl;
 			}
 		}
-	}
+	// }
 }
 
-void server::add_client(int i)
+void Server::add_client(int i)
 {
 	pollfd new_client;
 	new_client.fd = accept(_poll_fds[i].fd, NULL, NULL);
@@ -121,7 +132,7 @@ void server::add_client(int i)
 	std::cout << "New client added with fd: " << new_client.fd << std::endl;
 }
 
-void server::read_request(int client_fd)
+void Server::read_request(int client_fd)
 {
 	char buffer[5];
 	ssize_t bytes_read = read(client_fd, buffer, sizeof(buffer) - 1);

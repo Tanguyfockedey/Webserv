@@ -6,14 +6,16 @@
 #    By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/04/20 16:37:10 by tafocked          #+#    #+#              #
-#    Updated: 2025/05/25 16:20:29 by tafocked         ###   ########.fr        #
+#    Updated: 2025/06/05 18:42:07 by tafocked         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 NAME	= webserv
 
 FILES	= main.cpp \
-		server/server.cpp \
+		server/Server.cpp \
+		server/Cluster.cpp \
+		config/Config.cpp \
 			
 CC		= c++
 CFLAGS	= -Wall -Wextra -Werror -std=c++98 -pedantic -g3
