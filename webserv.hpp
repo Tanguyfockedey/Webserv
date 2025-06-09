@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/05 19:39:13 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/05 20:29:48 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/09 18:26:27 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,3 +29,8 @@
 // Containers
 #include <algorithm>
 #include <vector>
+#include <map>
+#include <utility>
+
+// Constants
+#define CONNECTION_TIMEOUT 60
