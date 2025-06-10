@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:00:55 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/09 18:41:49 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/10 16:25:18 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -141,6 +141,7 @@ void Server::remove_client(pollfd &poll)
 
 void Server::read_request(pollfd &poll)
 {
+	ssize_t buff_size = 65536;
 	char buffer[65536];
 
 	memset(buffer, 0, sizeof(buffer));
@@ -161,7 +162,7 @@ void Server::read_request(pollfd &poll)
 		_requests.insert(std::make_pair(poll.fd, str));
 	else
 		_requests[poll.fd].append(str);
-	if (bytes_read < static_cast<int>(sizeof(buffer) - 1))
+	if (bytes_read < (buff_size - 1))
 		process_request(poll);
 }
 
