@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/03 16:07:02 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/10 19:51:49 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/10 19:58:27 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,8 +58,7 @@ Config* Config::parse_file(std::string file)
 
 	if (!is.good())
 		throw std::runtime_error("");
-	while (getline(is, tmp))
-		str.append(tmp);
+	getline(is, str, '\0');
 	while (str.find("server") != std::string::npos)
 	{
 		tmp = extract_server_block(str);
