@@ -6,53 +6,15 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/03 16:07:02 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/11 21:18:25 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/13 17:23:29 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Config.hpp"
 
-Config Config::parse()
+std::vector<Config> Config::parse_file(std::string file)
 {
-	static int i = 0;
-
-	Config config;
-
-	if (i == 0)
-	{
-		static uint16_t port[4] = {8000, 8001, 8002, 0};
-		config._server_name = "MyServer";
-		config._port = port;
-		config._addr = 0;
-		std::cout << "Configuration parsed successfully." << std::endl;
-		i++;
-		return config;
-	}
-	// if (i == 1)
-	// {
-	// 	static uint16_t port[3] = {8081, 8082, 0};
-	// 	config.set_server_name("AnotherServer");
-	// 	config.set_port(port);
-	// 	config.set_addr(0);
-	// 	std::cout << "Configuration parsed successfully." << std::endl;
-	// 	i++;
-	// 	return config;
-	// }
-	// if (i == 2)
-	// {
-	// 	static uint16_t port[2] = {7070, 0};
-	// 	config.set_server_name("ThirdServer");
-	// 	config.set_port(port);
-	// 	config.set_addr(0);
-	// 	std::cout << "Configuration parsed successfully." << std::endl;
-	// 	i++;
-	// 	return config;
-	// }
-	return Config(); // Return an empty config to signal no more configurations
-}
-
-Config* Config::parse_file(std::string file)
-{
+	std::vector<Config> cluster;
 	std::string tmp, str;
 	std::ifstream ifs(file.c_str());
 
@@ -63,12 +25,12 @@ Config* Config::parse_file(std::string file)
 	{
 		Config config;
 		tmp = extract_server_block(str);
-		config._server_name = extract_token(tmp, "server_name");
+		config.extract_name(tmp);
 		config.extract_address(tmp);
-		std::cout << config._server_name << std::endl;
+		cluster.push_back(config);
 	}
 	ifs.close();
-	return NULL;
+	return cluster;
 }
 
 std::string Config::extract_server_block(std::string& str)
@@ -95,7 +57,6 @@ std::string Config::extract_server_block(std::string& str)
 	return (tmp);
 }
 
-
 std::string Config::extract_token(std::string& str, const char* token)
 {
 	std::string tok;
@@ -110,14 +71,19 @@ std::string Config::extract_token(std::string& str, const char* token)
 	return tmp;
 }
 
-uint32_t Config::extract_address(std::string& str)
+void Config::extract_name(std::string& str)
+{
+	_server_name = extract_token(str, "server_name");
+}
+
+void Config::extract_address(std::string& str)
 {
 	std::string tmp;
-	// in_addr_t addr;
 
-	tmp = extract_token(str, "listen");
-	_addr = inet_addr(tmp.substr(0, tmp.find(':')).c_str());
-	int i = atoi(tmp.substr(tmp.find(':') + 1).c_str());
-	std::cout << _addr << " " << i << std::endl;
-	return _addr;
+	while (str.find("listen") != std::string::npos)
+	{
+		tmp = extract_token(str, "listen");
+		_addr = inet_addr(tmp.substr(0, tmp.find(':')).c_str());
+		_port.push_back(atoi(tmp.substr(tmp.find(':') + 1).c_str()));
+	}
 }

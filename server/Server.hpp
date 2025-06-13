@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:01:39 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/09 18:51:55 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/13 16:03:33 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,8 +25,8 @@ class Server
 
 	public:
 		// Constructor and Destructor
-		Server(uint16_t* port, uint32_t addr);
-		Server(uint16_t* port, uint32_t addr, std::string server_name);
+		Server(std::vector<uint16_t> port, uint32_t addr);
+		Server(std::vector<uint16_t> port, uint32_t addr, std::string server_name);
 		~Server();
 		
 		// Getters and Setters
@@ -36,7 +36,7 @@ class Server
 		void polling();
 		
 	private:
-		void init_socket(uint16_t* port, uint32_t addr);
+		void init_socket(std::vector<uint16_t> port, uint32_t addr);
 		void add_client(int i);
 		void remove_client(pollfd &poll);
 		void read_request(pollfd &poll);

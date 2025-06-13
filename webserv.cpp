@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 15:59:00 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/11 20:09:13 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/13 17:01:57 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,9 +19,11 @@ int main(int argc, char **argv)
 	(void)argc;
 	(void)argv;
 
+	Cluster cluster;
 	try
 	{
-		Config::parse_file("/home/tafocked/Documents/Webserv/config/config1.conf");
+		cluster.init_cluster(Config::parse_file("/home/tafocked/Documents/Webserv/config/config1.conf"));
+		cluster.run_servers();
 	}
 	catch (const std::exception &e)
 	{

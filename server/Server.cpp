@@ -6,35 +6,35 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:00:55 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/10 16:25:18 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/13 17:09:48 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 
-Server::Server(uint16_t* port, uint32_t addr): _server_name("DefaultServer")
+Server::Server(std::vector<uint16_t> port, uint32_t addr): _server_name("DefaultServer")
 {
 	init_socket(port, addr);
 	std::cout << "Server '" << _server_name << "' is listening on port(s) : ";
-	for (size_t i = 0; port[i]; i++)
+	for (std::vector<uint16_t>::iterator i = port.begin(); i < port.end(); i++)
 	{
-		if (port[i + 1])
-			std::cout << port[i] << ", ";
+		if ((i + 1) != port.end())
+			std::cout << (*i) << ", ";
 		else
-			std::cout << port[i] << std::endl;
+			std::cout << (*i) << std::endl;
 	}
 }
 
-Server::Server(uint16_t* port, uint32_t addr, std::string server_name): _server_name(server_name)
+Server::Server(std::vector<uint16_t> port, uint32_t addr, std::string server_name): _server_name(server_name)
 {
 	init_socket(port, addr);
 	std::cout << "Server '" << _server_name << "' is listening on port(s) : ";
-	for (size_t i = 0; port[i]; i++)
+	for (std::vector<uint16_t>::iterator i = port.begin(); i < port.end(); i++)
 	{
-		if (port[i + 1])
-			std::cout << port[i] << ", ";
+		if ((i + 1) != port.end())
+			std::cout << (*i) << ", ";
 		else
-			std::cout << port[i] << std::endl;
+			std::cout << (*i) << std::endl;
 	}
 }
 
@@ -53,38 +53,40 @@ Server::~Server()
 	}
 }
 
-void Server::init_socket(uint16_t* port, uint32_t addr)
+void Server::init_socket(std::vector<uint16_t> port, uint32_t addr)
 {
 	pollfd socket_fd;
 	sockaddr_in sin;
 	
-	for (uint16_t i = 0; port[i]; ++i)
+	for (std::vector<uint16_t>::iterator i = port.begin(); i < port.end(); i++)
 	{
+		int j = 0;
 		_sin.push_back(sin);
-		_sin[i].sin_family = AF_INET;
-		_sin[i].sin_port = htons(port[i]);
-		_sin[i].sin_addr.s_addr = htonl(addr);
+		_sin[j].sin_family = AF_INET;
+		_sin[j].sin_port = htons(*i);
+		_sin[j].sin_addr.s_addr = addr;
 		
 		_poll_fds.push_back(socket_fd);
-		_poll_fds[i].events = POLLIN;
-		_poll_fds[i].revents = 0;
+		_poll_fds[j].events = POLLIN;
+		_poll_fds[j].revents = 0;
 		
-		if ((_poll_fds[i].fd = socket(_sin[i].sin_family, SOCK_STREAM, 0)) < 0)
+		if ((_poll_fds[j].fd = socket(_sin[j].sin_family, SOCK_STREAM, 0)) < 0)
 		throw std::runtime_error("Socket creation failed");
 		
-		if (bind(_poll_fds[i].fd, (struct sockaddr *)&_sin[i], sizeof(_sin[i])) < 0)
+		if (bind(_poll_fds[j].fd, (struct sockaddr *)&_sin[j], sizeof(_sin[j])) < 0)
 		throw std::runtime_error("Socket binding failed");
 		
-		if (listen(_poll_fds[i].fd, 10) < 0)
+		if (listen(_poll_fds[j].fd, 10) < 0)
 		throw std::runtime_error("Socket listening failed");
 		
-		if (fcntl(_poll_fds[i].fd, F_SETFL, O_NONBLOCK) < 0)
+		if (fcntl(_poll_fds[j].fd, F_SETFL, O_NONBLOCK) < 0)
 		throw std::runtime_error("Setting socket to non-blocking mode failed");
 		
 		// const int opt = 1;
 		// const int* optval = &opt;
 		// if (setsockopt(socket_fd.fd, SOL_SOCKET, SO_REUSEADDR, optval, sizeof(int)) == -1) // Set socket options to allow reuse of the address
 		// 	throw std::runtime_error("Setting socket options failed");
+		j++;
 	}
 }
 

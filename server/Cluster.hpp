@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/28 16:48:38 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/06 14:04:31 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/13 17:21:25 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,8 +29,8 @@ class Cluster
 		~Cluster();
 
 		// Methods
-		void init_cluster();
-		void add_server(Config config);
-		void remove_server(int i);
+		void init_cluster(std::vector<Config> config);
+		void add_server(const Config config);
+		void remove_server(const int i);
 		void run_servers();
 };
