@@ -6,36 +6,18 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:00:55 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/13 17:09:48 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/14 20:24:13 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 
-Server::Server(std::vector<uint16_t> port, uint32_t addr): _server_name("DefaultServer")
+Server::Server(Config config)
 {
-	init_socket(port, addr);
-	std::cout << "Server '" << _server_name << "' is listening on port(s) : ";
-	for (std::vector<uint16_t>::iterator i = port.begin(); i < port.end(); i++)
-	{
-		if ((i + 1) != port.end())
-			std::cout << (*i) << ", ";
-		else
-			std::cout << (*i) << std::endl;
-	}
-}
-
-Server::Server(std::vector<uint16_t> port, uint32_t addr, std::string server_name): _server_name(server_name)
-{
-	init_socket(port, addr);
-	std::cout << "Server '" << _server_name << "' is listening on port(s) : ";
-	for (std::vector<uint16_t>::iterator i = port.begin(); i < port.end(); i++)
-	{
-		if ((i + 1) != port.end())
-			std::cout << (*i) << ", ";
-		else
-			std::cout << (*i) << std::endl;
-	}
+	_config = config;
+	std::cout << "Server '" << config.get_server_name() << "' is listening on port(s) : ";
+	init_socket();
+	std::cout << std::endl;
 }
 
 Server::~Server()
@@ -53,39 +35,53 @@ Server::~Server()
 	}
 }
 
-void Server::init_socket(std::vector<uint16_t> port, uint32_t addr)
+void Server::init_socket()
 {
 	pollfd socket_fd;
 	sockaddr_in sin;
-	
-	for (std::vector<uint16_t>::iterator i = port.begin(); i < port.end(); i++)
+	int j = 0;
+	for (std::vector<uint16_t>::const_iterator i = _config.get_port().begin(); i < _config.get_port().end(); i++)
 	{
-		int j = 0;
 		_sin.push_back(sin);
 		_sin[j].sin_family = AF_INET;
 		_sin[j].sin_port = htons(*i);
-		_sin[j].sin_addr.s_addr = addr;
+		_sin[j].sin_addr.s_addr = inet_addr(_config.get_addr()[j].c_str());
 		
 		_poll_fds.push_back(socket_fd);
 		_poll_fds[j].events = POLLIN;
 		_poll_fds[j].revents = 0;
 		
 		if ((_poll_fds[j].fd = socket(_sin[j].sin_family, SOCK_STREAM, 0)) < 0)
-		throw std::runtime_error("Socket creation failed");
+		{
+			std::cerr << "Could not create socket: " << strerror(errno) << std::endl;
+			j++;
+			continue;
+		}
 		
 		if (bind(_poll_fds[j].fd, (struct sockaddr *)&_sin[j], sizeof(_sin[j])) < 0)
-		throw std::runtime_error("Socket binding failed");
+		{
+			close(_poll_fds[j].fd);
+			std::cerr << "{Binding socket failed: " << strerror(errno) << "} ";
+			j++;
+			continue;
+		}
 		
 		if (listen(_poll_fds[j].fd, 10) < 0)
-		throw std::runtime_error("Socket listening failed");
+		{
+			close(_poll_fds[j].fd);
+			std::cerr << "{Listening on socket failed: " << strerror(errno) <<  "} ";
+			j++;
+			continue;
+		}
 		
 		if (fcntl(_poll_fds[j].fd, F_SETFL, O_NONBLOCK) < 0)
-		throw std::runtime_error("Setting socket to non-blocking mode failed");
-		
-		// const int opt = 1;
-		// const int* optval = &opt;
-		// if (setsockopt(socket_fd.fd, SOL_SOCKET, SO_REUSEADDR, optval, sizeof(int)) == -1) // Set socket options to allow reuse of the address
-		// 	throw std::runtime_error("Setting socket options failed");
+		{
+			close(_poll_fds[j].fd);
+			std::cerr << "{Setting socket to non-blocking mode failed: " << strerror(errno) << "} ";
+			j++;
+			continue;
+		}
+		std::cout << *i << " ";
 		j++;
 	}
 }
@@ -161,7 +157,7 @@ void Server::read_request(pollfd &poll)
 	}
 	std::string str = buffer;
 	if (_requests.find(poll.fd) == _requests.end())
-		_requests.insert(std::make_pair(poll.fd, str));
+		_requests[poll.fd] = str;
 	else
 		_requests[poll.fd].append(str);
 	if (bytes_read < (buff_size - 1))
@@ -174,7 +170,7 @@ void Server::process_request(pollfd &poll)
 
 	std::cout << "Request received: " << _requests[poll.fd] << std::endl;
 	response.append("HTTP/1.1 200 ok\r\n\r\n");
-	_response.insert(std::make_pair(poll.fd, response));
+	_response[poll.fd] = response;
 	poll.events |= POLLOUT;
 	_requests.erase(poll.fd);
 }

@@ -6,18 +6,19 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:01:39 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/13 16:03:33 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/14 20:20:16 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
 #include "../webserv.hpp"
+#include "../config/Config.hpp"
 
 class Server
 {
 	private:
-		std::string _server_name;
+		Config _config;
 		std::vector<struct sockaddr_in> _sin; //list of socket adresses/open ports
 		std::vector<struct pollfd> _poll_fds;
 		std::map<int, std::string> _requests;
@@ -25,18 +26,17 @@ class Server
 
 	public:
 		// Constructor and Destructor
-		Server(std::vector<uint16_t> port, uint32_t addr);
-		Server(std::vector<uint16_t> port, uint32_t addr, std::string server_name);
+		Server(Config config);
 		~Server();
 		
 		// Getters and Setters
-		const std::string &get_server_name() const { return _server_name; }
+		const std::string &get_server_name() const { return _config.get_server_name(); }
 		
 		// Methods
 		void polling();
 		
 	private:
-		void init_socket(std::vector<uint16_t> port, uint32_t addr);
+		void init_socket();
 		void add_client(int i);
 		void remove_client(pollfd &poll);
 		void read_request(pollfd &poll);

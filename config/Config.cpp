@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/03 16:07:02 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/13 17:23:29 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/14 20:03:13 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,9 @@ std::vector<Config> Config::parse_file(std::string file)
 		tmp = extract_server_block(str);
 		config.extract_name(tmp);
 		config.extract_address(tmp);
+		config.extract_client_body_size(tmp);
+		config.extract_location(tmp);
+
 		cluster.push_back(config);
 	}
 	ifs.close();
@@ -67,7 +70,7 @@ std::string Config::extract_token(std::string& str, const char* token)
 	tmp = str.substr(str.find(tok), str.find(";", str.find(tok)) - str.find(tok));
 	str.erase(str.find(tok), str.find(";", str.find(tok)) - str.find(tok) + 1);
 	tmp.erase(0, tok.length());
-	tmp.erase(remove_if(tmp.begin(), tmp.end(), isspace));
+	tmp.erase(remove_if(tmp.begin(), tmp.end(), isspace), tmp.end());
 	return tmp;
 }
 
@@ -83,7 +86,33 @@ void Config::extract_address(std::string& str)
 	while (str.find("listen") != std::string::npos)
 	{
 		tmp = extract_token(str, "listen");
-		_addr = inet_addr(tmp.substr(0, tmp.find(':')).c_str());
+		if (tmp.find(':') == std::string::npos)
+			_addr.push_back("0.0.0.0");
+		else
+			_addr.push_back(tmp.substr(0, tmp.find(':')));
 		_port.push_back(atoi(tmp.substr(tmp.find(':') + 1).c_str()));
+	}
+}
+
+void Config::extract_client_body_size(std::string& str)
+{
+	std::string tmp = extract_token(str, "client_body_size");
+	if (!tmp.empty())
+		_client_body_size = atoi(tmp.c_str());
+	else
+		_client_body_size = 1000000;
+}
+
+void Config::extract_location(std::string& str)
+{
+	std::string loc, data;
+	while (str.find("location") != std::string::npos)
+	{
+		loc = str.substr(str.find("location") + 9, str.find('{') - str.find("location") - 9);
+		data = str.substr(str.find('{', str.find("location")) + 1, str.find('}',
+			str.find("location")) - str.find('{', str.find("location")) - 1);
+		loc.erase(remove_if(loc.begin(), loc.end(), isspace), loc.end());
+		str.erase(str.find("location"), str.find('}', str.find("location")) - str.find("location") + 1);
+		_location[loc] = data;
 	}
 }

@@ -6,13 +6,13 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/28 16:48:38 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/13 17:21:25 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/14 19:15:12 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
-// #include "../webserv.hpp"
+#include "../webserv.hpp"
 #include "Server.hpp"
 #include "../config/Config.hpp"
 
@@ -27,6 +27,9 @@ class Cluster
 		// Constructor and Destructor
 		Cluster();
 		~Cluster();
+
+		// Getters
+		const std::vector<Server*>& get_cluster() const { return _cluster; }
 
 		// Methods
 		void init_cluster(std::vector<Config> config);
