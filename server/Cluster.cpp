@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/28 16:48:31 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/14 17:34:03 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/17 16:12:28 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 Cluster::Cluster()
 {
-	std::cout << "Cluster constructor called." << std::endl;
+	// std::cout << "Cluster constructor called." << std::endl;
 }
 
 Cluster::~Cluster()
@@ -32,7 +32,6 @@ void Cluster::init_cluster(std::vector<Config> config)
 		std::cerr << "No server configurations provided." << std::endl;
 		return;
 	}
-	std::cout << "Cluster initialized." << std::endl;
 	for (std::vector<Config>::iterator i = config.begin(); i < config.end(); i++)
 		add_server(*i);
 	config.clear();
@@ -42,7 +41,6 @@ void Cluster::add_server(const Config config)
 {
 	Server *new_server= new Server(config);
 	_cluster.push_back(new_server);
-	std::cout << "Server '" << new_server->get_server_name() << "' added to cluster." << std::endl;
 }
 
 void Cluster::remove_server(const int i)

@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:01:39 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/14 20:20:16 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/17 18:11:04 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 
 #include "../webserv.hpp"
 #include "../config/Config.hpp"
+#include "Client.hpp"
 
 class Server
 {
@@ -21,6 +22,7 @@ class Server
 		Config _config;
 		std::vector<struct sockaddr_in> _sin; //list of socket adresses/open ports
 		std::vector<struct pollfd> _poll_fds;
+		std::vector<Client> _clients;
 		std::map<int, std::string> _requests;
 		std::map<int, std::string> _response;
 
@@ -38,8 +40,9 @@ class Server
 	private:
 		void init_socket();
 		void add_client(int i);
-		void remove_client(pollfd &poll);
+		void remove_client(int fd);
 		void read_request(pollfd &poll);
 		void process_request(pollfd &poll);
 		void send_request(pollfd &poll);
+		void update_client_timeout(pollfd &poll);
 };

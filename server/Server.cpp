@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:00:55 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/14 20:24:13 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/17 18:28:13 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,58 +81,79 @@ void Server::init_socket()
 			j++;
 			continue;
 		}
-		std::cout << *i << " ";
+		std::cout << *i << "(" << _poll_fds[j].fd << ") ";
 		j++;
 	}
 }
 
 void Server::polling()
 {
-		int poll_count = poll(_poll_fds.data(), _poll_fds.size(), 0);
-		if (poll_count < 0)
+	int poll_count = poll(_poll_fds.data(), _poll_fds.size(), 0);
+	if (poll_count < 0)
+	{
+		std::cerr << "Polling error: " << strerror(errno) << std::endl;
+		return;
+	}
+	for (size_t i = 0; i < _poll_fds.size(); ++i)
+	{
+		if (_poll_fds[i].revents & POLLIN)
 		{
-			std::cerr << "Polling error: " << strerror(errno) << std::endl;
-			return;
+			if (i < _sin.size())
+				add_client(i);
+			else
+				read_request(_poll_fds[i]);
 		}
-		for (size_t i = 0; i < _poll_fds.size(); ++i)
+		if (_poll_fds[i].revents & POLLOUT)
+			send_request(_poll_fds[i]);
+	}
+	time_t current_time = time(NULL);
+	for (size_t i = 0; i < _clients.size(); i++)
+	{
+		if (current_time - _clients[i].get_last_activity() > CONNECTION_TIMEOUT)
 		{
-			if (_poll_fds[i].revents & POLLIN)
-			{
-				if (i < _sin.size())
-					add_client(i);
-				else
-					read_request(_poll_fds[i]);
-			}
-			if (_poll_fds[i].revents & POLLOUT)
-				send_request(_poll_fds[i]);
+			std::cout << YELLOW << "Client [" << _clients[i].get_fd() << "] timeout, disconnecting." << RESET << std::endl;
+			remove_client(_clients[i].get_fd());
+			i--;
 		}
+	}
 }
 
 void Server::add_client(int i)
 {
-	pollfd new_client;
-	new_client.fd = accept(_poll_fds[i].fd, NULL, NULL);
-	if (new_client.fd < 0)
+	pollfd new_fd;
+
+	new_fd.fd = accept(_poll_fds[i].fd, NULL, NULL);
+	if (new_fd.fd < 0)
 	{
 		std::cerr << "Error accepting new client: " << strerror(errno) << std::endl;
 		return;
 	}
-	new_client.events = POLLIN;
-	new_client.revents = 0;
-	_poll_fds.push_back(new_client);
-	std::cout << "New client added with fd: " << new_client.fd << std::endl;
+	new_fd.events = POLLIN;
+	new_fd.revents = 0;
+	_poll_fds.push_back(new_fd);
+	Client client(new_fd.fd);
+	_clients.push_back(client);
+	std::cout << YELLOW << "New client added with fd: " << new_fd.fd << RESET << std::endl;
 }
 
-void Server::remove_client(pollfd &poll)
+void Server::remove_client(int fd)
 {
-	std::cout << "Client disconnected." << std::endl;
-	close(poll.fd);
-	for (size_t i = 0; i < _poll_fds.size(); ++i)
-	{
-		if (_poll_fds[i].fd == poll.fd)
+	std::cout << YELLOW << "Client [" << fd << "] disconnected." << RESET << std::endl;
+	close(fd);
+	for (size_t i = 0; i < _poll_fds.size(); i++)
+	{	
+		if (_poll_fds[i].fd == fd)
 		{
 			_poll_fds.erase(_poll_fds.begin() + i);
-			return;
+			i--;
+		}
+	}
+	for (size_t i = 0; i < _clients.size(); i++)
+	{
+		if (_clients[i].get_fd() == fd)
+		{
+			_clients.erase(_clients.begin() + i);
+			i--;
 		}
 	}
 }
@@ -147,18 +168,19 @@ void Server::read_request(pollfd &poll)
 	if (bytes_read < 0)
 	{
 		std::cerr << "Error reading from client: " << strerror(errno) << std::endl;
-		remove_client(poll);
+		remove_client(poll.fd);
 		return;
 	}
 	if (bytes_read == 0)
 	{
-		remove_client(poll);
+		remove_client(poll.fd);
 		return;
 	}
+	update_client_timeout(poll);
 	std::string str = buffer;
-	if (_requests.find(poll.fd) == _requests.end())
-		_requests[poll.fd] = str;
-	else
+	// if (_requests.find(poll.fd) == _requests.end())
+	// 	_requests[poll.fd] = str;
+	// else
 		_requests[poll.fd].append(str);
 	if (bytes_read < (buff_size - 1))
 		process_request(poll);
@@ -167,8 +189,8 @@ void Server::read_request(pollfd &poll)
 void Server::process_request(pollfd &poll)
 {
 	std::string response;
-
-	std::cout << "Request received: " << _requests[poll.fd] << std::endl;
+	
+	std::cout << MAGENTA << "Request received: " << _requests[poll.fd] << RESET << std::endl;
 	response.append("HTTP/1.1 200 ok\r\n\r\n");
 	_response[poll.fd] = response;
 	poll.events |= POLLOUT;
@@ -180,4 +202,16 @@ void Server::send_request(pollfd &poll)
 	write(poll.fd, _response[poll.fd].c_str(), _response[poll.fd].size());
 	_response.erase(poll.fd);
 	poll.events ^= POLLOUT;
+}
+
+void Server::update_client_timeout(pollfd &poll)
+{
+	for (size_t i = 0; i < _clients.size(); ++i)
+	{
+		if (_clients[i].get_fd() == poll.fd)
+		{
+			_clients[i].set_last_activity();
+			return;
+		}
+	}
 }
