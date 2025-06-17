@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:00:55 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/17 18:28:13 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/17 18:59:41 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -109,7 +109,7 @@ void Server::polling()
 	time_t current_time = time(NULL);
 	for (size_t i = 0; i < _clients.size(); i++)
 	{
-		if (current_time - _clients[i].get_last_activity() > CONNECTION_TIMEOUT)
+		if (current_time - _clients[i].get_last_activity() >= CONNECTION_TIMEOUT)
 		{
 			std::cout << YELLOW << "Client [" << _clients[i].get_fd() << "] timeout, disconnecting." << RESET << std::endl;
 			remove_client(_clients[i].get_fd());
@@ -133,7 +133,7 @@ void Server::add_client(int i)
 	_poll_fds.push_back(new_fd);
 	Client client(new_fd.fd);
 	_clients.push_back(client);
-	std::cout << YELLOW << "New client added with fd: " << new_fd.fd << RESET << std::endl;
+	std::cout << YELLOW << "Client [" << new_fd.fd << "] connected." << RESET << std::endl;
 }
 
 void Server::remove_client(int fd)
@@ -190,7 +190,7 @@ void Server::process_request(pollfd &poll)
 {
 	std::string response;
 	
-	std::cout << MAGENTA << "Request received: " << _requests[poll.fd] << RESET << std::endl;
+	std::cout << MAGENTA << "Request received[" << poll.fd << "]: " << _requests[poll.fd] << RESET << std::endl;
 	response.append("HTTP/1.1 200 ok\r\n\r\n");
 	_response[poll.fd] = response;
 	poll.events |= POLLOUT;

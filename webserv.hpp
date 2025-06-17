@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/05 19:39:13 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/17 18:31:07 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/17 18:32:51 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,7 @@
 // Constants
 #define CONNECTION_TIMEOUT 30
 #define REQUEST_TIMEOUT 10
+
 // Colors
 #define RED "\033[31m"
 #define GREEN "\033[32m"
