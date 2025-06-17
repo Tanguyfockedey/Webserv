@@ -6,13 +6,13 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/28 16:48:38 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/11 14:19:55 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/06/14 19:15:12 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
-// #include "../webserv.hpp"
+#include "../webserv.hpp"
 #include "Server.hpp"
 #include "../config/Config.hpp"
 
@@ -28,9 +28,12 @@ class Cluster
 		Cluster();
 		~Cluster();
 
+		// Getters
+		const std::vector<Server*>& get_cluster() const { return _cluster; }
+
 		// Methods
-		void init_cluster();
-		void add_server(Config config);
-		void remove_server(int i);
+		void init_cluster(std::vector<Config> config);
+		void add_server(const Config config);
+		void remove_server(const int i);
 		void run_servers();
 };

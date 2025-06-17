@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/28 16:48:31 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/06 14:06:46 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/17 16:12:28 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 Cluster::Cluster()
 {
-	std::cout << "Cluster constructor called." << std::endl;
+	// std::cout << "Cluster constructor called." << std::endl;
 }
 
 Cluster::~Cluster()
@@ -25,23 +25,25 @@ Cluster::~Cluster()
 	_cluster.clear();
 }
 
-void Cluster::init_cluster()
+void Cluster::init_cluster(std::vector<Config> config)
 {
-	Config config;
-
-	std::cout << "Cluster initialized." << std::endl;
-	while ((config = config.parse()).get_server_name() != "")
-		add_server(config);
+	if (config.empty())
+	{
+		std::cerr << "No server configurations provided." << std::endl;
+		return;
+	}
+	for (std::vector<Config>::iterator i = config.begin(); i < config.end(); i++)
+		add_server(*i);
+	config.clear();
 }
 
-void Cluster::add_server(Config config)
+void Cluster::add_server(const Config config)
 {
-	Server *new_server= new Server(config.get_port(), config.get_addr(), config.get_server_name());
+	Server *new_server= new Server(config);
 	_cluster.push_back(new_server);
-	std::cout << "Server '" << new_server->get_server_name() << "' added to cluster." << std::endl;
 }
 
-void Cluster::remove_server(int i)
+void Cluster::remove_server(const int i)
 {
 	if ((_cluster.begin() + i) < _cluster.end() && i >= 0)
 	{
