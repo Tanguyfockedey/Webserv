@@ -3,7 +3,7 @@
 /*                                                        :::      ::::::::   */
 /*   Cluster.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
+/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/28 16:48:38 by tafocked          #+#    #+#             */
 /*   Updated: 2025/06/14 19:15:12 by tafocked         ###   ########.fr       */

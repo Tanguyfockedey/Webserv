@@ -3,10 +3,11 @@
 /*                                                        :::      ::::::::   */
 /*   Config.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
+/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/03 16:06:16 by tafocked          #+#    #+#             */
 /*   Updated: 2025/06/14 20:00:47 by tafocked         ###   ########.fr       */
+
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,4 +48,5 @@ private:
 	void extract_address(std::string& str);
 	void extract_client_body_size(std::string& str);
 	void extract_location(std::string& str);
+
 };

@@ -3,7 +3,7 @@
 /*                                                        :::      ::::::::   */
 /*   Config.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
+/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/03 16:07:02 by tafocked          #+#    #+#             */
 /*   Updated: 2025/06/14 20:03:13 by tafocked         ###   ########.fr       */
@@ -115,4 +115,3 @@ void Config::extract_location(std::string& str)
 		str.erase(str.find("location"), str.find('}', str.find("location")) - str.find("location") + 1);
 		_location[loc] = data;
 	}
-}
