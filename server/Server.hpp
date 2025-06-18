@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:01:39 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/17 18:11:04 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/18 16:13:03 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 
 #include "../webserv.hpp"
 #include "../config/Config.hpp"
+#include "../request/Request.hpp"
 #include "Client.hpp"
 
 class Server
@@ -23,7 +24,7 @@ class Server
 		std::vector<struct sockaddr_in> _sin; //list of socket adresses/open ports
 		std::vector<struct pollfd> _poll_fds;
 		std::vector<Client> _clients;
-		std::map<int, std::string> _requests;
+		std::vector<Request> _requests;
 		std::map<int, std::string> _response;
 
 	public:
