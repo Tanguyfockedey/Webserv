@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:00:55 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/17 18:59:41 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/18 16:16:47 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -178,10 +178,7 @@ void Server::read_request(pollfd &poll)
 	}
 	update_client_timeout(poll);
 	std::string str = buffer;
-	// if (_requests.find(poll.fd) == _requests.end())
-	// 	_requests[poll.fd] = str;
-	// else
-		_requests[poll.fd].append(str);
+	_requests.push_back(Request(poll.fd, str));
 	if (bytes_read < (buff_size - 1))
 		process_request(poll);
 }
@@ -190,11 +187,11 @@ void Server::process_request(pollfd &poll)
 {
 	std::string response;
 	
-	std::cout << MAGENTA << "Request received[" << poll.fd << "]: " << _requests[poll.fd] << RESET << std::endl;
+	std::cout << MAGENTA << "Request received[" << poll.fd << "]: " << _requests.back().get_raw_request() << RESET << std::endl;
 	response.append("HTTP/1.1 200 ok\r\n\r\n");
 	_response[poll.fd] = response;
 	poll.events |= POLLOUT;
-	_requests.erase(poll.fd);
+	_requests.pop_back();
 }
 
 void Server::send_request(pollfd &poll)

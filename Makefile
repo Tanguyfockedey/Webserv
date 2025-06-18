@@ -6,13 +6,14 @@
 #    By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/04/20 16:37:10 by tafocked          #+#    #+#              #
-#    Updated: 2025/06/17 17:52:51 by tafocked         ###   ########.fr        #
+#    Updated: 2025/06/18 16:12:42 by tafocked         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 NAME	= webserv
 
 FILES	= webserv.cpp \
+		request/Request.cpp \
 		server/Client.cpp \
 		server/Cluster.cpp \
 		server/Server.cpp \

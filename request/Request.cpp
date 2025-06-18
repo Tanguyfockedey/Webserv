@@ -1,19 +1,21 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Client.cpp                                         :+:      :+:    :+:   */
+/*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/06/17 17:22:31 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/18 16:12:13 by tafocked         ###   ########.fr       */
+/*   Created: 2025/06/18 14:48:10 by tafocked          #+#    #+#             */
+/*   Updated: 2025/06/18 16:15:45 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Client.hpp"
+#include "Request.hpp"
 
-Client::Client(int fd): _fd(fd), _last_activity(time(NULL))
+Request::Request(const int fd, const std::string raw_request)
+	: fd(fd),_timestamp(time(NULL)), _raw_request(raw_request)
 {}
 
-Client::~Client()
+Request::~Request()
 {}
+
