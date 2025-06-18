@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/28 16:48:31 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/18 16:12:16 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/18 17:45:14 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 Cluster::Cluster()
 {
-	// std::cout << "Cluster constructor called." << std::endl;
+	std::cout << "Cluster constructor called." << std::endl;
 }
 
 Cluster::~Cluster()
@@ -33,8 +33,16 @@ void Cluster::init_cluster(std::vector<Config> config)
 		return;
 	}
 	for (std::vector<Config>::iterator i = config.begin(); i < config.end(); i++)
-		add_server(*i);
-	config.clear();
+	{
+		try
+		{
+			add_server(*i);
+		}
+		catch(const std::exception& e)
+		{
+			std::cerr << e.what() << '\n';
+		}
+	}
 }
 
 void Cluster::add_server(const Config config)
