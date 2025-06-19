@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/03 16:07:02 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/17 19:02:11 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/19 19:35:50 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,6 +77,8 @@ std::string Config::extract_token(std::string& str, const char* token)
 void Config::extract_name(std::string& str)
 {
 	_server_name = extract_token(str, "server_name");
+	if (_server_name.empty())
+		_server_name = "default_server";
 }
 
 void Config::extract_address(std::string& str)
@@ -103,16 +105,33 @@ void Config::extract_client_body_size(std::string& str)
 		_client_body_size = 1000000;
 }
 
+void Config::extract_index(std::string& str)
+{
+	_index = extract_token(str, "index");
+	if (_index.empty())
+		_index = "index.html";
+}
+
+void Config::extract_root(std::string& str)
+{
+	_root = extract_token(str, "root");
+	if (_root.empty())
+		_root = "./";
+	else if ((*_root.end() - 1) != '/')
+		_root += '/';
+}
+
 void Config::extract_location(std::string& str)
 {
-	std::string loc, data;
+	std::string path, data;
 	while (str.find("location") != std::string::npos)
 	{
-		loc = str.substr(str.find("location") + 9, str.find('{') - str.find("location") - 9);
+		path = str.substr(str.find("location") + 9, str.find('{') - str.find("location") - 9);
 		data = str.substr(str.find('{', str.find("location")) + 1, str.find('}',
 			str.find("location")) - str.find('{', str.find("location")) - 1);
-		loc.erase(remove_if(loc.begin(), loc.end(), isspace), loc.end());
+		path.erase(remove_if(path.begin(), path.end(), isspace), path.end());
 		str.erase(str.find("location"), str.find('}', str.find("location")) - str.find("location") + 1);
-		_location[loc] = data;
+		_locations.insert((std::make_pair(path, Location(data))));
+		
 	}
 }
