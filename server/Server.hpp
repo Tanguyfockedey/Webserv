@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:01:39 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/18 18:13:04 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/19 17:20:17 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,4 +48,5 @@ class Server
 		void send_request(pollfd &poll);
 		void update_client_timeout(int fd);
 		void check_clients_timeout();
+		void check_requests_timeout();
 };
