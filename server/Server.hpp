@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:01:39 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/18 16:13:03 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/19 17:20:17 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 #include "../webserv.hpp"
 #include "../config/Config.hpp"
 #include "../request/Request.hpp"
+#include "../request/Response.hpp"
 #include "Client.hpp"
 
 class Server
@@ -25,11 +26,11 @@ class Server
 		std::vector<struct pollfd> _poll_fds;
 		std::vector<Client> _clients;
 		std::vector<Request> _requests;
-		std::map<int, std::string> _response;
+		std::vector<Response> _response;
 
 	public:
 		// Constructor and Destructor
-		Server(Config config);
+		Server(const Config& config);
 		~Server();
 		
 		// Getters and Setters
@@ -45,5 +46,7 @@ class Server
 		void read_request(pollfd &poll);
 		void process_request(pollfd &poll);
 		void send_request(pollfd &poll);
-		void update_client_timeout(pollfd &poll);
+		void update_client_timeout(int fd);
+		void check_clients_timeout();
+		void check_requests_timeout();
 };

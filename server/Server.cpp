@@ -6,13 +6,13 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:00:55 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/18 16:16:47 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/19 18:19:14 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 
-Server::Server(Config config)
+Server::Server(const Config& config): _config(config)
 {
 	_config = config;
 	std::cout << "Server '" << config.get_server_name() << "' is listening on port(s) : ";
@@ -54,31 +54,24 @@ void Server::init_socket()
 		if ((_poll_fds[j].fd = socket(_sin[j].sin_family, SOCK_STREAM, 0)) < 0)
 		{
 			std::cerr << "Could not create socket: " << strerror(errno) << std::endl;
-			j++;
+			_sin.pop_back();
+			_poll_fds.pop_back();
 			continue;
 		}
-		
 		if (bind(_poll_fds[j].fd, (struct sockaddr *)&_sin[j], sizeof(_sin[j])) < 0)
 		{
 			close(_poll_fds[j].fd);
 			std::cerr << "{Binding socket failed: " << strerror(errno) << "} ";
-			j++;
+			_sin.pop_back();
+			_poll_fds.pop_back();
 			continue;
 		}
-		
 		if (listen(_poll_fds[j].fd, 10) < 0)
 		{
 			close(_poll_fds[j].fd);
 			std::cerr << "{Listening on socket failed: " << strerror(errno) <<  "} ";
-			j++;
-			continue;
-		}
-		
-		if (fcntl(_poll_fds[j].fd, F_SETFL, O_NONBLOCK) < 0)
-		{
-			close(_poll_fds[j].fd);
-			std::cerr << "{Setting socket to non-blocking mode failed: " << strerror(errno) << "} ";
-			j++;
+			_sin.pop_back();
+			_poll_fds.pop_back();
 			continue;
 		}
 		std::cout << *i << "(" << _poll_fds[j].fd << ") ";
@@ -106,16 +99,8 @@ void Server::polling()
 		if (_poll_fds[i].revents & POLLOUT)
 			send_request(_poll_fds[i]);
 	}
-	time_t current_time = time(NULL);
-	for (size_t i = 0; i < _clients.size(); i++)
-	{
-		if (current_time - _clients[i].get_last_activity() >= CONNECTION_TIMEOUT)
-		{
-			std::cout << YELLOW << "Client [" << _clients[i].get_fd() << "] timeout, disconnecting." << RESET << std::endl;
-			remove_client(_clients[i].get_fd());
-			i--;
-		}
-	}
+	check_clients_timeout();
+	check_requests_timeout();
 }
 
 void Server::add_client(int i)
@@ -131,8 +116,7 @@ void Server::add_client(int i)
 	new_fd.events = POLLIN;
 	new_fd.revents = 0;
 	_poll_fds.push_back(new_fd);
-	Client client(new_fd.fd);
-	_clients.push_back(client);
+	_clients.push_back(Client(new_fd.fd));
 	std::cout << YELLOW << "Client [" << new_fd.fd << "] connected." << RESET << std::endl;
 }
 
@@ -160,11 +144,10 @@ void Server::remove_client(int fd)
 
 void Server::read_request(pollfd &poll)
 {
-	ssize_t buff_size = 65536;
 	char buffer[65536];
 
 	memset(buffer, 0, sizeof(buffer));
-	ssize_t bytes_read = read(poll.fd, buffer, sizeof(buffer) - 1);
+	ssize_t bytes_read = recv(poll.fd, buffer, sizeof(buffer) - 1, MSG_DONTWAIT);
 	if (bytes_read < 0)
 	{
 		std::cerr << "Error reading from client: " << strerror(errno) << std::endl;
@@ -176,11 +159,10 @@ void Server::read_request(pollfd &poll)
 		remove_client(poll.fd);
 		return;
 	}
-	update_client_timeout(poll);
+	update_client_timeout(poll.fd);
 	std::string str = buffer;
 	_requests.push_back(Request(poll.fd, str));
-	if (bytes_read < (buff_size - 1))
-		process_request(poll);
+	process_request(poll);
 }
 
 void Server::process_request(pollfd &poll)
@@ -188,27 +170,82 @@ void Server::process_request(pollfd &poll)
 	std::string response;
 	
 	std::cout << MAGENTA << "Request received[" << poll.fd << "]: " << _requests.back().get_raw_request() << RESET << std::endl;
-	response.append("HTTP/1.1 200 ok\r\n\r\n");
-	_response[poll.fd] = response;
+	_response.push_back(Response(poll.fd));
 	poll.events |= POLLOUT;
 	_requests.pop_back();
 }
 
 void Server::send_request(pollfd &poll)
 {
-	write(poll.fd, _response[poll.fd].c_str(), _response[poll.fd].size());
-	_response.erase(poll.fd);
-	poll.events ^= POLLOUT;
+	for (size_t i = 0; i < _response.size(); i++)
+	{
+		if (_response[i].get_fd() == poll.fd)
+		{
+			ssize_t bytes_sent = send(poll.fd, _response[i].get_raw_response().c_str(), _response[i].get_raw_response().size(), MSG_DONTWAIT);
+			if (bytes_sent < 0)
+			{
+				std::cerr << "Error sending response to client: " << strerror(errno) << std::endl;
+				_response.erase(_response.begin() + i);
+				remove_client(poll.fd);
+			}
+			else if (bytes_sent == 0)
+			{
+				std::cout << YELLOW << "Client [" << poll.fd << "] closed connection." << RESET << std::endl;
+				_response.erase(_response.begin() + i);
+				remove_client(poll.fd);
+			}
+			else if (bytes_sent == static_cast<ssize_t>(_response[i].get_raw_response().size()))
+			{
+				std::cout << CYAN << "Response sent to client [" << poll.fd << "]: " << _response[i].get_raw_response() << RESET << std::endl;
+				_response.erase(_response.begin() + i);
+				poll.events ^= POLLOUT;
+			}
+			else
+			{
+				std::cerr << "Partial response sent to client." << std::endl;
+				_response[i].set_raw_response(_response[i].get_raw_response().substr(bytes_sent));
+			}
+			return;
+		}
+	}
 }
 
-void Server::update_client_timeout(pollfd &poll)
+void Server::update_client_timeout(int fd)
 {
 	for (size_t i = 0; i < _clients.size(); ++i)
 	{
-		if (_clients[i].get_fd() == poll.fd)
+		if (_clients[i].get_fd() == fd)
 		{
 			_clients[i].set_last_activity();
 			return;
+		}
+	}
+}
+
+void Server::check_clients_timeout()
+{
+	time_t current_time = time(NULL);
+	for (size_t i = 0; i < _clients.size(); i++)
+	{
+		if (current_time - _clients[i].get_last_activity() >= CONNECTION_TIMEOUT)
+		{
+			std::cout << YELLOW << "Client [" << _clients[i].get_fd() << "] timeout, disconnecting." << RESET << std::endl;
+			remove_client(_clients[i].get_fd());
+			i--;
+		}
+	}
+}
+
+void Server::check_requests_timeout()
+{
+	time_t current_time = time(NULL);
+	for (size_t i = 0; i < _requests.size(); i++)
+	{
+		if (current_time - _requests[i].get_timestamp() >= REQUEST_TIMEOUT)
+		{
+			std::cout << MAGENTA << "Request timeout, removing request." << RESET << std::endl;
+			_requests.erase(_requests.begin() + i);
+			i--;
 		}
 	}
 }
