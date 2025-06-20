@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   webserv.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
+/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/05 19:39:13 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/19 19:05:56 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/21 00:13:12 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,7 @@
 // C++ Standard Library
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <exception>
 #include <ctime>
 

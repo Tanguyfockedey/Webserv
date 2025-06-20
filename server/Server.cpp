@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
+/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:00:55 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/19 18:19:14 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/21 00:38:20 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -182,6 +182,7 @@ void Server::send_request(pollfd &poll)
 		if (_response[i].get_fd() == poll.fd)
 		{
 			ssize_t bytes_sent = send(poll.fd, _response[i].get_raw_response().c_str(), _response[i].get_raw_response().size(), MSG_DONTWAIT);
+			close(poll.fd); //test
 			if (bytes_sent < 0)
 			{
 				std::cerr << "Error sending response to client: " << strerror(errno) << std::endl;
