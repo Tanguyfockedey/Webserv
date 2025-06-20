@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/03 16:06:16 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/19 19:17:58 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/20 14:34:28 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@ private:
 	int _client_body_size;
 	std::map<std::string, Location> _locations;
 
-public:
+	public:
 	// Constructor and Destructor
 	Config() {}
 	~Config() {}
