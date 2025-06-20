@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/28 16:48:31 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/18 17:45:14 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/20 14:27:55 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,8 @@ void Cluster::init_cluster(std::vector<Config> config)
 		}
 		catch(const std::exception& e)
 		{
-			std::cerr << e.what() << '\n';
+			std::cerr << "Error building server: " << e.what() << '\n';
+			std::cerr << strerror(errno) << std::endl;
 		}
 	}
 }
@@ -64,7 +65,23 @@ void Cluster::run_servers()
 {
 	while (true)
 	{
-		for (size_t i = 0; i < _cluster.size(); ++i) 
-			_cluster[i]->polling();
+		for (size_t i = 0; i < _cluster.size(); ++i)
+		{
+			try
+			{
+				_cluster[i]->polling();
+			}
+			catch(const std::exception& e)
+			{
+				std::cerr << e.what() << '\n';
+				std::cerr << strerror(errno) << std::endl;
+				remove_server(i);
+				if (_cluster.empty())
+				{
+					std::cerr << "No servers left in the cluster." << std::endl;
+					return;
+				}
+			}
+		}
 	}
 }

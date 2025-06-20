@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/03 16:07:02 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/19 19:35:50 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/06/20 14:48:07 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,24 +15,41 @@
 std::vector<Config> Config::parse_file(std::string file)
 {
 	std::vector<Config> cluster;
-	std::string tmp, str;
-	std::ifstream ifs(file.c_str());
-
-	if (!ifs.good())
-		throw std::runtime_error("");
-	getline(ifs, str, '\0');
-	while (str.find("server") != std::string::npos)
+	try
 	{
-		Config config;
-		tmp = extract_server_block(str);
-		config.extract_name(tmp);
-		config.extract_address(tmp);
-		config.extract_client_body_size(tmp);
-		config.extract_location(tmp);
-
-		cluster.push_back(config);
+		std::string tmp, str;
+		std::ifstream ifs(file.c_str());
+	
+		if (!ifs.good())
+			throw std::runtime_error("");
+		getline(ifs, str, '\0');
+		while (str.find("server") != std::string::npos)
+		{
+			try
+			{
+				Config config;
+				tmp = extract_server_block(str);
+				config.extract_name(tmp);
+				config.extract_address(tmp);
+				config.extract_client_body_size(tmp);
+				config.extract_location(tmp);
+				cluster.push_back(config);
+			}
+			catch(const std::exception& e)
+			{
+				std::cerr << e.what() << '\n';
+				std::cerr << "Error parsing server block: " << strerror(errno) << std::endl;
+				std::cerr << "Skipping invalid server block." << std::endl;
+			}
+		}
+		ifs.close();
 	}
-	ifs.close();
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+		std::cerr << "Error reading configuration file: " << strerror(errno) << std::endl;
+		std::cerr << "Please check the file path and format." << std::endl;
+	}
 	return cluster;
 }
 
