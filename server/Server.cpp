@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:00:55 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/21 00:38:20 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/06/25 14:57:12 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -170,7 +170,7 @@ void Server::process_request(pollfd &poll)
 	std::string response;
 	
 	std::cout << MAGENTA << "Request received[" << poll.fd << "]: " << _requests.back().get_raw_request() << RESET << std::endl;
-	_response.push_back(Response(poll.fd));
+	_response.push_back(Response(poll.fd, _requests.back()));
 	poll.events |= POLLOUT;
 	_requests.pop_back();
 }
