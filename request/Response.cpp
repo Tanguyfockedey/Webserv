@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/26 16:18:07 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/06/30 15:43:10 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,7 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 	uri = _req.get_raw_request().substr(0, _req.get_raw_request().find_first_of('\n'));
 	uri = uri.substr(uri.find_first_of(' '));
 	uri = uri.substr(1, uri.find_last_of(' '));
+	uri = uri.substr(1); // strip initial slash
 
 	host = _req.get_raw_request().substr(_req.get_raw_request().find_first_of('\n'));
 	host = host.substr(1);
@@ -31,20 +32,22 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 	host = "http://" + host + "/www"; // Later, will need to manage https as well !
 
 	if (uri.length() < 5)
-		uri = "/index.html";
-	//std::cout << "HEY HO : " << _req.get_raw_request() << std::endl; // TEMP: print path to console
-	//_req.set_uri(_req.get_raw_request().substr(_req.get_raw_request().find_first_of("/"), std::size_t( _req.get_raw_request().find_first_of("/").find_first_of(" ") - _req.get_raw_request().find_first_of("/") )));
-	//std::cout << "HEY URL : " << uri << std::endl; // TEMP: print path to console
-	//dir_path.append("/../www"); // /../www
-	dir_path = "../www" + uri;
-	//dir_path.append(uri);
-//	dir_path.append(uri.c_str());
-	//dir_path.append(uri);
-	std::cout << "Path : " << dir_path << std::endl; // TEMP: print path to console
-	std::cout << "Len : " << dir_path.length() << std::endl; // TEMP: print path to console
+	{
+		std::cout << "Too short URI, replaced by index.html" << std::endl;
+		uri = "index.html";
+	}
+	std::cout << "uri : " << uri << std::endl;
+	std::string fullpath = "http://localhost/home/jrichir/git/jgithub/rank5/webserv/www/";
+	if (uri == "favicon.ico")
+	{
+		fullpath = "http://localhost/home/jrichir/git/jgithub/rank5/webserv/";
+	}
+	dir_path = "./www/" + uri;
 	std::fstream file(dir_path.c_str(), std::ios::in | std::ios::binary);
 	if(file.is_open())
 	{
+		std::cout << "PAF!" << std::endl;
+		std::cout << "Path : " << dir_path << std::endl; // TEMP: print path to console
 		std::string body = std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 		std::stringstream response;
 		response << "HTTP/1.1 200 OK\r\n";
@@ -54,17 +57,122 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		response << "\r\n";
 		response << body;
 		_raw_response = response.str();
-		// _raw_response.append("HTTP/1.1 200 OK\r\n");
-		// _raw_response.append("Content-Type: text/html\r\n");
-		// _raw_response.append("Content-Length: ");
-		// _raw_response.append(std::to_string(body.length()));
-		// _raw_response.append("\r\n");
-		// _raw_response.append("\r\n");
-		// _raw_response.append(body);
 		file.close();
-	} else {
-		std::cout << "File Not Found" << std::endl;
+		uri.clear();
+		body.clear();
+		response.clear();
+		return;
 	}
+	std::cout << "Failed path : " << dir_path << std::endl; // TEMP: print path to console
+	dir_path = fullpath + uri;
+	std::fstream file0(dir_path.c_str(), std::ios::in | std::ios::binary);
+	if(file0.is_open())
+	{
+		std::cout << "ABSOL PATH" << std::endl;
+		std::cout << "Path : " << dir_path << std::endl; // TEMP: print path to console
+		std::string body = std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+		std::stringstream response;
+		response << "HTTP/1.1 200 OK\r\n";
+		response << "Content-Type: text/html\r\n";
+		response << "Content-Length: " << body.length() << "\r\n";
+		response << "\r\n";
+		response << body;
+		_raw_response = response.str();
+		file0.close();
+		uri.clear();
+		body.clear();
+		response.clear();
+		return;
+	}
+	std::cout << "Failed path : " << dir_path << std::endl; // TEMP: print path to console
+	dir_path = "/" + uri;
+	std::fstream file1(dir_path.c_str(), std::ios::in | std::ios::binary);
+	if(file1.is_open())
+	{
+		std::cout << "ERROR 404 page" << std::endl;
+		std::cout << "Path : " << dir_path << std::endl; // TEMP: print path to console
+		std::string body = std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+		std::stringstream response;
+		response << "HTTP/1.1 200 OK\r\n";
+		response << "Content-Type: text/html\r\n";
+		response << "Content-Length: " << body.length() << "\r\n";
+		response << "\r\n";
+		response << body;
+		_raw_response = response.str();
+		file1.close();
+		uri.clear();
+		body.clear();
+		response.clear();
+		return;
+	}
+	std::cout << "Failed path : " << dir_path << std::endl; // TEMP: print path to console
+	dir_path = "./" + uri;
+	std::fstream file2(dir_path.c_str(), std::ios::in | std::ios::binary);
+	if(file2.is_open())
+	{
+		std::cout << "BOUM" << std::endl;
+		std::cout << "Path : " << dir_path << std::endl; // TEMP: print path to console
+		std::string body = std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+		std::stringstream response;
+		response << "HTTP/1.1 200 OK\r\n";
+		response << "Content-Type: text/html\r\n";
+		response << "Content-Length: " << body.length() << "\r\n";
+		response << "\r\n";
+		response << body;
+		_raw_response = response.str();
+		file2.close();
+		uri.clear();
+		body.clear();
+		response.clear();
+		return;
+	}
+	std::cout << "Failed path : " << dir_path << std::endl; // TEMP: print path to console
+	dir_path = uri;
+	std::fstream file3(dir_path.c_str(), std::ios::in | std::ios::binary);
+	if(file3.is_open())
+	{
+		std::cout << "TCHAK" << std::endl;
+		std::cout << "Path : " << dir_path << std::endl; // TEMP: print path to console
+		std::string body = std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+		std::stringstream response;
+		response << "HTTP/1.1 200 OK\r\n";
+		response << "Content-Type: text/html\r\n";
+		response << "Content-Length: " << body.length() << "\r\n";
+		response << "\r\n";
+		response << body;
+		_raw_response = response.str();
+		file3.close();
+		uri.clear();
+		body.clear();
+		response.clear();
+		return;
+	}
+	std::cout << "Failed path : " << dir_path << std::endl; // TEMP: print path to console
+	dir_path = "../pages/error404.html";
+	std::fstream file4(dir_path.c_str(), std::ios::in | std::ios::binary);
+	if(file4.is_open())
+	{
+		std::cout << "ERROR 404 page" << std::endl;
+		std::cout << "Path : " << dir_path << std::endl; // TEMP: print path to console
+		std::string body = std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+		std::stringstream response;
+		response << "HTTP/1.1 200 OK\r\n";
+		response << "Content-Type: text/html\r\n";
+		response << "Content-Length: " << body.length() << "\r\n";
+		response << "\r\n";
+		response << body;
+		_raw_response = response.str();
+		file4.close();
+		uri.clear();
+		body.clear();
+		response.clear();
+		return;
+	}
+	std::cout << "Failed path : " << dir_path << std::endl; // TEMP: print path to console
+	std::cout << "File Not Found" << std::endl;
+	// else {
+	// 	std::cout << "File Not Found" << std::endl;
+	// }
 }
 
 Response::~Response()
