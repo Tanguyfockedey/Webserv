@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:21 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/25 14:58:47 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/02 14:31:33 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,8 @@ private:
 	std::string _status_line;
 	std::map<std::string, std::string> _headers;
 	std::string _body;
+
+	std::string get_http_date();
 
 public:
 	// Constructors and Destructor

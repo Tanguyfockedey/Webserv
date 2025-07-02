@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/02 01:42:36 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/02 14:43:59 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,7 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 	std::string host;
 	std::string dir_path;
 
-	_raw_response = ""; // TEST
+	_raw_response.clear();// = "";
 	uri.clear();
 	
 	uri = _req.get_raw_request().substr(0, _req.get_raw_request().find_first_of('\n'));
@@ -41,9 +41,23 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 	uri.erase(uri.find_last_not_of(" \t\r\n") + 1); // Remove trailing whitespace
 	uri.erase(0, uri.find_first_not_of(" \t\r\n")); // Remove leading whitespace
 
+	std::cout << "_" << uri << "_" << std::endl;
+
+	if (uri == "/")
+	{
+		uri = "/index.html";
+		std::cout << "Requested: / --> index.html" << std::endl;
+	}
+
 	// Get extension
 	std::string extension = uri.substr(uri.find_last_of('.') + 1);
 
+	// Make extension lowercase
+	for (size_t x = 0; x < extension.length(); x++)
+		extension[x] = tolower(extension[x]);
+	
+	std::cout << "Extension: _" << extension << "_" << std::endl;
+	
 	// Set MIME type
 	std::string mime_type;
 	if (extension == "html")
@@ -52,7 +66,8 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		mime_type = "image/x-icon";
 	else if (extension == "txt")
 		mime_type = "text/plain";
-
+	std::cout << "MIME-type : " << mime_type << std::endl;
+	
 	host = _req.get_raw_request().substr(_req.get_raw_request().find_first_of('\n'));
 	host = host.substr(1);
 	host = host.substr(0, host.find_first_of('\n'));
@@ -61,30 +76,32 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 	host.erase( std::remove(host.begin(), host.end(), '\r'), host.end() );
 	host = "http://" + host + "/www"; // Later, will need to manage https as well !
 
-	if (uri.length() < 5)
-	{
-		std::cout << "Too short URI, replaced by index.html" << std::endl;
-		uri = "/index.html";
-	}
+
 	dir_path = std::string(get_current_dir_name()) + "/www" + uri;
 	std::fstream file(dir_path.c_str(), std::ios::in | std::ios::binary);
 	if(file.is_open())
 	{
 		std::cout << "requested : " << dir_path << std::endl;
 		std::string body = std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+		std::string date = get_http_date();
 		std::stringstream response;
-		response.clear();
+		//response.clear();
+		//response.str("");
 		response << "HTTP/1.1 200 OK\r\n";
+		response << "Date: " << date << "\r\n";
 		response << "Content-Type: " + mime_type + "\r\n";
 		response << "Content-Length: " << body.length() << "\r\n";
+		response << "Connection: close\r\n";
 		response << "\r\n";
 		response << body;
 		_raw_response = response.str();
 		file.close();
-		file.clear();
+		//file.clear();
+		response.str("");
+		response.clear();
 		uri.clear();
 		body.clear();
-		response.clear();
+		dir_path.clear();
 		return;
 	}
 	std::string err_path = std::string(get_current_dir_name()) + "/pages/error_404.html";
@@ -93,18 +110,24 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 	{
 		std::cout << "requested : " << dir_path << std::endl;
 		std::string body = std::string((std::istreambuf_iterator<char>(file_err)), std::istreambuf_iterator<char>());
+		std::string date = get_http_date();
 		std::stringstream response;
+		//response.str("");
 		response << "HTTP/1.1 404 Not Found\r\n";
+		response << "Date: " << date << "\r\n";
 		response << "Content-Type: text/html\r\n";
 		response << "Content-Length: " << body.length() << "\r\n";
+		response << "Connection: close\r\n";
 		response << "\r\n";
 		response << body;
 		_raw_response = response.str();
 		file_err.close();
-		file_err.clear();
+		//file_err.clear();
+		response.str("");
+		response.clear();
 		uri.clear();
 		body.clear();
-		response.clear();
+		dir_path.clear();
 		return;
 	}
 	std::cout << "Failed path : " << dir_path << std::endl;
@@ -120,15 +143,26 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 Response::~Response()
 {}
 
-// // Send an HTML file as the response
-// Response& html(const std::string& path){
-// 	header("Content-Type", "text/html");
-// 	std::fstream file(path, std::ios::in | std::ios::binary);
-// 	if(file.is_open()){
-// 		body = std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-// 		file.close();
-// 	} else {
-// 		status_code(404) << "File Not Found";
-// 	}
-// 	return *this;
-// }
+std::string Response::get_http_date() {
+    const char* days[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+    const char* months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
+    std::time_t now = std::time(NULL);
+    std::tm* gmt = std::gmtime(&now);
+
+    std::ostringstream oss;
+    oss << days[gmt->tm_wday] << ", ";
+    if (gmt->tm_mday < 10) oss << '0';
+    oss << gmt->tm_mday << ' ';
+    oss << months[gmt->tm_mon] << ' ';
+    oss << (1900 + gmt->tm_year) << ' ';
+    if (gmt->tm_hour < 10) oss << '0';
+    oss << gmt->tm_hour << ':';
+    if (gmt->tm_min < 10) oss << '0';
+    oss << gmt->tm_min << ':';
+    if (gmt->tm_sec < 10) oss << '0';
+    oss << gmt->tm_sec << " GMT";
+
+    return oss.str();
+}
