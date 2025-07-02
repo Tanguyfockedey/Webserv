@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:00:55 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/25 14:57:12 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/02 17:14:55 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -97,7 +97,7 @@ void Server::polling()
 				read_request(_poll_fds[i]);
 		}
 		if (_poll_fds[i].revents & POLLOUT)
-			send_request(_poll_fds[i]);
+			send_response(_poll_fds[i]);
 	}
 	check_clients_timeout();
 	check_requests_timeout();
@@ -169,13 +169,13 @@ void Server::process_request(pollfd &poll)
 {
 	std::string response;
 	
-	std::cout << MAGENTA << "Request received[" << poll.fd << "]: " << _requests.back().get_raw_request() << RESET << std::endl;
+	std::cout << MAGENTA << "Request received [" << poll.fd << "]:\n" << _requests.back().get_raw_request() << RESET << std::endl;
 	_response.push_back(Response(poll.fd, _requests.back()));
 	poll.events |= POLLOUT;
 	_requests.pop_back();
 }
 
-void Server::send_request(pollfd &poll)
+void Server::send_response(pollfd &poll)
 {
 	for (size_t i = 0; i < _response.size(); i++)
 	{
@@ -197,7 +197,7 @@ void Server::send_request(pollfd &poll)
 			}
 			else if (bytes_sent == static_cast<ssize_t>(_response[i].get_raw_response().size()))
 			{
-				std::cout << CYAN << "Response sent to client [" << poll.fd << "]: " << _response[i].get_raw_response() << RESET << std::endl;
+				std::cout << CYAN << "Response sent to client [" << poll.fd << "]:\n" << _response[i].get_raw_response() << RESET << std::endl;
 				_response.erase(_response.begin() + i);
 				poll.events ^= POLLOUT;
 			}

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
+/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:01:39 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/19 17:20:17 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/07/02 15:24:17 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,7 +45,7 @@ class Server
 		void remove_client(int fd);
 		void read_request(pollfd &poll);
 		void process_request(pollfd &poll);
-		void send_request(pollfd &poll);
+		void send_response(pollfd &poll);
 		void update_client_timeout(int fd);
 		void check_clients_timeout();
 		void check_requests_timeout();
