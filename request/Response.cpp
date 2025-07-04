@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/04 16:08:20 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/04 16:11:30 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,12 +41,9 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 	uri.erase(uri.find_last_not_of(" \t\r\n") + 1); // Remove trailing whitespace
 	uri.erase(0, uri.find_first_not_of(" \t\r\n")); // Remove leading whitespace
 
-	std::cout << "_" << uri << "_" << std::endl;
-
 	if (uri == "/")
 	{
 		uri = "/index.html";
-		std::cout << "Requested: / --> index.html" << std::endl;
 	}
 
 	// Get extension
@@ -55,8 +52,6 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 	// Make extension lowercase
 	for (size_t x = 0; x < extension.length(); x++)
 		extension[x] = tolower(extension[x]);
-	
-	std::cout << "Extension: _" << extension << "_" << std::endl;
 	
 	// Set MIME type
 	std::string mime_type;
@@ -86,13 +81,13 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 
 	std::cout << "MIME-type : " << mime_type << std::endl;
 	
-	host = _req.get_raw_request().substr(_req.get_raw_request().find_first_of('\n'));
-	host = host.substr(1);
-	host = host.substr(0, host.find_first_of('\n'));
-	host = host.substr(host.find_first_of(':'));
-	host = host.substr(2);
-	host.erase( std::remove(host.begin(), host.end(), '\r'), host.end() );
-	host = "http://" + host + "/www"; // Later, will need to manage https as well !
+	// host = _req.get_raw_request().substr(_req.get_raw_request().find_first_of('\n'));
+	// host = host.substr(1);
+	// host = host.substr(0, host.find_first_of('\n'));
+	// host = host.substr(host.find_first_of(':'));
+	// host = host.substr(2);
+	// host.erase( std::remove(host.begin(), host.end(), '\r'), host.end() );
+	// host = "http://" + host + "/www"; // Later, will need to manage https as well !
 
 	dir_path = std::string(get_current_dir_name()) + "/www" + uri;
 	std::fstream file(dir_path.c_str(), std::ios::in | std::ios::binary);
@@ -107,7 +102,6 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
 		if(file_err.is_open())
 		{
-			std::cout << "requested : " << dir_path << std::endl;
 			std::string body = std::string((std::istreambuf_iterator<char>(file_err)), std::istreambuf_iterator<char>());
 			std::string date = get_http_date();
 			std::stringstream response;
@@ -134,7 +128,6 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 	}
 	if(file.is_open())
 	{
-		std::cout << "requested : " << dir_path << std::endl;
 		std::string body = std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 		std::string date = get_http_date();
 		std::stringstream response;
@@ -159,7 +152,6 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 	std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
 	if(file_err.is_open())
 	{
-		std::cout << "requested : " << dir_path << std::endl;
 		std::string body = std::string((std::istreambuf_iterator<char>(file_err)), std::istreambuf_iterator<char>());
 		std::string date = get_http_date();
 		std::stringstream response;
@@ -183,11 +175,11 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 	std::cout << "Failed path : " << dir_path << std::endl;
 	std::cout << "File Not Found" << std::endl;
 	
-	for (size_t i = 0; i < dir_path.length(); ++i)
-	{
-		std::cout << "[" << dir_path[i] << "](" << (int)dir_path[i] << ") ";
-	}
-	std::cout << std::endl;
+	// for (size_t i = 0; i < dir_path.length(); ++i)
+	// {
+	// 	std::cout << "[" << dir_path[i] << "](" << (int)dir_path[i] << ") ";
+	// }
+	// std::cout << std::endl;
 }
 
 Response::~Response()
