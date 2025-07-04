@@ -89,7 +89,7 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		//response.str("");
 		response << "HTTP/1.1 200 OK\r\n";
 		response << "Date: " << date << "\r\n";
-		response << "Content-Type: " + mime_type + "\r\n";
+		response << "Content-Type: " << mime_type << "\r\n";
 		response << "Content-Length: " << body.length() << "\r\n";
 		response << "Connection: close\r\n";
 		response << "\r\n";
