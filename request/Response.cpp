@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/04 15:49:57 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/04 16:08:20 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -94,9 +94,9 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 	host.erase( std::remove(host.begin(), host.end(), '\r'), host.end() );
 	host = "http://" + host + "/www"; // Later, will need to manage https as well !
 
-
 	dir_path = std::string(get_current_dir_name()) + "/www" + uri;
 	std::fstream file(dir_path.c_str(), std::ios::in | std::ios::binary);
+
 	// Check if I have the permission to read the file
 	if (file.fail())
 	{
@@ -104,7 +104,6 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		std::cout << "Error: " << strerror(errno) << std::endl;
 		std::string err_path = std::string(get_current_dir_name()) + "/pages/error_403.html";
 		// Try to open the error page
-		// If the error page is not found, we will return a 404 error
 		std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
 		if(file_err.is_open())
 		{
