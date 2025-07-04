@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/02 14:43:59 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/04 15:49:57 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,12 +60,30 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 	
 	// Set MIME type
 	std::string mime_type;
-	if (extension == "html")
+	if (extension == "html" || extension == "htm")
 		mime_type = "text/html";
 	else if (extension == "ico")
 		mime_type = "image/x-icon";
 	else if (extension == "txt")
 		mime_type = "text/plain";
+	else if (extension == "css")
+		mime_type = "text/css";
+	else if (extension == "js")
+		mime_type = "application/javascript";
+	else if (extension == "png")
+		mime_type = "image/png";
+	else if (extension == "jpg" || extension == "jpeg")
+		mime_type = "image/jpeg";
+	else if (extension == "gif")
+		mime_type = "image/gif";
+	else if (extension == "svg")
+		mime_type = "image/svg+xml";
+	else
+	{
+		std::cout << "Unknown extension: _" << extension << "_" << std::endl;
+		mime_type = "application/octet-stream"; // Default MIME type
+	}
+
 	std::cout << "MIME-type : " << mime_type << std::endl;
 	
 	host = _req.get_raw_request().substr(_req.get_raw_request().find_first_of('\n'));
@@ -79,6 +97,42 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 
 	dir_path = std::string(get_current_dir_name()) + "/www" + uri;
 	std::fstream file(dir_path.c_str(), std::ios::in | std::ios::binary);
+	// Check if I have the permission to read the file
+	if (file.fail())
+	{
+		std::cout << "Failed to open file: " << dir_path << std::endl;
+		std::cout << "Error: " << strerror(errno) << std::endl;
+		std::string err_path = std::string(get_current_dir_name()) + "/pages/error_403.html";
+		// Try to open the error page
+		// If the error page is not found, we will return a 404 error
+		std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
+		if(file_err.is_open())
+		{
+			std::cout << "requested : " << dir_path << std::endl;
+			std::string body = std::string((std::istreambuf_iterator<char>(file_err)), std::istreambuf_iterator<char>());
+			std::string date = get_http_date();
+			std::stringstream response;
+			response << "HTTP/1.1 403 Forbidden\r\n";
+			response << "Date: " << date << "\r\n";
+			response << "Content-Type: text/html\r\n";
+			response << "Content-Length: " << body.length() << "\r\n";
+			response << "Connection: keep-alive\r\n";// vs close
+			response << "Cache-Control: no-store\r\n";
+			response << "\r\n";
+			response << body;
+			_raw_response = response.str();
+			file_err.close();
+			response.str("");
+			response.clear();
+			uri.clear();
+			body.clear();
+			dir_path.clear();
+			return;
+		}
+		std::cout << "Failed to open error page: " << err_path << std::endl;
+		std::cout << "Error: " << strerror(errno) << std::endl;
+		std::cout << "File Not Found" << std::endl;
+	}
 	if(file.is_open())
 	{
 		std::cout << "requested : " << dir_path << std::endl;
