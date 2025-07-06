@@ -79,7 +79,7 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		mime_type = "application/octet-stream"; // Default MIME type
 	}
 
-	std::cout << "MIME-type : " << mime_type << std::endl;
+	//std::cout << "MIME-type : " << mime_type << std::endl;
 	
 	// host = _req.get_raw_request().substr(_req.get_raw_request().find_first_of('\n'));
 	// host = host.substr(1);
