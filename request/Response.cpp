@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/04 16:11:30 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/06 18:59:40 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,9 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 	std::string uri;
 	std::string host;
 	std::string dir_path;
-
+	std::string status;
+	std::string body;
+	
 	_raw_response.clear();// = "";
 	uri.clear();
 	
@@ -95,9 +97,45 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 	// Check if I have the permission to read the file
 	if (file.fail())
 	{
-		std::cout << "Failed to open file: " << dir_path << std::endl;
-		std::cout << "Error: " << strerror(errno) << std::endl;
-		std::string err_path = std::string(get_current_dir_name()) + "/pages/error_403.html";
+		std::string errorpage;
+		if (errno == 2) // No such file or directory (404)
+		{
+			std::cerr << "errno : " << errno << std::endl;
+			std::cerr << "File Not Found: " << dir_path << std::endl;
+			errorpage = "error_404.html";
+			status = "404 Not Found";
+		}
+		else if (errno == 13) // Permission denied (403)
+		{
+			std::cerr << "errno : " << errno << std::endl;
+			std::cerr << "Permission Denied: " << dir_path << std::endl;
+			errorpage = "error_403.html";
+			status = "403 Forbidden";
+		}
+		else if (errno == 21) // Is a directory (ou tenter 20, si c'est pas 21)
+		{
+			// If the path is a directory, we can try to open the index.html file in that directory
+			dir_path += "/index.html";
+			file.open(dir_path.c_str(), std::ios::in | std::ios::binary);
+			if (file.fail())
+			{
+				std::cerr << "errno : " << errno << std::endl;
+				std::cerr << "Failed to open index file in directory: " << dir_path << std::endl;
+			}
+			else
+			{
+				std::cout << "Opened index file in directory: " << dir_path << std::endl;
+			}
+		}
+		else
+		{
+			std::cerr << "errno : " << errno << std::endl;
+			std::cout << "Unknown error: " << dir_path << std::endl;
+		}
+		std::cerr << "errno : " << errno << std::endl;
+		std::cerr << "Failed to open file: " << dir_path << std::endl;
+		std::cerr << "Error: " << strerror(errno) << std::endl;
+		std::string err_path = std::string(get_current_dir_name()) + "/pages/" + errorpage;
 		// Try to open the error page
 		std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
 		if(file_err.is_open())
@@ -105,7 +143,7 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 			std::string body = std::string((std::istreambuf_iterator<char>(file_err)), std::istreambuf_iterator<char>());
 			std::string date = get_http_date();
 			std::stringstream response;
-			response << "HTTP/1.1 403 Forbidden\r\n";
+			response << "HTTP/1.1 " << status << "\r\n";
 			response << "Date: " << date << "\r\n";
 			response << "Content-Type: text/html\r\n";
 			response << "Content-Length: " << body.length() << "\r\n";
