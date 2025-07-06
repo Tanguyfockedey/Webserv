@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/06 18:59:40 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/06 19:10:22 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -132,9 +132,9 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 			std::cerr << "errno : " << errno << std::endl;
 			std::cout << "Unknown error: " << dir_path << std::endl;
 		}
-		std::cerr << "errno : " << errno << std::endl;
-		std::cerr << "Failed to open file: " << dir_path << std::endl;
-		std::cerr << "Error: " << strerror(errno) << std::endl;
+		// std::cerr << "errno : " << errno << std::endl;
+		// std::cerr << "Failed to open file: " << dir_path << std::endl;
+		// std::cerr << "Error: " << strerror(errno) << std::endl;
 		std::string err_path = std::string(get_current_dir_name()) + "/pages/" + errorpage;
 		// Try to open the error page
 		std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
@@ -158,11 +158,11 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 			uri.clear();
 			body.clear();
 			dir_path.clear();
-			return;
+			return ;
 		}
-		std::cout << "Failed to open error page: " << err_path << std::endl;
-		std::cout << "Error: " << strerror(errno) << std::endl;
-		std::cout << "File Not Found" << std::endl;
+		// std::cerr << "Failed to open error page: " << err_path << std::endl;
+		// std::cerr << "Error: " << strerror(errno) << std::endl;
+		// std::cerr << "File Not Found" << std::endl;
 	}
 	if(file.is_open())
 	{
@@ -184,7 +184,7 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		uri.clear();
 		body.clear();
 		dir_path.clear();
-		return;
+		return ;
 	}
 	std::string err_path = std::string(get_current_dir_name()) + "/pages/error_404.html";
 	std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
@@ -208,7 +208,7 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		uri.clear();
 		body.clear();
 		dir_path.clear();
-		return;
+		return ;
 	}
 	std::cout << "Failed path : " << dir_path << std::endl;
 	std::cout << "File Not Found" << std::endl;
