@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/06 19:10:22 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/09 15:20:09 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,6 +73,8 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		mime_type = "image/jpeg";
 	else if (extension == "gif")
 		mime_type = "image/gif";
+	else if (extension == "avif") // AV1 Image File Format
+		mime_type = "image/avif";
 	else if (extension == "svg")
 		mime_type = "image/svg+xml";
 	else
