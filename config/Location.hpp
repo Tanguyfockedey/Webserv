@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Location.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
+/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/19 18:35:06 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/19 19:35:51 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/07/09 10:29:45 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,19 +17,18 @@
 
 class Location
 {
-private:
-	std::string _root;
-	std::string _index;
-	std::vector<std::string> _allow_methods;
+	private:
+		std::string _root;
+		std::string _index;
+		std::vector<std::string> _allow_methods;
 
-public:
-	// Constructor and Destructor
-	Location(const std::string& raw);
-	~Location();
+	public:
+		// Constructor and Destructor
+		Location(const std::string& raw);
+		~Location();
 
-	// Getters
-	const std::string& get_root() const { return _root; }
-	const std::string& get_index() const { return _index; }
-	const std::vector<std::string>& get_allow_methods() const { return _allow_methods; }
-
+		// Getters
+		const std::string& get_root() const { return _root; }
+		const std::string& get_index() const { return _index; }
+		const std::vector<std::string>& get_allow_methods() const { return _allow_methods; }
 };

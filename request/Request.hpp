@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
+/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:47:50 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/18 16:15:39 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/07/09 10:32:27 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 class Request
 {
 private:
-	int fd;
+	int _fd;
 	time_t _timestamp;
 	std::string _raw_request;
 	std::string _method;
@@ -32,6 +32,7 @@ public:
 	~Request();
 
 	// Getters
+	int get_fd() const { return _fd; }
 	const std::string& get_raw_request() const { return _raw_request; }
 	const std::string& get_method() const { return _method; }
 	const std::string& get_uri() const { return _uri; }

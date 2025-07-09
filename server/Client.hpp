@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
+/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 17:22:08 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/18 16:12:14 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/07/09 10:29:31 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,4 +29,4 @@ class Client
 		int get_fd() const {return _fd;}
 		time_t get_last_activity() const {return _last_activity;}
 		void set_last_activity() {_last_activity = time(NULL);}
-	};
+};
