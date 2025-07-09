@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/09 15:35:00 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/09 16:08:06 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,12 +71,82 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		mime_type = "application/xml";
 	else if (extension == "pdf")
 		mime_type = "application/pdf";
+	else if (extension == "doc" || extension == "docx")
+		mime_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+	else if (extension == "xls" || extension == "xlsx")
+		mime_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+	else if (extension == "ppt" || extension == "pptx")
+		mime_type = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+	else if (extension == "csv")
+		mime_type = "text/csv";
+	else if (extension == "rtf")
+		mime_type = "application/rtf";
+	else if (extension == "epub")
+		mime_type = "application/epub+zip";
+	else if (extension == "odt")
+		mime_type = "application/vnd.oasis.opendocument.text";
+	else if (extension == "odp")
+		mime_type = "application/vnd.oasis.opendocument.presentation";
+	else if (extension == "ods")
+		mime_type = "application/vnd.oasis.opendocument.spreadsheet";
+	else if (extension == "jsonp")
+		mime_type = "application/javascript"; // JSONP is often served as JavaScript
+	else if (extension == "jsonld")
+		mime_type = "application/ld+json";
+	else if (extension == "wasm")
+		mime_type = "application/wasm";
+	else if (extension == "woff" || extension == "woff2")
+		mime_type = "font/woff";
+	else if (extension == "ttf")
+		mime_type = "font/ttf";
+	else if (extension == "otf")
+		mime_type = "font/otf";
+	else if (extension == "svgz")
+		mime_type = "image/svg+xml"; // Compressed SVG
+	else if (extension == "webmanifest")
+		mime_type = "application/manifest+json";
+	else if (extension == "mpd")
+		mime_type = "application/dash+xml";
+	else if (extension == "flv")
+		mime_type = "video/x-flv";
+	else if (extension == "mkv")
+		mime_type = "video/x-matroska";
+	else if (extension == "mov" || extension == "qt")
+		mime_type = "video/quicktime";
+	else if (extension == "wmv")
+		mime_type = "video/x-ms-wmv";
+	else if (extension == "mpegts" || extension == "ts")
+		mime_type = "video/mp2t";
+	else if (extension == "3gp" || extension == "3gpp")
+		mime_type = "video/3gpp";
+	else if (extension == "3g2" || extension == "3gp2")
+		mime_type = "video/3gpp2";
 	else if (extension == "zip")
 		mime_type = "application/zip";
 	else if (extension == "tar")
 		mime_type = "application/x-tar";
-	else if (extension == "gz")
+	else if (extension == "gz" || mime_type == "gzip")
 		mime_type = "application/gzip";
+	else if (extension == "bz2")
+		mime_type = "application/x-bzip2";
+	else if (extension == "7z")
+		mime_type = "application/x-7z-compressed";
+	else if (extension == "rar")
+		mime_type = "application/vnd.rar";
+	else if (extension == "exe")
+		mime_type = "application/x-msdownload";
+	else if (extension == "apk")
+		mime_type = "application/vnd.android.package-archive";
+	else if (extension == "sh")
+		mime_type = "application/x-sh";
+	else if (extension == "ps" || extension == "eps")
+		mime_type = "application/postscript";
+	else if (extension == "rtf")
+		mime_type = "application/rtf";
+	else if (extension == "txt" || extension == "text" || extension == "conf" || extension == "log" || extension == "md")
+		mime_type = "text/plain";
+	else if (extension == "csv")
+		mime_type = "text/csv";
 	else if (extension == "mp3")
 		mime_type = "audio/mpeg";
 	else if (extension == "wav")
@@ -89,6 +159,14 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		mime_type = "audio/midi";
 	else if (extension == "aac")
 		mime_type = "audio/aac";
+	else if (extension == "m4a")
+		mime_type = "audio/x-m4a";
+	else if (extension == "wma")
+		mime_type = "audio/x-ms-wma";
+	else if (extension == "mp4a")
+		mime_type = "audio/mp4";
+	else if (extension == "aiff")
+		mime_type = "audio/aiff";
 	else if (extension == "opus")
 		mime_type = "audio/opus";
 	else if (extension == "ico")
