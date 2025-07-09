@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/09 15:20:09 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/09 15:35:00 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,22 +59,64 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 	std::string mime_type;
 	if (extension == "html" || extension == "htm")
 		mime_type = "text/html";
-	else if (extension == "ico")
-		mime_type = "image/x-icon";
 	else if (extension == "txt")
 		mime_type = "text/plain";
 	else if (extension == "css")
 		mime_type = "text/css";
 	else if (extension == "js")
 		mime_type = "application/javascript";
+	else if (extension == "json")
+		mime_type = "application/json";
+	else if (extension == "xml")
+		mime_type = "application/xml";
+	else if (extension == "pdf")
+		mime_type = "application/pdf";
+	else if (extension == "zip")
+		mime_type = "application/zip";
+	else if (extension == "tar")
+		mime_type = "application/x-tar";
+	else if (extension == "gz")
+		mime_type = "application/gzip";
+	else if (extension == "mp3")
+		mime_type = "audio/mpeg";
+	else if (extension == "wav")
+		mime_type = "audio/wav";
+	else if (extension == "ogg")
+		mime_type = "audio/ogg";
+	else if (extension == "flac")
+		mime_type = "audio/flac";
+	else if (extension == "midi" || extension == "mid")
+		mime_type = "audio/midi";
+	else if (extension == "aac")
+		mime_type = "audio/aac";
+	else if (extension == "opus")
+		mime_type = "audio/opus";
+	else if (extension == "ico")
+		mime_type = "image/x-icon";
 	else if (extension == "png")
 		mime_type = "image/png";
 	else if (extension == "jpg" || extension == "jpeg")
 		mime_type = "image/jpeg";
 	else if (extension == "gif")
 		mime_type = "image/gif";
+	else if (extension == "webp") // WebP Image
+		mime_type = "image/webp";
+	else if (extension == "bmp") // Bitmap Image
+		mime_type = "image/bmp";
+	else if (extension == "tiff" || extension == "tif") // TIFF Image
+		mime_type = "image/tiff";
 	else if (extension == "avif") // AV1 Image File Format
 		mime_type = "image/avif";
+	else if (extension == "mpg" || extension == "mpeg") // MPEG Video
+		mime_type = "video/mpeg";
+	else if (extension == "avi") // AVI: Audio Video Interleave
+		mime_type = "video/x-msvideo";
+	else if (extension == "mp4") // MPEG-4 Video
+		mime_type = "video/mp4";
+	else if (extension == "webm") // WebM Video
+		mime_type = "video/webm";
+	else if (extension == "azw") // Amazon Kindle eBook format
+		mime_type = "application/vnd.amazon.ebook";
 	else if (extension == "svg")
 		mime_type = "image/svg+xml";
 	else
