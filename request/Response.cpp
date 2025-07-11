@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/09 16:08:06 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/11 14:19:26 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,7 @@
 
 Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 {
+	std::string method;
 	std::string uri;
 	std::string host;
 	std::string dir_path;
@@ -37,11 +38,48 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 	_raw_response.clear();// = "";
 	uri.clear();
 	
+	// Parse request line
+	method = _req.get_raw_request().substr(0, _req.get_raw_request().find_first_of(' '));
+	method.erase(method.find_last_not_of(" \t\r\n") + 1); // Remove trailing whitespace
+	method.erase(0, method.find_first_not_of(" \t\r\n")); // Remove leading whitespace
+
 	uri = _req.get_raw_request().substr(0, _req.get_raw_request().find_first_of('\n'));
 	uri = uri.substr(uri.find_first_of(' '));
 	uri = uri.substr(1, uri.find_last_of(' '));
 	uri.erase(uri.find_last_not_of(" \t\r\n") + 1); // Remove trailing whitespace
 	uri.erase(0, uri.find_first_not_of(" \t\r\n")); // Remove leading whitespace
+
+	body = _req.get_raw_request().substr(_req.get_raw_request().find("\r\n\r\n") + 4);
+
+	if (method != "GET" && method != "POST" && method != "DELETE")
+	{
+		std::cerr << "Unsupported HTTP method: " << method << std::endl;
+		status = "501 Not Implemented";
+		_raw_response = "HTTP/1.1 " + status + "\r\n\r\n";
+		return ;
+	}
+	
+	if (method == "POST")
+	{
+		dir_path = std::string(get_current_dir_name()) + "/www" + uri;
+		std::fstream file(dir_path.c_str(), std::ios::out | std::ios::binary);
+		if (file.is_open())
+		{
+			file << body;
+			file.close();
+			status = "201 Created";
+			_raw_response = "HTTP/1.1 " + status + "\r\n\r\n";
+			return ;
+		}
+		else
+		{
+			std::cerr << "Failed to open file for writing: " << dir_path << std::endl;
+			status = "500 Internal Server Error";
+			_raw_response = "HTTP/1.1 " + status + "\r\n\r\n";
+			return ;
+		}
+		return ;
+	}
 
 	if (uri == "/")
 	{
