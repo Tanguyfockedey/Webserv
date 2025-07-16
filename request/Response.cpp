@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/16 13:58:08 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/16 18:24:11 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,13 +35,32 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 	std::string status;
 	std::string body;
 	std::string rq;
+	std::string boundary;
+	
 	_raw_response.clear();// = "";
 	uri.clear();
 	
 	// DEBUG PRINT RAW REQUEST
 	rq = _req.get_raw_request();
-	std::cout << "Raw request: " << std::endl << rq << std::endl;
+	//std::cout << "Raw request: " << std::endl << rq << std::endl;
 
+
+	// TRY-CATCH pour requetes erronees
+	if (rq.empty())
+	{
+		std::cerr << "Empty request received" << std::endl;
+		status = "400 Bad Request";
+		_raw_response = "HTTP/1.1 " + status + "\r\n\r\n";
+		return ;
+	}
+	if (rq.find("\r\n\r\n") == std::string::npos)
+	{
+		std::cerr << "Malformed request: missing headers" << std::endl;
+		status = "400 Bad Request";
+		_raw_response = "HTTP/1.1 " + status + "\r\n\r\n";
+		return ;
+	}
+	
 	// Parse request line
 	method = _req.get_raw_request().substr(0, _req.get_raw_request().find_first_of(' '));
 	method.erase(method.find_last_not_of(" \t\r\n") + 1); // Remove trailing whitespace
@@ -63,6 +82,22 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 	
 	if (method == "POST")
 	{
+		boundary = _req.get_raw_request().substr(_req.get_raw_request().find("boundary=") + 9);
+		std::string full_boundary = boundary.substr(0, boundary.find_first_of('\r'));
+		full_boundary = "--" + full_boundary;
+		// full_boundary.erase(full_boundary.find_last_not_of(" \t\r\n") + 1); // Remove trailing whitespace
+		// full_boundary.erase(0, full_boundary.find_first_not_of(" \t\r\n")); // Remove leading whitespace
+
+		// DEBUG PRINT
+		std::cout << "Boundary: " << full_boundary << std::endl;
+
+		if (boundary.empty())
+		{
+			std::cerr << "No boundary provided in POST request" << std::endl;
+			status = "400 Bad Request";
+			_raw_response = "HTTP/1.1 " + status + "\r\n\r\n";
+			return ;
+		}
 		std::string filename = _req.get_raw_request().substr(_req.get_raw_request().find("filename=\"") + 10);
 		filename = filename.substr(0, filename.find_first_of('"'));
 		if (filename.empty())
@@ -77,6 +112,7 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		size_t length;
 		std::istringstream iss(header_length);
 		iss >> key >> length;
+		
 		// DEBUG PRINT
 		//std::cout << "length of request: " << length << std::endl;
 		
@@ -84,7 +120,33 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		//method = _req.get_raw_request().substr(0, _req.get_raw_request().find_first_of(' '));
 		
 		//body = _req.get_raw_request().substr(_req.get_raw_request().find("\r\n\r\n") + 4);
-		body = rq.substr(rq.find_last_of("\r\n\r\n") + 4);
+		body = rq;
+		do {
+			size_t pos = body.find("\r\n\r\n");
+			if (pos == std::string::npos)
+			{
+				std::cerr << "Malformed request: missing headers" << std::endl;
+				status = "400 Bad Request";
+				_raw_response = "HTTP/1.1 " + status + "\r\n\r\n";
+				return ;
+			}
+
+			body = body.substr(pos + 4);
+		} while (body.find("\r\n\r\n") != std::string::npos);
+
+		// DEBUG PRINT
+		std::cout << "FirstPrint Body : " << std::endl << body << std::endl << "---FIN de BODY---" << std::endl;
+		//std::string closing_boundary = full_boundary + "--";
+		//body = body.substr(body.find(full_boundary) + full_boundary.length());
+		body = body.substr(0, body.find("\r\n"));
+
+		// body = body.erase(...) ?
+		// body.erase(body.find_last_not_of(" \r\n") + 1); // Remove trailing whitespace
+		// body.erase(0, body.find_first_not_of(" \r\n")); // Remove leading whitespace
+		// body.erase(body.find(full_boundary), full_boundary.length());
+		// body.erase(body.find_last_not_of(" \r\n") + 1); // Remove trailing whitespace
+		// body.erase(0, body.find_first_not_of(" \r\n")); // Remove leading whitespace
+		//body = rq.substr(rq.find_last_of("\r\n\r\n") + 4);
 		if (body.empty())
 		{
 			std::cerr << "No body in POST request" << std::endl;
@@ -92,11 +154,16 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 			_raw_response = "HTTP/1.1 " + status + "\r\n\r\n";
 			return ;
 		}
+
+		// DEBUG PRINT
+		std::cout << "Body : " << std::endl << body << std::endl << "---FIN de BODY---" << std::endl;
+
 		dir_path = std::string(get_current_dir_name()) + "/www/" + filename;
 		std::fstream file(dir_path.c_str(), std::ios::out | std::ios::binary);
 		if (file.is_open())
 		{
-			for (size_t i = 0; i < length; ++i)
+			//file.clear(); // Could cause problems
+			for (size_t i = 0; i < body.length(); ++i)
 			{
 				file << body[i];
 			}
