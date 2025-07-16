@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/11 14:19:26 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/16 13:58:08 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,10 +34,14 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 	std::string dir_path;
 	std::string status;
 	std::string body;
-	
+	std::string rq;
 	_raw_response.clear();// = "";
 	uri.clear();
 	
+	// DEBUG PRINT RAW REQUEST
+	rq = _req.get_raw_request();
+	std::cout << "Raw request: " << std::endl << rq << std::endl;
+
 	// Parse request line
 	method = _req.get_raw_request().substr(0, _req.get_raw_request().find_first_of(' '));
 	method.erase(method.find_last_not_of(" \t\r\n") + 1); // Remove trailing whitespace
@@ -49,8 +53,6 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 	uri.erase(uri.find_last_not_of(" \t\r\n") + 1); // Remove trailing whitespace
 	uri.erase(0, uri.find_first_not_of(" \t\r\n")); // Remove leading whitespace
 
-	body = _req.get_raw_request().substr(_req.get_raw_request().find("\r\n\r\n") + 4);
-
 	if (method != "GET" && method != "POST" && method != "DELETE")
 	{
 		std::cerr << "Unsupported HTTP method: " << method << std::endl;
@@ -61,11 +63,44 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 	
 	if (method == "POST")
 	{
-		dir_path = std::string(get_current_dir_name()) + "/www" + uri;
+		std::string filename = _req.get_raw_request().substr(_req.get_raw_request().find("filename=\"") + 10);
+		filename = filename.substr(0, filename.find_first_of('"'));
+		if (filename.empty())
+		{
+			std::cerr << "No filename provided in POST request" << std::endl;
+			status = "400 Bad Request";
+			_raw_response = "HTTP/1.1 " + status + "\r\n\r\n";
+			return ;
+		}
+		std::string header_length = _req.get_raw_request().substr(_req.get_raw_request().find("Content-Length"));
+		std::string key;
+		size_t length;
+		std::istringstream iss(header_length);
+		iss >> key >> length;
+		// DEBUG PRINT
+		//std::cout << "length of request: " << length << std::endl;
+		
+		//DELETE LINE
+		//method = _req.get_raw_request().substr(0, _req.get_raw_request().find_first_of(' '));
+		
+		//body = _req.get_raw_request().substr(_req.get_raw_request().find("\r\n\r\n") + 4);
+		body = rq.substr(rq.find_last_of("\r\n\r\n") + 4);
+		if (body.empty())
+		{
+			std::cerr << "No body in POST request" << std::endl;
+			status = "400 Bad Request";
+			_raw_response = "HTTP/1.1 " + status + "\r\n\r\n";
+			return ;
+		}
+		dir_path = std::string(get_current_dir_name()) + "/www/" + filename;
 		std::fstream file(dir_path.c_str(), std::ios::out | std::ios::binary);
 		if (file.is_open())
 		{
-			file << body;
+			for (size_t i = 0; i < length; ++i)
+			{
+				file << body[i];
+			}
+			//file << body;
 			file.close();
 			status = "201 Created";
 			_raw_response = "HTTP/1.1 " + status + "\r\n\r\n";
@@ -97,8 +132,6 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 	std::string mime_type;
 	if (extension == "html" || extension == "htm")
 		mime_type = "text/html";
-	else if (extension == "txt")
-		mime_type = "text/plain";
 	else if (extension == "css")
 		mime_type = "text/css";
 	else if (extension == "js")
@@ -179,12 +212,8 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		mime_type = "application/x-sh";
 	else if (extension == "ps" || extension == "eps")
 		mime_type = "application/postscript";
-	else if (extension == "rtf")
-		mime_type = "application/rtf";
 	else if (extension == "txt" || extension == "text" || extension == "conf" || extension == "log" || extension == "md")
 		mime_type = "text/plain";
-	else if (extension == "csv")
-		mime_type = "text/csv";
 	else if (extension == "mp3")
 		mime_type = "audio/mpeg";
 	else if (extension == "wav")
