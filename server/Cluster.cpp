@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/28 16:48:31 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/20 14:27:55 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/07/16 18:24:04 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,7 @@ Cluster::Cluster()
 Cluster::~Cluster()
 {
 	std::cout << "Cluster destructor called." << std::endl;
-	for (size_t i = 0; i < _cluster.size(); ++i)
+	for (size_t i = 0; i < _cluster.size(); i++)
 		delete _cluster[i];
 	_cluster.clear();
 }
@@ -65,7 +65,7 @@ void Cluster::run_servers()
 {
 	while (true)
 	{
-		for (size_t i = 0; i < _cluster.size(); ++i)
+		for (size_t i = 0; i < _cluster.size(); i++)
 		{
 			try
 			{
