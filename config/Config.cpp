@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/03 16:07:02 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/17 15:10:29 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/07/17 16:11:21 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,8 +36,6 @@ std::vector<Config> Config::parse_file(std::string file)
 				config._root = extract_token(tmp, "root");
 				config._client_body_size = extract_client_body_size(tmp);
 				config._allow_methods = extract_token(tmp, "method");
-				if (config._allow_methods.empty())
-					config._allow_methods = "GET POST DELETE";
 				cluster.push_back(config);
 			}
 			catch(const std::exception& e)
@@ -131,12 +129,20 @@ void Config::extract_location(std::string& str)
 	std::string path, data;
 	while (str.find("location") != std::string::npos)
 	{
-		path = str.substr(str.find("location") + 9, str.find('{') - str.find("location") - 9);
-		data = str.substr(str.find('{', str.find("location")) + 1, str.find('}',
-			str.find("location")) - str.find('{', str.find("location")) - 1);
-		path.erase(remove_if(path.begin(), path.end(), isspace), path.end());
-		str.erase(str.find("location"), str.find('}', str.find("location")) - str.find("location") + 1);
-		_locations.insert((std::make_pair(path, Location(data))));
-		
+		try
+		{
+			path = str.substr(str.find("location") + 9, str.find('{') - str.find("location") - 9);
+			data = str.substr(str.find('{', str.find("location")) + 1, str.find('}',
+				str.find("location")) - str.find('{', str.find("location")) - 1);
+			path.erase(remove_if(path.begin(), path.end(), isspace), path.end());
+			str.erase(str.find("location"), str.find('}', str.find("location")) - str.find("location") + 1);
+			_locations.insert((std::make_pair(path, Location(data))));
+		}
+		catch(const std::exception& e)
+		{
+			std::cerr << e.what() << '\n';
+			std::cerr << "Error parsing location block: " << strerror(errno) << std::endl;
+			std::cerr << "Skipping invalid location block." << std::endl;
+		}
 	}
 }

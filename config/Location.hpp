@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/19 18:35:06 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/17 15:00:36 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/07/17 16:02:31 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,7 @@ private:
 	std::string _root;
 	int _client_body_size;
 	std::string _allow_methods;
+	std::string _autoindex;
 
 public:
 	// Constructor and Destructor
