@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
+/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:00:55 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/09 11:22:23 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/16 18:26:45 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@ Server::Server(const Config& config): _config(config)
 Server::~Server()
 {
 	std::cout << "Server destructor called." << std::endl;
-	for (size_t i = 0; i < _poll_fds.size(); ++i)
+	for (size_t i = 0; i < _poll_fds.size(); i++)
 	{
 		if (_poll_fds[i].fd >= 0)
 		{
@@ -87,7 +87,7 @@ void Server::polling()
 		std::cerr << "Polling error: " << strerror(errno) << std::endl;
 		return;
 	}
-	for (size_t i = 0; i < _poll_fds.size(); ++i)
+	for (size_t i = 0; i < _poll_fds.size(); i++)
 	{
 		if (_poll_fds[i].revents & POLLIN)
 		{
@@ -212,7 +212,7 @@ void Server::send_request(pollfd &poll)
 
 void Server::update_client_timeout(int fd)
 {
-	for (size_t i = 0; i < _clients.size(); ++i)
+	for (size_t i = 0; i < _clients.size(); i++)
 	{
 		if (_clients[i].get_fd() == fd)
 		{

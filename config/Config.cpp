@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/03 16:07:02 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/20 14:48:07 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/07/17 16:11:21 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,10 +29,13 @@ std::vector<Config> Config::parse_file(std::string file)
 			{
 				Config config;
 				tmp = extract_server_block(str);
+				config.extract_location(tmp);
 				config.extract_name(tmp);
 				config.extract_address(tmp);
-				config.extract_client_body_size(tmp);
-				config.extract_location(tmp);
+				config._index = extract_token(tmp, "index");
+				config._root = extract_token(tmp, "root");
+				config._client_body_size = extract_client_body_size(tmp);
+				config._allow_methods = extract_token(tmp, "method");
 				cluster.push_back(config);
 			}
 			catch(const std::exception& e)
@@ -113,29 +116,12 @@ void Config::extract_address(std::string& str)
 	}
 }
 
-void Config::extract_client_body_size(std::string& str)
+int Config::extract_client_body_size(std::string& str)
 {
 	std::string tmp = extract_token(str, "client_body_size");
 	if (!tmp.empty())
-		_client_body_size = atoi(tmp.c_str());
-	else
-		_client_body_size = 1000000;
-}
-
-void Config::extract_index(std::string& str)
-{
-	_index = extract_token(str, "index");
-	if (_index.empty())
-		_index = "index.html";
-}
-
-void Config::extract_root(std::string& str)
-{
-	_root = extract_token(str, "root");
-	if (_root.empty())
-		_root = "./";
-	else if ((*_root.end() - 1) != '/')
-		_root += '/';
+		return (atoi(tmp.c_str()));
+	return (0);
 }
 
 void Config::extract_location(std::string& str)
@@ -143,12 +129,20 @@ void Config::extract_location(std::string& str)
 	std::string path, data;
 	while (str.find("location") != std::string::npos)
 	{
-		path = str.substr(str.find("location") + 9, str.find('{') - str.find("location") - 9);
-		data = str.substr(str.find('{', str.find("location")) + 1, str.find('}',
-			str.find("location")) - str.find('{', str.find("location")) - 1);
-		path.erase(remove_if(path.begin(), path.end(), isspace), path.end());
-		str.erase(str.find("location"), str.find('}', str.find("location")) - str.find("location") + 1);
-		_locations.insert((std::make_pair(path, Location(data))));
-		
+		try
+		{
+			path = str.substr(str.find("location") + 9, str.find('{') - str.find("location") - 9);
+			data = str.substr(str.find('{', str.find("location")) + 1, str.find('}',
+				str.find("location")) - str.find('{', str.find("location")) - 1);
+			path.erase(remove_if(path.begin(), path.end(), isspace), path.end());
+			str.erase(str.find("location"), str.find('}', str.find("location")) - str.find("location") + 1);
+			_locations.insert((std::make_pair(path, Location(data))));
+		}
+		catch(const std::exception& e)
+		{
+			std::cerr << e.what() << '\n';
+			std::cerr << "Error parsing location block: " << strerror(errno) << std::endl;
+			std::cerr << "Skipping invalid location block." << std::endl;
+		}
 	}
 }
