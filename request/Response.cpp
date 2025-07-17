@@ -89,6 +89,10 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		// full_boundary.erase(0, full_boundary.find_first_not_of(" \t\r\n")); // Remove leading whitespace
 
 		// DEBUG PRINT
+
+		std::string reqHeaders = _req.get_raw_request().substr(0, _req.get_raw_request().find("\r\n\r\n") + 4);
+		int reqHeadersLength = reqHeaders.length();
+
 		std::cout << "Boundary: " << full_boundary << std::endl;
 
 		std::string bodypart = _req.get_raw_request().substr(_req.get_raw_request().find("\r\n\r\n") + 4);
@@ -181,12 +185,18 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		// DEBUG PRINT
 		std::cout << "Body : " << std::endl << body << std::endl << "---FIN de BODY---" << std::endl;
 
+		int limit;
+		if (actualBodyLength < (BUFFERSIZE - reqHeadersLength - (int)bodyHeaders.length() - (((int)bound1.length() * 2) + 2) - 2))
+			limit = actualBodyLength;
+		else
+			limit = BUFFERSIZE;
+		limit = limit - reqHeadersLength - (int)bodyHeaders.length() - (((int)bound1.length() * 2) + 2) - 2; // last 2 is the \r\n before the closing boundary
 		dir_path = std::string(get_current_dir_name()) + "/www/" + filename;
 		std::fstream file(dir_path.c_str(), std::ios::out | std::ios::binary);
 		if (file.is_open())
 		{
 			//file.clear(); // Could cause problems
-			for (int i = 0; i < actualBodyLength; ++i)
+			for (int i = 0; i < limit; ++i)
 			{
 				file << body[i];
 			}

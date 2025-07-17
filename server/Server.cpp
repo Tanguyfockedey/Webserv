@@ -144,7 +144,7 @@ void Server::remove_client(int fd)
 
 void Server::read_request(pollfd &poll)
 {
-	char buffer[65536];
+	char buffer[BUFFERSIZE];
 
 	memset(buffer, 0, sizeof(buffer));
 	ssize_t bytes_read = recv(poll.fd, buffer, sizeof(buffer) - 1, MSG_DONTWAIT);

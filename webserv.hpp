@@ -40,6 +40,7 @@
 // Constants
 #define CONNECTION_TIMEOUT 30
 #define REQUEST_TIMEOUT 5
+#define BUFFERSIZE 65536 // 64 KB
 
 // Colors
 #define RED "\033[31m"
