@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/16 18:24:11 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/17 16:20:38 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -91,6 +91,22 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		// DEBUG PRINT
 		std::cout << "Boundary: " << full_boundary << std::endl;
 
+		std::string bodypart = _req.get_raw_request().substr(_req.get_raw_request().find("\r\n\r\n") + 4);
+		std::cout << "Body part len: " << bodypart.length() << std::endl;
+		std::string bound1 = bodypart.substr(0, bodypart.find(full_boundary) + full_boundary.length() + 2);
+		std::string bodyHeaders = bodypart.substr(bodypart.find("Content"));
+		bodyHeaders = bodyHeaders.substr(0, bodyHeaders.find("\r\n\r\n") + 4);
+
+		std::cout << "BodyHeaders --->" << bodyHeaders << "<--- ENDOFBodyHeaders" << std::endl;
+		std::cout << "Bounds len: " << ((bound1.length() * 2) + 2) << std::endl;
+		std::cout << "BodyHeaders len: " << bodyHeaders.length() << std::endl;
+		
+		
+
+
+
+
+		
 		if (boundary.empty())
 		{
 			std::cerr << "No boundary provided in POST request" << std::endl;
@@ -113,6 +129,10 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		std::istringstream iss(header_length);
 		iss >> key >> length;
 		
+		int actualBodyLength = length - ((bound1.length() * 2) + 2) - bodyHeaders.length() - 2; // last 2 is the \r\n before the closing boundary
+		std::cout << "Actual body len: " << actualBodyLength << std::endl;
+
+
 		// DEBUG PRINT
 		//std::cout << "length of request: " << length << std::endl;
 		
@@ -138,8 +158,11 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		std::cout << "FirstPrint Body : " << std::endl << body << std::endl << "---FIN de BODY---" << std::endl;
 		//std::string closing_boundary = full_boundary + "--";
 		//body = body.substr(body.find(full_boundary) + full_boundary.length());
-		body = body.substr(0, body.find("\r\n"));
+		
 
+		//body = body.substr(0, body.find("\r\n")); // JUST COMMENTED OUT
+
+		
 		// body = body.erase(...) ?
 		// body.erase(body.find_last_not_of(" \r\n") + 1); // Remove trailing whitespace
 		// body.erase(0, body.find_first_not_of(" \r\n")); // Remove leading whitespace
@@ -163,7 +186,7 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		if (file.is_open())
 		{
 			//file.clear(); // Could cause problems
-			for (size_t i = 0; i < body.length(); ++i)
+			for (int i = 0; i < actualBodyLength; ++i)
 			{
 				file << body[i];
 			}
