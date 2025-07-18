@@ -246,20 +246,11 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 	// HERE : process redirection to CGI if needed (based on requested resource extension ?)
 
 	if (_req.get_method() == "GET")
-	{
 		process_get_request(this, _req);
-		return ;
-	}
 	else if (_req.get_method() == "POST")
-	{
 		process_post_request(this, _req);
-		return ;
-	}
 	else if (_req.get_method() == "DELETE")
-	{
 		process_delete_request(this, _req);
-		return ;
-	}
 }
 
 Response::~Response()

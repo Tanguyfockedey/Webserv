@@ -278,12 +278,13 @@ static void extract_resource_info(Request *req)
 	req->set_resource_info(resource_info);
 }
 
+
 static void parse_body(Request *req)
 {
 	std::string body;
 	
 	body = req->get_raw_request().substr(req->get_raw_request().find("\r\n\r\n") + 4);
-	if (body.empty())
+	if (body.empty() && req->get_method() == "POST")
 	{
 		std::cerr << "Empty body in request." << std::endl;
 		req->set_error_code(400);
