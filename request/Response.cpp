@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/18 18:32:38 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/18 22:28:36 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,14 +28,14 @@ void process_get_request(Response *response_object, Request &req)
 			std::cerr << "errno : " << errno << std::endl;
 			std::cerr << "File Not Found: " << path << std::endl;
 			errorpage = "error_404.html";
-			status_line = "404 Not Found";
+			response_object->set_status_line("404 Not Found");
 		}
 		else if (errno == 13) // Permission denied (403)
 		{
 			std::cerr << "errno : " << errno << std::endl;
 			std::cerr << "Permission Denied: " << path << std::endl;
 			errorpage = "error_403.html";
-			status_line = "403 Forbidden";
+			response_object->set_status_line("403 Forbidden");
 		}
 		else if (errno == 21) // Is a directory (ou tenter 20, si c'est pas 21)
 		{
@@ -64,9 +64,9 @@ void process_get_request(Response *response_object, Request &req)
 		if(file_err.is_open())
 		{
 			std::string body = std::string((std::istreambuf_iterator<char>(file_err)), std::istreambuf_iterator<char>());
-			std::string date = get_http_date();
+			std::string date = response_object->get_http_date();
 			std::stringstream response;
-			response << "HTTP/1.1 " << status << "\r\n";
+			response << "HTTP/1.1 " << status_line << "\r\n";
 			response << "Date: " << date << "\r\n";
 			response << "Content-Type: text/html\r\n";
 			response << "Content-Length: " << body.length() << "\r\n";
@@ -74,11 +74,11 @@ void process_get_request(Response *response_object, Request &req)
 			response << "Cache-Control: no-store\r\n";
 			response << "\r\n";
 			response << body;
-			_response = response.str();
+			response_object->set_response(response.str());
 			file_err.close();
 			response.str("");
 			response.clear();
-			uri.clear();
+			//uri.clear();
 			body.clear();
 			path.clear();
 			return ;
@@ -87,7 +87,7 @@ void process_get_request(Response *response_object, Request &req)
 	if(file.is_open())
 	{
 		std::string body = std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-		std::string date = get_http_date();
+		std::string date = response_object->get_http_date();
 		std::stringstream response;
 		response << "HTTP/1.1 200 OK\r\n";
 		response << "Date: " << date << "\r\n";
@@ -97,13 +97,13 @@ void process_get_request(Response *response_object, Request &req)
 		response << "Cache-Control: no-store\r\n";
 		response << "\r\n";
 		response << body;
-		_response = response.str();
+		response_object->set_response(response.str());
 		file.close();
 		response.str("");
 		response.clear();
-		uri.clear();
+		//uri.clear();
 		body.clear();
-		dir_path.clear();
+		//dir_path.clear();
 		return ;
 	}
 	std::string err_path = std::string(get_current_dir_name()) + "/pages/error_404.html";
@@ -111,7 +111,7 @@ void process_get_request(Response *response_object, Request &req)
 	if(file_err.is_open())
 	{
 		std::string body = std::string((std::istreambuf_iterator<char>(file_err)), std::istreambuf_iterator<char>());
-		std::string date = get_http_date();
+		std::string date = response_object->get_http_date();
 		std::stringstream response;
 		response << "HTTP/1.1 404 Not Found\r\n";
 		response << "Date: " << date << "\r\n";
@@ -121,16 +121,16 @@ void process_get_request(Response *response_object, Request &req)
 		response << "Cache-Control: no-store\r\n";
 		response << "\r\n";
 		response << body;
-		_response = response.str();
+		response_object->set_response(response.str());
 		file_err.close();
 		response.str("");
 		response.clear();
-		uri.clear();
+		//uri.clear();
 		body.clear();
-		dir_path.clear();
+		//dir_path.clear();
 		return ;
 	}
-	std::cout << "Failed path : " << dir_path << std::endl;
+	std::cout << "Failed path : " << path << std::endl;
 	std::cout << "File Not Found" << std::endl;
 
 	response_object->set_response("...");;
@@ -265,7 +265,7 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 Response::~Response()
 {}
 
-std::string Response::get_http_date() {
+const std::string Response::get_http_date() {
     const char* days[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
     const char* months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
                             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};

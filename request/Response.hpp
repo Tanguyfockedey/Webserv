@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:21 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/18 16:17:07 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/18 22:19:47 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@ private:
 	std::map<std::string, std::string> _headers;
 	std::string _body;
 
-	std::string get_http_date();
+	
 
 public:
 	// Constructors and Destructor
@@ -45,4 +45,6 @@ public:
 	void set_headers(const std::map<std::string, std::string>& headers) { _headers = headers; }
 	void set_body(const std::string& body) { _body = body; }
 	void set_req(const Request& req) { _req = req; }
+
+	const std::string get_http_date();
 };
