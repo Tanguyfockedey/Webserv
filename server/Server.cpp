@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:00:55 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/09 14:58:14 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/18 16:17:07 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -144,7 +144,7 @@ void Server::remove_client(int fd)
 
 void Server::read_request(pollfd &poll)
 {
-	char buffer[BUFFERSIZE];
+	char buffer[BUFFER_SIZE];
 
 	memset(buffer, 0, sizeof(buffer));
 	ssize_t bytes_read = recv(poll.fd, buffer, sizeof(buffer) - 1, MSG_DONTWAIT);
@@ -161,7 +161,7 @@ void Server::read_request(pollfd &poll)
 	}
 	update_client_timeout(poll.fd);
 	std::string str = buffer;
-	_requests.push_back(Request(poll.fd, str));
+	_requests.push_back(Request(poll.fd, str, _config));
 	process_request(poll);
 }
 
@@ -181,7 +181,7 @@ void Server::send_response(pollfd &poll)
 	{
 		if (_response[i].get_fd() == poll.fd)
 		{
-			ssize_t bytes_sent = send(poll.fd, _response[i].get_raw_response().c_str(), _response[i].get_raw_response().size(), MSG_DONTWAIT);
+			ssize_t bytes_sent = send(poll.fd, _response[i].get_response().c_str(), _response[i].get_response().size(), MSG_DONTWAIT);
 			if (bytes_sent < 0)
 			{
 				std::cerr << "Error sending response to client: " << strerror(errno) << std::endl;
@@ -194,16 +194,16 @@ void Server::send_response(pollfd &poll)
 				_response.erase(_response.begin() + i);
 				remove_client(poll.fd);
 			}
-			else if (bytes_sent == static_cast<ssize_t>(_response[i].get_raw_response().size()))
+			else if (bytes_sent == static_cast<ssize_t>(_response[i].get_response().size()))
 			{
-				std::cout << CYAN << "Response sent to client [" << poll.fd << "]:\n" << _response[i].get_raw_response() << RESET << std::endl;
+				std::cout << CYAN << "Response sent to client [" << poll.fd << "]:\n" << _response[i].get_response() << RESET << std::endl;
 				_response.erase(_response.begin() + i);
 				poll.events ^= POLLOUT;
 			}
 			else
 			{
 				std::cerr << "Partial response sent to client." << std::endl;
-				_response[i].set_raw_response(_response[i].get_raw_response().substr(bytes_sent));
+				_response[i].set_response(_response[i].get_response().substr(bytes_sent));
 			}
 			return;
 		}

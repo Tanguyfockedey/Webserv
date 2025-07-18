@@ -6,28 +6,43 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/17 16:20:38 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/18 16:17:10 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Response.hpp"
 
 
-	// std::string method, path, version;
-
-	// // Parse request line
-	// std::string request_line = _req.get_raw_request().substr(0, _req.get_raw_request().find("\r\n"));
-	// std::istringstream iss(request_line);
-	// iss >> method >> path >> version;
-
-	// // Normalize path
-	// if (path == "/" || path.empty())
-	// 	path = "index.html";
-	// else if (path[0] == '/')
-	// 	path = path.substr(1); // remove leading slash
-
 Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 {
+	// DEBUG
+	std::cout <<  "response checkpoint 0" << std::endl; // DEBUG
+
+	try
+	{
+		if (_req.get_error_code() != 0)
+		{
+			std::string error_msg;
+			std::stringstream ss(error_msg);
+			ss << "HTTP/1.1 " << _req.get_error_code() << " Error\r\n\r\n";
+			_response = ss.str();
+			
+			// redirect to error page if needed
+			return ;
+		}
+		//throw std::runtime_error("400 Bad Request");
+		//req->set_error_code(400);
+
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+		return ;
+	}
+
+	// DEBUG
+	std::cout <<  "response checkpoint 1" << std::endl; // DEBUG
+
 	std::string method;
 	std::string uri;
 	std::string host;
@@ -37,27 +52,27 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 	std::string rq;
 	std::string boundary;
 	
-	_raw_response.clear();// = "";
-	uri.clear();
 	
 	// DEBUG PRINT RAW REQUEST
 	rq = _req.get_raw_request();
 	//std::cout << "Raw request: " << std::endl << rq << std::endl;
 
-
+	// Check if requests are not too long
 	// TRY-CATCH pour requetes erronees
+
+	
 	if (rq.empty())
 	{
 		std::cerr << "Empty request received" << std::endl;
 		status = "400 Bad Request";
-		_raw_response = "HTTP/1.1 " + status + "\r\n\r\n";
+		_response = "HTTP/1.1 " + status + "\r\n\r\n";
 		return ;
 	}
 	if (rq.find("\r\n\r\n") == std::string::npos)
 	{
 		std::cerr << "Malformed request: missing headers" << std::endl;
 		status = "400 Bad Request";
-		_raw_response = "HTTP/1.1 " + status + "\r\n\r\n";
+		_response = "HTTP/1.1 " + status + "\r\n\r\n";
 		return ;
 	}
 	
@@ -76,7 +91,7 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 	{
 		std::cerr << "Unsupported HTTP method: " << method << std::endl;
 		status = "501 Not Implemented";
-		_raw_response = "HTTP/1.1 " + status + "\r\n\r\n";
+		_response = "HTTP/1.1 " + status + "\r\n\r\n";
 		return ;
 	}
 	
@@ -115,7 +130,7 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		{
 			std::cerr << "No boundary provided in POST request" << std::endl;
 			status = "400 Bad Request";
-			_raw_response = "HTTP/1.1 " + status + "\r\n\r\n";
+			_response = "HTTP/1.1 " + status + "\r\n\r\n";
 			return ;
 		}
 		std::string filename = _req.get_raw_request().substr(_req.get_raw_request().find("filename=\"") + 10);
@@ -124,7 +139,7 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		{
 			std::cerr << "No filename provided in POST request" << std::endl;
 			status = "400 Bad Request";
-			_raw_response = "HTTP/1.1 " + status + "\r\n\r\n";
+			_response = "HTTP/1.1 " + status + "\r\n\r\n";
 			return ;
 		}
 		std::string header_length = _req.get_raw_request().substr(_req.get_raw_request().find("Content-Length"));
@@ -151,7 +166,7 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 			{
 				std::cerr << "Malformed request: missing headers" << std::endl;
 				status = "400 Bad Request";
-				_raw_response = "HTTP/1.1 " + status + "\r\n\r\n";
+				_response = "HTTP/1.1 " + status + "\r\n\r\n";
 				return ;
 			}
 
@@ -178,7 +193,7 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		{
 			std::cerr << "No body in POST request" << std::endl;
 			status = "400 Bad Request";
-			_raw_response = "HTTP/1.1 " + status + "\r\n\r\n";
+			_response = "HTTP/1.1 " + status + "\r\n\r\n";
 			return ;
 		}
 
@@ -186,10 +201,10 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		std::cout << "Body : " << std::endl << body << std::endl << "---FIN de BODY---" << std::endl;
 
 		int limit;
-		if (actualBodyLength < (BUFFERSIZE - reqHeadersLength - (int)bodyHeaders.length() - (((int)bound1.length() * 2) + 2) - 2))
+		if (actualBodyLength < (BUFFER_SIZE - reqHeadersLength - (int)bodyHeaders.length() - (((int)bound1.length() * 2) + 2) - 2))
 			limit = actualBodyLength;
 		else
-			limit = BUFFERSIZE;
+			limit = BUFFER_SIZE;
 		limit = limit - reqHeadersLength - (int)bodyHeaders.length() - (((int)bound1.length() * 2) + 2) - 2; // last 2 is the \r\n before the closing boundary
 		dir_path = std::string(get_current_dir_name()) + "/www/" + filename;
 		std::fstream file(dir_path.c_str(), std::ios::out | std::ios::binary);
@@ -203,14 +218,14 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 			//file << body;
 			file.close();
 			status = "201 Created";
-			_raw_response = "HTTP/1.1 " + status + "\r\n\r\n";
+			_response = "HTTP/1.1 " + status + "\r\n\r\n";
 			return ;
 		}
 		else
 		{
 			std::cerr << "Failed to open file for writing: " << dir_path << std::endl;
 			status = "500 Internal Server Error";
-			_raw_response = "HTTP/1.1 " + status + "\r\n\r\n";
+			_response = "HTTP/1.1 " + status + "\r\n\r\n";
 			return ;
 		}
 		return ;
@@ -440,7 +455,7 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 			response << "Cache-Control: no-store\r\n";
 			response << "\r\n";
 			response << body;
-			_raw_response = response.str();
+			_response = response.str();
 			file_err.close();
 			response.str("");
 			response.clear();
@@ -466,7 +481,7 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		response << "Cache-Control: no-store\r\n";
 		response << "\r\n";
 		response << body;
-		_raw_response = response.str();
+		_response = response.str();
 		file.close();
 		response.str("");
 		response.clear();
@@ -490,7 +505,7 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		response << "Cache-Control: no-store\r\n";
 		response << "\r\n";
 		response << body;
-		_raw_response = response.str();
+		_response = response.str();
 		file_err.close();
 		response.str("");
 		response.clear();

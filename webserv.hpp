@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/05 19:39:13 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/02 14:38:26 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/18 15:58:20 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,10 @@
 // Constants
 #define CONNECTION_TIMEOUT 30
 #define REQUEST_TIMEOUT 5
-#define BUFFERSIZE 65536 // 64 KB
+#define BUFFER_SIZE 65536 // 64 KB
+#define MAX_URI_LENGTH 2048 // 2 KB
+#define MAX_HEADER_LENGTH 8192 // 8 KB
+#define MAX_BODY_LENGTH 10485760 // 10 MB
 
 // Colors
 #define RED "\033[31m"
