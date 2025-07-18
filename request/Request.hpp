@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:47:50 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/18 15:31:39 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/18 17:10:11 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,8 +28,10 @@ private:
 	std::string _method;
 	std::string _uri;
 	std::string _version;
+	std::string _headers_string;
 	std::map<std::string, std::string> _headers;
 	std::string _body;
+	std::map<std::string, std::string> _resource_info;
 	Config _config;
 
 public:
@@ -45,7 +47,9 @@ public:
 	const std::string& get_method() const { return _method; }
 	const std::string& get_uri() const { return _uri; }
 	const std::string& get_version() const { return _version; }
+	const std::string& get_headers_string() const { return _headers_string; }
 	const std::map<std::string, std::string>& get_headers() const { return _headers; }
+	const std::map<std::string, std::string>& get_resource_info() const { return _resource_info; }
 	const std::string& get_body() const { return _body; }
 	const Config& get_config() const { return _config; }
 	time_t get_timestamp() const { return _timestamp; }
@@ -55,7 +59,9 @@ public:
 	void set_method(const std::string &method) { _method = method; }
 	void set_uri(const std::string &uri) { _uri = uri; }
 	void set_version(const std::string &version) { _version = version; }
+	void set_headers_string(const std::string &headers_string) { _headers_string = headers_string; }
 	void set_headers(const std::map<std::string, std::string> &headers) { _headers = headers; }
+	void set_resource_info(const std::map<std::string, std::string> &resource_info) { _resource_info = resource_info; }
 	void set_body(const std::string &body) { _body = body; }
 	void set_error_code(int error_code) { _error_code = error_code; }
 
