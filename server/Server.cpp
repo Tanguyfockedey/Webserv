@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
+/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:00:55 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/18 16:17:07 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/19 16:15:38 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,9 +30,9 @@ Server::~Server()
 			close(_poll_fds[i].fd);
 			std::cout << "Closed socket fd: " << _poll_fds[i].fd << std::endl;
 		}
-		_poll_fds.clear();
-		_sin.clear();
 	}
+	_poll_fds.clear();
+	_sin.clear();
 }
 
 void Server::init_socket()
