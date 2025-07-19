@@ -308,10 +308,6 @@ Request::Request(const int fd, const std::string raw_request, Config &server_con
 	: _fd(fd), _error_code(0), _timestamp(time(NULL)), _raw_request(raw_request), _config(server_config)
 {
 	parse_request_line();
-
-	// DEBUG
-	std::cout << "REQUEST LINE : " << _request_line << std::endl;
-
 	parse_uri(this);
 	normalize_uri(this);
 	extract_resource_info(this);

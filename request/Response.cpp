@@ -77,8 +77,10 @@ static void process_get_request(Response *response_object, Request &req)
 		std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
 		build_response(response_object, file_err, status_line);
 	}
-
-	build_response(response_object, file, "HTTP/1.1 200 OK\r\n");
+	else
+	{
+		build_response(response_object, file, "200 OK");
+	}
 }
 
 
