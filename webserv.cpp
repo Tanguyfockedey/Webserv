@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   webserv.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
+/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 15:59:00 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/20 14:30:04 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/07/02 16:34:54 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,7 @@ int main(int argc, char **argv)
 		return (1);
 	}
 	Cluster cluster;
-	std::string config_file = "/home/tafocked/Documents/Webserv/config/config1.conf";
+	std::string config_file = (std::string)get_current_dir_name() + "/config/config1.conf";
 	if (argc == 2)
 		config_file = argv[1];
 	cluster.init_cluster(Config::parse_file(config_file));

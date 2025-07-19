@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   webserv.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
+/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/05 19:39:13 by tafocked          #+#    #+#             */
-/*   Updated: 2025/06/19 19:05:56 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/07/18 18:02:08 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,12 +17,15 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <string.h>
+#include <dirent.h>
 
 // C++ Standard Library
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <exception>
 #include <ctime>
+#include <cstdio>
 
 // Network
 #include <sys/socket.h>
@@ -39,6 +42,11 @@
 // Constants
 #define CONNECTION_TIMEOUT 30
 #define REQUEST_TIMEOUT 5
+#define BUFFER_SIZE 65536 // 64 KB
+#define MAX_URI_LENGTH 2048 // 2 KB
+#define MAX_HEADER_LENGTH 8192 // 8 KB
+#define MAX_BODY_LENGTH 10485760 // 10 MB
+#define UPLOAD_PATH "/uploads/"
 
 // Colors
 #define RED "\033[31m"

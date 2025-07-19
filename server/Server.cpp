@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
+/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:00:55 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/16 18:26:45 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/07/18 16:17:07 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -97,7 +97,7 @@ void Server::polling()
 				read_request(_poll_fds[i]);
 		}
 		if (_poll_fds[i].revents & POLLOUT)
-			send_request(_poll_fds[i]);
+			send_response(_poll_fds[i]);
 	}
 	check_clients_timeout();
 	check_requests_timeout();
@@ -144,7 +144,7 @@ void Server::remove_client(int fd)
 
 void Server::read_request(pollfd &poll)
 {
-	char buffer[65536];
+	char buffer[BUFFER_SIZE];
 
 	memset(buffer, 0, sizeof(buffer));
 	ssize_t bytes_read = recv(poll.fd, buffer, sizeof(buffer) - 1, MSG_DONTWAIT);
@@ -161,7 +161,7 @@ void Server::read_request(pollfd &poll)
 	}
 	update_client_timeout(poll.fd);
 	std::string str = buffer;
-	_requests.push_back(Request(poll.fd, str));
+	_requests.push_back(Request(poll.fd, str, _config));
 	process_request(poll);
 }
 
@@ -169,19 +169,19 @@ void Server::process_request(pollfd &poll)
 {
 	std::string response;
 	
-	std::cout << MAGENTA << "Request received[" << poll.fd << "]: " << _requests.back().get_raw_request() << RESET << std::endl;
-	_response.push_back(Response(poll.fd));
+	std::cout << MAGENTA << "Request received [" << poll.fd << "]:\n" << _requests.back().get_raw_request() << RESET << std::endl;
+	_response.push_back(Response(poll.fd, _requests.back()));
 	poll.events |= POLLOUT;
 	_requests.pop_back();
 }
 
-void Server::send_request(pollfd &poll)
+void Server::send_response(pollfd &poll)
 {
 	for (size_t i = 0; i < _response.size(); i++)
 	{
 		if (_response[i].get_fd() == poll.fd)
 		{
-			ssize_t bytes_sent = send(poll.fd, _response[i].get_raw_response().c_str(), _response[i].get_raw_response().size(), MSG_DONTWAIT);
+			ssize_t bytes_sent = send(poll.fd, _response[i].get_response().c_str(), _response[i].get_response().size(), MSG_DONTWAIT);
 			if (bytes_sent < 0)
 			{
 				std::cerr << "Error sending response to client: " << strerror(errno) << std::endl;
@@ -194,16 +194,16 @@ void Server::send_request(pollfd &poll)
 				_response.erase(_response.begin() + i);
 				remove_client(poll.fd);
 			}
-			else if (bytes_sent == static_cast<ssize_t>(_response[i].get_raw_response().size()))
+			else if (bytes_sent == static_cast<ssize_t>(_response[i].get_response().size()))
 			{
-				std::cout << CYAN << "Response sent to client [" << poll.fd << "]: " << _response[i].get_raw_response() << RESET << std::endl;
+				std::cout << CYAN << "Response sent to client [" << poll.fd << "]:\n" << _response[i].get_response() << RESET << std::endl;
 				_response.erase(_response.begin() + i);
 				poll.events ^= POLLOUT;
 			}
 			else
 			{
 				std::cerr << "Partial response sent to client." << std::endl;
-				_response[i].set_raw_response(_response[i].get_raw_response().substr(bytes_sent));
+				_response[i].set_response(_response[i].get_response().substr(bytes_sent));
 			}
 			return;
 		}
