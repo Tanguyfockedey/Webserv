@@ -12,132 +12,77 @@
 
 #include "Response.hpp"
 
-void process_get_request(Response *response_object, Request &req)
+
+static void build_response(Response *response_object, std::fstream &path, const std::string &status_line)
 {
-	std::string path, status_line;
-	
-	path = std::string(get_current_dir_name()) + req.get_uri();
-	std::fstream file(path.c_str(), std::ios::in | std::ios::binary);
-
-	// Check if I have the permission to read the file
-	if (file.fail())
+	if(path.is_open())
 	{
-		std::string errorpage;
-		if (errno == 2) // No such file or directory (404)
-		{
-			std::cerr << "errno : " << errno << std::endl;
-			std::cerr << "File Not Found: " << path << std::endl;
-			errorpage = "error_404.html";
-			response_object->set_status_line("404 Not Found");
-		}
-		else if (errno == 13) // Permission denied (403)
-		{
-			std::cerr << "errno : " << errno << std::endl;
-			std::cerr << "Permission Denied: " << path << std::endl;
-			errorpage = "error_403.html";
-			response_object->set_status_line("403 Forbidden");
-		}
-		else if (errno == 21) // Is a directory (ou tenter 20, si c'est pas 21)
-		{
-			// If the path is a directory, we can try to open the index.html file in that directory
-			path += "/index.html";
-			file.open(path.c_str(), std::ios::in | std::ios::binary);
-			if (file.fail())
-			{
-				std::cerr << "errno : " << errno << std::endl;
-				std::cerr << "Failed to open index file in directory: " << path << std::endl;
-			}
-			else
-			{
-				std::cout << "Opened index file in directory: " << path << std::endl;
-			}
-		}
-		else
-		{
-			std::cerr << "errno : " << errno << std::endl;
-			std::cout << "Unknown error: " << path << std::endl;
-		}
-
-		std::string err_path = std::string(get_current_dir_name()) + "/pages/" + errorpage;
-		// Try to open the error page
-		std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
-		if(file_err.is_open())
-		{
-			std::string body = std::string((std::istreambuf_iterator<char>(file_err)), std::istreambuf_iterator<char>());
-			std::string date = response_object->get_http_date();
-			std::stringstream response;
-			response << "HTTP/1.1 " << status_line << "\r\n";
-			response << "Date: " << date << "\r\n";
-			response << "Content-Type: text/html\r\n";
-			response << "Content-Length: " << body.length() << "\r\n";
-			response << "Connection: keep-alive\r\n";// vs close
-			response << "Cache-Control: no-store\r\n";
-			response << "\r\n";
-			response << body;
-			response_object->set_response(response.str());
-			file_err.close();
-			response.str("");
-			response.clear();
-			//uri.clear();
-			body.clear();
-			path.clear();
-			return ;
-		}
-	}
-	if(file.is_open())
-	{
-		std::string body = std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-		std::string date = response_object->get_http_date();
+		std::string body = std::string((std::istreambuf_iterator<char>(path)), std::istreambuf_iterator<char>());
 		std::stringstream response;
-		response << "HTTP/1.1 200 OK\r\n";
-		response << "Date: " << date << "\r\n";
-		response << "Content-Type: " << req.get_resource_info().find("mime-type")->second << "\r\n";
-		response << "Content-Length: " << body.length() << "\r\n";
-		response << "Connection: keep-alive\r\n";// vs close
-		response << "Cache-Control: no-store\r\n";
-		response << "\r\n";
-		response << body;
-		response_object->set_response(response.str());
-		file.close();
-		response.str("");
-		response.clear();
-		//uri.clear();
-		body.clear();
-		//dir_path.clear();
-		return ;
-	}
-	std::string err_path = std::string(get_current_dir_name()) + "/pages/error_404.html";
-	std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
-	if(file_err.is_open())
-	{
-		std::string body = std::string((std::istreambuf_iterator<char>(file_err)), std::istreambuf_iterator<char>());
-		std::string date = response_object->get_http_date();
-		std::stringstream response;
-		response << "HTTP/1.1 404 Not Found\r\n";
-		response << "Date: " << date << "\r\n";
-		response << "Content-Type: text/html\r\n";
+
+		response << "HTTP/1.1 " << status_line << "\r\n";
+		response << "Date: " << response_object->get_http_date() << "\r\n";
+		response << "Content-Type:" << response_object->get_req().get_resource_info().find("mime_type")->second << "\r\n";
 		response << "Content-Length: " << body.length() << "\r\n";
 		response << "Connection: keep-alive\r\n";
 		response << "Cache-Control: no-store\r\n";
 		response << "\r\n";
 		response << body;
 		response_object->set_response(response.str());
-		file_err.close();
-		response.str("");
-		response.clear();
-		//uri.clear();
-		body.clear();
-		//dir_path.clear();
-		return ;
 	}
-	std::cout << "Failed path : " << path << std::endl;
-	std::cout << "File Not Found" << std::endl;
-
-	response_object->set_response("...");;
+	else
+	{
+		std::cerr << "Failed to open file for reading." << std::endl;
+		response_object->set_response("HTTP/1.1 500 Internal Server Error\r\n\r\n");
+	}
+	path.close();
 }
 
 
-void process_post_request(Response *response_object, Request &req)
+static void process_get_request(Response *response_object, Request &req)
+{
+	std::string path, status_line, error_msg, error_page;
+	
+	path = std::string(get_current_dir_name()) + "/" + req.get_uri();
+	std::fstream file(path.c_str(), std::ios::in | std::ios::binary);
+
+	if (file.fail())
+	{
+		if (errno == 2) // No such file or directory (404)
+		{
+			error_msg = "File Not Found: " + path + "\n";
+			error_page = "error_404.html";
+			status_line = "404 Not Found";
+		}
+		else if (errno == 13) // Permission denied (403)
+		{
+			error_msg = "Permission Denied: " + path + "\n";
+			error_page = "error_403.html";
+			status_line = "403 Forbidden";
+		}
+		else if (errno == 21) // Is a directory (ou tenter 20, si c'est pas 21)
+		{
+			// Handle directory access / listing
+		}
+		else
+		{
+			error_msg = "Unknown error: " + path + "\n";
+		}
+		
+		std::cerr << "errno : " << errno << std::endl;
+		std::cerr << error_msg;
+		response_object->set_status_line(status_line);
+		
+		std::string err_path = std::string(get_current_dir_name()) + "/pages/" + error_page;
+		std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
+		build_response(response_object, file_err, status_line);
+	}
+
+	build_response(response_object, file, "HTTP/1.1 200 OK\r\n");
+}
+
+
+static void process_post_request(Response *response_object, Request &req)
 {
 	std::string response, status_line, boundary;
 	
@@ -206,7 +151,7 @@ void process_post_request(Response *response_object, Request &req)
 }
 
 
-void process_delete_request(Response *response_object, Request &req)
+static void process_delete_request(Response *response_object, Request &req)
 {
 	// Basic implementation for now
     int status = remove(req.get_uri().c_str());

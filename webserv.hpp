@@ -17,6 +17,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <string.h>
+#include <dirent.h>
 
 // C++ Standard Library
 #include <iostream>
@@ -24,6 +25,7 @@
 #include <sstream>
 #include <exception>
 #include <ctime>
+#include <cstdio>
 
 // Network
 #include <sys/socket.h>

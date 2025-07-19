@@ -38,6 +38,7 @@ public:
 	const std::string& get_status_line() const { return _status_line; }
 	const std::map<std::string, std::string>& get_headers() const { return _headers; }
 	const std::string& get_body() const { return _body; }
+	const Request& get_req() const { return _req; }
 
 	// Setters
 	void set_response(const std::string& response) { _response = response; }

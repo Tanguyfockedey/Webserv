@@ -30,12 +30,6 @@ static void parse_uri(Request *req)
 			req->set_error_code(414);
 			throw std::runtime_error("414 URI Too Long");
 		}
-		else if (uri.find(" ") != std::string::npos && uri.find("HTTP/") == std::string::npos)
-		{
-			std::cerr << "The requested URL is too long: " << uri << std::endl;
-			req->set_error_code(414);
-			throw std::runtime_error("414 URI Too Long");
-		}
 		else if (uri.find(" ") != std::string::npos)
 		{
 			std::cerr << "The requested URL contains spaces: " << uri << std::endl;
@@ -53,22 +47,33 @@ static void parse_uri(Request *req)
 
 static void normalize_uri(Request *req)
 {
-	std::string uri = req->get_uri();
-	std::string root = req->get_config().get_root();
+	std::string root, uri, normalized_uri;
+	char root_last, uri_first;
 
+	root = req->get_config().get_root();
 	if (root.empty())
 	{
-		root = "";
+		root = "/";
 	}
+
+	uri = req->get_uri();
 	if (uri == "/" || uri.empty())
 	{
 		if (req->get_config().get_index().empty())
-			req->set_uri(root + "/index.html");
+			uri = "/index.html";
 		else
-			req->set_uri(root + req->get_config().get_index());
+			uri = req->get_config().get_index();
 	}
-	else
-		uri = root + uri;
+
+	root_last = root[root.length() - 1];
+	uri_first = uri[0];
+	if (root_last == '/' && uri_first == '/')
+		uri = uri.substr(1);
+	else if (root_last != '/' && uri_first != '/')
+		uri = "/" + uri;
+	
+	normalized_uri = root + uri;
+	req->set_uri(normalized_uri);
 }
 
 
@@ -139,6 +144,8 @@ static void extract_resource_info(Request *req)
 		mime_type = "text/css";
 	else if (extension == "js")
 		mime_type = "application/javascript";
+	else if (extension == "php")
+		mime_type = "application/x-httpd-php";
 	else if (extension == "json")
 		mime_type = "application/json";
 	else if (extension == "xml")
@@ -288,13 +295,11 @@ static void parse_body(Request *req)
 	{
 		std::cerr << "Empty body in request." << std::endl;
 		req->set_error_code(400);
-		return ;
 	}
-	if (body.length() > MAX_BODY_LENGTH)
+	else if (body.length() > MAX_BODY_LENGTH)
 	{
 		std::cerr << "Body too long: " << body.length() << " bytes" << std::endl;
 		req->set_error_code(413);
-		return ;
 	}
 	req->set_body(body);
 }
@@ -303,6 +308,10 @@ Request::Request(const int fd, const std::string raw_request, Config &server_con
 	: _fd(fd), _error_code(0), _timestamp(time(NULL)), _raw_request(raw_request), _config(server_config)
 {
 	parse_request_line();
+
+	// DEBUG
+	std::cout << "REQUEST LINE : " << _request_line << std::endl;
+
 	parse_uri(this);
 	normalize_uri(this);
 	extract_resource_info(this);
@@ -357,8 +366,8 @@ void Request::parse_request_line()
 	if (method != "GET" && method != "POST" && method != "DELETE")
 	{
 		std::cerr << "Unsupported HTTP method: " << method << std::endl;
-		throw std::runtime_error("501 Not Implemented");
 		_error_code = 501;
+		throw std::runtime_error("501 Not Implemented");
 		return ;
 	}
 	else if (!is_allowed_method())

@@ -29,6 +29,8 @@ std::vector<Config> Config::parse_file(std::string file)
 		config.extract_address(tmp);
 		config.extract_client_body_size(tmp);
 		config.extract_location(tmp);
+		config.extract_index(tmp);
+		config.extract_root(tmp);
 
 		cluster.push_back(config);
 	}
