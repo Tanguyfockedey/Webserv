@@ -105,69 +105,41 @@ static void process_get_request(Response *response_object, Request &req)
 
 void Response::handle_multipart_post(std::string &boundary)
 {
-		//DEBUG print
-		std::cout << "Multipart POST request handled." << std::endl;//DEBUG
-		(void)boundary;//DEBUG
+	//DEBUG print
+	std::cout << "Multipart POST request handled." << std::endl;//DEBUG
+	size_t actual_body_length = this->get_req().get_actual_body_length();
+
+
+	//DEBUG
+	std::cout << "Actual body length: " << actual_body_length << std::endl;//DEBUG
+	(void)boundary;//DEBUG
 }
 
 void Response::handle_single_part_post()
 {
-		//DEBUG print
-		std::cout << "Single part POST request handled." << std::endl;//DEBUG
-		std::string body = _req.get_body();
-		if (body.empty())
-			return ;
-		else
-			for (size_t i = 0; i < body.length(); ++i)
-				std::cout << body[i];
+	//DEBUG print
+	std::cout << "Single part POST request handled." << std::endl;//DEBUG
+	std::string body = _req.get_body();
+	if (body.empty())
+		return ;
+	else
+		for (size_t i = 0; i < body.length(); ++i)
+			std::cout << body[i];
 }
 
 // zero size
 // single part vs multipart
 static void process_post_request(Response *response_object, Request &req)
 {
-	if (req.get_headers_string().empty())
+	if (req.get_boundary().empty())
 	{
 		response_object->handle_single_part_post();
 		return ;
 	}
-	
-	//DEBUG
-	std::cout << "DEBUG Checkpoint 1" << std::endl;//DEBUG
-	
-	std::string response, status_line, boundary;
-
-	if (req.get_headers_string().find("boundary=") == std::string::npos)
-	{
-		response_object->handle_single_part_post();
-		return ;
-	}
-	
-	std::cout << "DEBUG Checkpoint 1.1" << std::endl;//DEBUG
-	
-	boundary = req.get_headers_string().substr(req.get_headers_string().find("boundary="));
-
-	//DEBUG
-	std::cout << "DEBUG Checkpoint 2" << std::endl;//DEBUG
-
-	if (boundary.empty())
-	{
-		response_object->handle_single_part_post();
-		return ;
-	}
-
-	//DEBUG
-	std::cout << "DEBUG Checkpoint 3" << std::endl;//DEBUG
-
-	boundary = boundary.substr(boundary.find("boundary=") + 9);
-	boundary = boundary.substr(0, boundary.find_first_of('\r'));
-
-	//DEBUG
-	std::cout << "DEBUG Checkpoint 4" << std::endl;//DEBUG
+	std::string boundary, status_line, response;
 
 	//DEBUG
 	std::cout << "Boundary: " << std::endl << boundary << std::endl;//DEBUG
-
 
 	if (boundary.length() > 70)
 	{

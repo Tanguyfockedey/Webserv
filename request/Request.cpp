@@ -30,6 +30,49 @@ static std::string join_paths(const std::string &path_left, const std::string &p
 		return path_left + path_right;
 }
 
+void Request::set_boundary()
+{
+	std::string boundary;
+	
+	if (this->get_raw_request().find("boundary=") == std::string::npos)
+		_boundary = "";
+	else
+	{
+		boundary = this->get_raw_request().substr(this->get_raw_request().find("boundary="));
+		boundary = boundary.substr(boundary.find("boundary=") + 9);
+		boundary = boundary.substr(0, boundary.find_first_of('\r'));
+		_boundary = boundary;
+	}
+}
+
+void Request::set_actual_body_length(void)
+{
+	int content_length;
+
+	if (this->get_headers().find("Content-Length") != this->get_headers().end())
+	{
+		std::istringstream iss(this->get_headers().find("Content-Length")->second);
+		iss >> content_length;
+	}
+	else
+	{
+		std::cerr << "Content-Length header not found." << std::endl;
+		_actual_body_length = 0;
+	}
+	std::string begin_boundary, end_boundary;
+	begin_boundary = "--" + _boundary + "\r\n";
+	end_boundary = "--" + _boundary + "--\r\n";
+	_actual_body_length = content_length - (begin_boundary.length() + end_boundary.length());
+	//_actual_body_length -= get_request_line().length();
+	//_actual_body_length -= get_headers_string().length();
+	_actual_body_length -= 4; // for the \r\n\r\n after the headers
+	_actual_body_length -= 2; // for the \r\n before the closing boundary
+
+	//DEBUG print
+	std::cout << "Actual body length: " << _actual_body_length << std::endl; //DEBUG
+	// DEBUG
+}
+
 static void parse_uri(Request *req)
 {
 	std::string uri = req->get_uri();
@@ -221,7 +264,7 @@ static void extract_resource_info(Request *req)
 		mime_type = "application/x-bzip2";
 	else if (extension == "7z")
 		mime_type = "application/x-7z-compressed";
-	else if (extension == "rar")
+	else if (extension == "ra	void set_actual_body_length(void);r")
 		mime_type = "application/vnd.rar";
 	else if (extension == "exe")
 		mime_type = "application/x-msdownload";
@@ -320,6 +363,7 @@ Request::Request(const int fd, const std::string raw_request, Config &server_con
 	parse_uri(this);
 	normalize_uri(this);
 	extract_resource_info(this);
+	set_boundary();
 	parse_headers(this);
 	parse_body(this);
 }
