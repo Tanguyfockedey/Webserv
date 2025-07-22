@@ -103,12 +103,90 @@ static void process_get_request(Response *response_object, Request &req)
 }
 
 
+void Response::handle_multipart_post(std::string &boundary)
+{
+		//DEBUG print
+		std::cout << "Multipart POST request handled." << std::endl;//DEBUG
+		(void)boundary;//DEBUG
+}
+
+void Response::handle_single_part_post()
+{
+		//DEBUG print
+		std::cout << "Single part POST request handled." << std::endl;//DEBUG
+		std::string body = _req.get_body();
+		if (body.empty())
+			return ;
+		else
+			for (size_t i = 0; i < body.length(); ++i)
+				std::cout << body[i];
+}
+
+// zero size
+// single part vs multipart
 static void process_post_request(Response *response_object, Request &req)
 {
-	std::string response, status_line, boundary;
+	if (req.get_headers_string().empty())
+	{
+		response_object->handle_single_part_post();
+		return ;
+	}
 	
-	boundary = req.get_headers_string().substr(req.get_headers_string().find("boundary=") + 9);
+	//DEBUG
+	std::cout << "DEBUG Checkpoint 1" << std::endl;//DEBUG
+	
+	std::string response, status_line, boundary;
+
+	if (req.get_headers_string().find("boundary=") == std::string::npos)
+	{
+		response_object->handle_single_part_post();
+		return ;
+	}
+	
+	std::cout << "DEBUG Checkpoint 1.1" << std::endl;//DEBUG
+	
+	boundary = req.get_headers_string().substr(req.get_headers_string().find("boundary="));
+
+	//DEBUG
+	std::cout << "DEBUG Checkpoint 2" << std::endl;//DEBUG
+
+	if (boundary.empty())
+	{
+		response_object->handle_single_part_post();
+		return ;
+	}
+
+	//DEBUG
+	std::cout << "DEBUG Checkpoint 3" << std::endl;//DEBUG
+
+	boundary = boundary.substr(boundary.find("boundary=") + 9);
 	boundary = boundary.substr(0, boundary.find_first_of('\r'));
+
+	//DEBUG
+	std::cout << "DEBUG Checkpoint 4" << std::endl;//DEBUG
+
+	//DEBUG
+	std::cout << "Boundary: " << std::endl << boundary << std::endl;//DEBUG
+
+
+	if (boundary.length() > 70)
+	{
+		std::cerr << "Boundary too long: " << boundary.length() << " characters" << std::endl;
+		status_line = "400 Bad Request";
+		response = "HTTP/1.1 " + status_line + "\r\n\r\n";
+		response_object->set_response(response);
+		return ;
+	}
+	else if (boundary.length() > 0)
+	{
+		//DEBUG
+		std::cout << "Boundary found: " << boundary << std::endl;//DEBUG
+		
+		response_object->handle_multipart_post(boundary);
+	}
+
+	//DEBUG
+	return ;//DEBUG
 
 
 	int req_headers_length = req.get_headers_string().length();
