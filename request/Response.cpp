@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/21 15:29:49 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/22 15:48:31 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,7 +60,7 @@ static void process_get_request(Response *response_object, Request &req)
 {
 	std::string path, status_line, error_msg, error_page;
 	
-	path = std::string(get_current_dir_name()) + "/" + req.get_uri();
+	path = join_paths(get_current_dir_name(), req.get_uri());
 	std::fstream file(path.c_str(), std::ios::in | std::ios::binary);
 
 	if (file.fail())
@@ -79,7 +79,7 @@ static void process_get_request(Response *response_object, Request &req)
 		}
 		else if (errno == 21) // Is a directory (ou tenter 20, si c'est pas 21)
 		{
-			// Handle directory access / listing
+			// Handle directory access / listing (peut-etre pas ici, ici on est dans le cas FAIL)
 		}
 		else
 		{
