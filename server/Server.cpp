@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:00:55 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/19 16:15:38 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/07/22 17:16:30 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -162,7 +162,16 @@ void Server::read_request(pollfd &poll)
 	update_client_timeout(poll.fd);
 	std::string str = buffer;
 	_requests.push_back(Request(poll.fd, str, _config));
-	process_request(poll);
+	if (_requests.back().is_complete()) //verifier body size pour savoir si la requete est complete 
+	{
+		std::cout << GREEN << "Complete request received from client [" << poll.fd << "]" << RESET << std::endl;
+		process_request(poll);
+	}
+	else
+	{
+		std::cout << BLUE << "Partial request received from client [" << poll.fd << "]" << RESET << std::endl;
+		// _requests.back().set_timestamp(time(NULL));
+	}
 }
 
 void Server::process_request(pollfd &poll)
