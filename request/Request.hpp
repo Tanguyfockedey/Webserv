@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:47:50 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/22 16:49:16 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/07/22 17:29:55 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,9 +41,9 @@ public:
 	~Request();
 
 	// Getters
-	const bool is_complete() const { return _is_complete; }
-	const int get_fd() const { return _fd; }
-	const int get_error_code() const { return _error_code; }
+	const bool& is_complete() const { return _is_complete; }
+	const int& get_fd() const { return _fd; }
+	const int& get_error_code() const { return _error_code; }
 	const std::string& get_raw_request() const { return _raw_request; }
 	const std::string& get_request_line() const { return _request_line; }
 	const std::string& get_method() const { return _method; }

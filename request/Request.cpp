@@ -6,11 +6,29 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:48:10 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/22 16:56:53 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/07/22 17:42:06 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Request.hpp"
+
+static std::string join_paths(const std::string &path_left, const std::string &path_right)
+{
+	if (path_left.empty())
+		return path_right;
+	if (path_right.empty())
+		return path_left;
+
+	char left_last = path_left[path_left.length() - 1];
+	char right_first = path_right[0];
+
+	if (left_last == '/' && right_first == '/')
+		return path_left + path_right.substr(1);
+	else if (left_last != '/' && right_first != '/')
+		return path_left + "/" + path_right;
+	else
+		return path_left + path_right;
+}
 
 static void parse_uri(Request *req)
 {
@@ -48,7 +66,6 @@ static void parse_uri(Request *req)
 static void normalize_uri(Request *req)
 {
 	std::string root, uri, normalized_uri;
-	char root_last, uri_first;
 
 	root = req->get_config().get_root();
 	if (root.empty())
@@ -65,15 +82,7 @@ static void normalize_uri(Request *req)
 			uri = req->get_config().get_index();
 	}
 
-	root_last = root[root.length() - 1];
-	uri_first = uri[0];
-	if (root_last == '/' && uri_first == '/')
-		uri = uri.substr(1);
-	else if (root_last != '/' && uri_first != '/')
-		uri = "/" + uri;
-	
-	normalized_uri = root + uri;
-	req->set_uri(normalized_uri);
+	req->set_uri(join_paths(root, uri));
 }
 
 
@@ -84,7 +93,7 @@ static void parse_headers(Request *req)
 	std::string raw_request = req->get_raw_request();
 	size_t pos = raw_request.find("\r\n");
 	size_t end_pos = raw_request.find("\r\n\r\n");
-	if (pos == std::string::npos || end_pos == std::string::npos || end_pos <= pos)
+	if (req->get_method() == "POST" && REQUIRE_HEADERS && (std::string::npos || end_pos == std::string::npos || end_pos <= pos))
 	{
 		std::cerr << "Malformed request: missing headers" << std::endl;
 		req->set_error_code(400);
@@ -97,7 +106,7 @@ static void parse_headers(Request *req)
 		req->set_error_code(431);
 		return ;
 	}
-	if (headers_string.empty())
+	if (headers_string.empty() && req->get_method() == "POST" && REQUIRE_HEADERS)
 	{
 		std::cerr << "Malformed request: empty headers" << std::endl;
 		req->set_error_code(400);
@@ -307,6 +316,7 @@ static void parse_body(Request *req)
 Request::Request(const int fd, const std::string raw_request, const Config &server_config)
 	: _fd(fd), _error_code(0), _timestamp(time(NULL)), _raw_request(raw_request), _config(server_config)
 {
+	_is_complete = true; //a editer =>probablement true si pas de bodysize ou bodysize atteint, sinon false
 	parse_request_line();
 	parse_uri(this);
 	normalize_uri(this);

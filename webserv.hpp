@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/05 19:39:13 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/22 17:17:18 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/07/22 17:22:11 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,6 +47,7 @@
 #define MAX_HEADER_LENGTH 8192 // 8 KB
 #define MAX_BODY_LENGTH 10485760 // 10 MB
 #define UPLOAD_PATH "/uploads/"
+#define REQUIRE_HEADERS 0
 
 // Colors
 #define RED "\033[31m"

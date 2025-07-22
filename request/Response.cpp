@@ -6,12 +6,29 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/18 22:28:36 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/22 15:48:31 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Response.hpp"
 
+static std::string join_paths(const std::string &path_left, const std::string &path_right)
+{
+	if (path_left.empty())
+		return path_right;
+	if (path_right.empty())
+		return path_left;
+
+	char left_last = path_left[path_left.length() - 1];
+	char right_first = path_right[0];
+
+	if (left_last == '/' && right_first == '/')
+		return path_left + path_right.substr(1);
+	else if (left_last != '/' && right_first != '/')
+		return path_left + "/" + path_right;
+	else
+		return path_left + path_right;
+}
 
 static void build_response(Response *response_object, std::fstream &path, const std::string &status_line)
 {
@@ -43,7 +60,7 @@ static void process_get_request(Response *response_object, Request &req)
 {
 	std::string path, status_line, error_msg, error_page;
 	
-	path = std::string(get_current_dir_name()) + "/" + req.get_uri();
+	path = join_paths(get_current_dir_name(), req.get_uri());
 	std::fstream file(path.c_str(), std::ios::in | std::ios::binary);
 
 	if (file.fail())
@@ -62,7 +79,7 @@ static void process_get_request(Response *response_object, Request &req)
 		}
 		else if (errno == 21) // Is a directory (ou tenter 20, si c'est pas 21)
 		{
-			// Handle directory access / listing
+			// Handle directory access / listing (peut-etre pas ici, ici on est dans le cas FAIL)
 		}
 		else
 		{
@@ -73,7 +90,9 @@ static void process_get_request(Response *response_object, Request &req)
 		std::cerr << error_msg;
 		response_object->set_status_line(status_line);
 		
-		std::string err_path = std::string(get_current_dir_name()) + "/pages/" + error_page;
+		std::string err_path;
+		err_path = join_paths(get_current_dir_name(), "/pages/");
+		err_path = join_paths(err_path, error_page);
 		std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
 		build_response(response_object, file_err, status_line);
 	}
@@ -132,13 +151,18 @@ static void process_post_request(Response *response_object, Request &req)
 	limit = limit - req_headers_length - (int)body_part_headers.length() - (((int)start_boundary.length() * 2) + 2) - 2;
 	
 	std::string actual_body = req.get_body().substr(req.get_body().find("\r\n\r\n") + 4);
-	std::string path = std::string(get_current_dir_name()) + UPLOAD_PATH + filename;
+	std::string path;
+	path = join_paths(get_current_dir_name(), req.get_config().get_root());
+	path = join_paths(path, UPLOAD_PATH);
+	path = join_paths(path, filename);
 	std::fstream file(path.c_str(), std::ios::out | std::ios::binary);
 	if (file.is_open())
 	{
 		for (int i = 0; i < limit; ++i)
 		{
 			file << actual_body[i];
+			if (i == actual_body_length - 1)
+				break;
 		}
 		file.close();
 		status_line = "201 Created";
