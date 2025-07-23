@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/23 20:22:53 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/23 21:26:03 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 
 void Response::build_response(std::fstream &path)
 {
-	if(path.is_open())
+	if (path.is_open())
 	{
 		std::string body, status_line;
 		
@@ -92,20 +92,9 @@ void Response::process_get_request()
 
 void Response::handle_multipart_post()
 {
-	//DEBUG print
-	std::cout << "Debug checkpoint 1" << std::endl;//DEBUG
-
-	std::string post_data, new_file_data, filename, path;
+	std::string post_data, filename, path;
 
 	post_data = _req.get_multipart_data();
-
-	for (size_t i = 0; i < _req.get_actual_body_length(); ++i)
-	{
-		new_file_data[i] = post_data[i];
-	}
-
-	//DEBUG print
-	std::cout << "Debug checkpoint 2" << std::endl;//DEBUG
 
 	filename = _req.get_raw_request().substr(_req.get_raw_request().find("filename=\"") + 10);
 	filename = filename.substr(0, filename.find_first_of('"'));
@@ -117,17 +106,20 @@ void Response::handle_multipart_post()
 		return ;
 	}
 
-	//DEBUG print
-	std::cout << "Debug checkpoint 3" << std::endl;//DEBUG
-
 	path = join_paths(get_current_dir_name(), _req.get_config().get_root());
 	path = join_paths(path, UPLOAD_PATH);
+
+	mkdir(path.c_str(), 0755);
+
 	path = join_paths(path, filename);
 
 	std::fstream file(path.c_str(), std::ios::out | std::ios::binary);
 	if (file.is_open())
 	{
-		file << new_file_data;
+		for (size_t i = 0; i < _req.get_actual_body_length(); ++i)
+		{
+			file << post_data[i];
+		}
 		file.close();
 		_status_line = "201 Created";
 	}
@@ -136,19 +128,12 @@ void Response::handle_multipart_post()
 		std::cerr << "Failed to open file for writing: " << path << std::endl;
 		_status_line = "500 Internal Server Error";
 	}
-	
-	//DEBUG print
-	std::cout << "Debug checkpoint 4" << std::endl;//DEBUG
-	
 	set_response("HTTP/1.1 " + _status_line + "\r\n\r\n");
 }
 
 
 void Response::handle_single_part_post()
 {
-	//DEBUG print
-	//std::cout << "Single part POST request handled." << std::endl;//DEBUG
-	
 	std::string body = _req.get_body();
 	if (body.empty())
 		return ;
@@ -170,9 +155,6 @@ void Response::process_post_request()
 	
 	boundary = _req.get_boundary();
 
-	//DEBUG
-	std::cout << "Boundary: " << std::endl << boundary << std::endl;//DEBUG
-
 	if (boundary.length() > 70)
 	{
 		std::cerr << "Boundary too long: " << boundary.length() << " characters" << std::endl;
@@ -183,15 +165,11 @@ void Response::process_post_request()
 	}
 	else if (boundary.length() > 0)
 	{
-		//DEBUG
-		std::cout << "Boundary found: " << boundary << std::endl;//DEBUG
-		
 		handle_multipart_post();
 	}
 
 	//DEBUG
 	return ;//DEBUG
-
 
 	int req_headers_length = _req.get_headers_string().length();
 
