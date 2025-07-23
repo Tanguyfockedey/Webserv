@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/05 19:39:13 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/21 16:25:34 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/23 16:37:49 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,6 +38,9 @@
 #include <vector>
 #include <map>
 #include <utility>
+
+// Project helper functions
+#include "utils.hpp"
 
 // Constants
 #define CONNECTION_TIMEOUT 30

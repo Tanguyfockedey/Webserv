@@ -6,61 +6,47 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/22 15:48:31 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/23 17:20:26 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Response.hpp"
 
-static std::string join_paths(const std::string &path_left, const std::string &path_right)
-{
-	if (path_left.empty())
-		return path_right;
-	if (path_right.empty())
-		return path_left;
 
-	char left_last = path_left[path_left.length() - 1];
-	char right_first = path_right[0];
-
-	if (left_last == '/' && right_first == '/')
-		return path_left + path_right.substr(1);
-	else if (left_last != '/' && right_first != '/')
-		return path_left + "/" + path_right;
-	else
-		return path_left + path_right;
-}
-
-static void build_response(Response *response_object, std::fstream &path, const std::string &status_line)
+void Response::build_response(std::fstream &path)
 {
 	if(path.is_open())
 	{
-		std::string body = std::string((std::istreambuf_iterator<char>(path)), std::istreambuf_iterator<char>());
+		std::string body, status_line;
+		
+		status_line = 
+		body = std::string((std::istreambuf_iterator<char>(path)), std::istreambuf_iterator<char>());
 		std::stringstream response;
 
-		response << "HTTP/1.1 " << status_line << "\r\n";
-		response << "Date: " << response_object->get_http_date() << "\r\n";
-		response << "Content-Type:" << response_object->get_req().get_resource_info().find("mime_type")->second << "\r\n";
+		response << "HTTP/1.1 " << get_status_line() << "\r\n";
+		response << "Date: " << get_http_date() << "\r\n";
+		response << "Content-Type:" << get_req().get_resource_info().find("mime_type")->second << "\r\n";
 		response << "Content-Length: " << body.length() << "\r\n";
 		response << "Connection: keep-alive\r\n";
 		response << "Cache-Control: no-store\r\n";
 		response << "\r\n";
 		response << body;
-		response_object->set_response(response.str());
+		set_response(response.str());
 	}
 	else
 	{
 		std::cerr << "Failed to open file for reading." << std::endl;
-		response_object->set_response("HTTP/1.1 500 Internal Server Error\r\n\r\n");
+		set_response("HTTP/1.1 500 Internal Server Error\r\n\r\n");
 	}
 	path.close();
 }
 
 
-static void process_get_request(Response *response_object, Request &req)
+void Response::process_get_request()
 {
 	std::string path, status_line, error_msg, error_page;
 	
-	path = join_paths(get_current_dir_name(), req.get_uri());
+	path = join_paths(get_current_dir_name(), _req.get_uri());
 	std::fstream file(path.c_str(), std::ios::in | std::ios::binary);
 
 	if (file.fail())
@@ -88,23 +74,26 @@ static void process_get_request(Response *response_object, Request &req)
 		
 		std::cerr << "errno : " << errno << std::endl;
 		std::cerr << error_msg;
-		response_object->set_status_line(status_line);
+		set_status_line(status_line);
 		
 		std::string err_path;
 		err_path = join_paths(get_current_dir_name(), "/pages/");
 		err_path = join_paths(err_path, error_page);
 		std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
-		build_response(response_object, file_err, status_line);
+		build_response(file_err);
 	}
 	else
 	{
-		build_response(response_object, file, "200 OK");
+		set_status_line("200 OK");
+		build_response(file);
 	}
 }
 
 
-void Response::handle_multipart_post(std::string &boundary)
+void Response::handle_multipart_post()
 {
+	std::string boundary = _req.get_boundary();
+	
 	//DEBUG print
 	std::cout << "Multipart POST request handled." << std::endl;//DEBUG
 	size_t actual_body_length = this->get_req().get_actual_body_length();
@@ -114,6 +103,7 @@ void Response::handle_multipart_post(std::string &boundary)
 	std::cout << "Actual body length: " << actual_body_length << std::endl;//DEBUG
 	(void)boundary;//DEBUG
 }
+
 
 void Response::handle_single_part_post()
 {
@@ -129,14 +119,16 @@ void Response::handle_single_part_post()
 
 // zero size
 // single part vs multipart
-static void process_post_request(Response *response_object, Request &req)
+void Response::process_post_request()
 {
-	if (req.get_boundary().empty())
+	if (_req.get_boundary().empty())
 	{
-		response_object->handle_single_part_post();
+		handle_single_part_post();
 		return ;
 	}
 	std::string boundary, status_line, response;
+	
+	boundary = _req.get_boundary();
 
 	//DEBUG
 	std::cout << "Boundary: " << std::endl << boundary << std::endl;//DEBUG
@@ -146,7 +138,7 @@ static void process_post_request(Response *response_object, Request &req)
 		std::cerr << "Boundary too long: " << boundary.length() << " characters" << std::endl;
 		status_line = "400 Bad Request";
 		response = "HTTP/1.1 " + status_line + "\r\n\r\n";
-		response_object->set_response(response);
+		set_response(response);
 		return ;
 	}
 	else if (boundary.length() > 0)
@@ -154,16 +146,16 @@ static void process_post_request(Response *response_object, Request &req)
 		//DEBUG
 		std::cout << "Boundary found: " << boundary << std::endl;//DEBUG
 		
-		response_object->handle_multipart_post(boundary);
+		handle_multipart_post();
 	}
 
 	//DEBUG
 	return ;//DEBUG
 
 
-	int req_headers_length = req.get_headers_string().length();
+	int req_headers_length = _req.get_headers_string().length();
 
-	std::string response_body = req.get_raw_request().substr(req.get_raw_request().find("\r\n\r\n") + 4);
+	std::string response_body = _req.get_raw_request().substr(_req.get_raw_request().find("\r\n\r\n") + 4);
 
 	std::string start_boundary = response_body.substr(0, response_body.find("--" + boundary) + boundary.length() + 4); // +4 for the "--" before, and the "\r\n" after
 	std::string body_part_headers = response_body.substr(response_body.find("Content"));
@@ -176,7 +168,7 @@ static void process_post_request(Response *response_object, Request &req)
 		response = "HTTP/1.1 " + status_line + "\r\n\r\n";
 		return ;
 	}
-	std::string filename = req.get_raw_request().substr(req.get_raw_request().find("filename=\"") + 10);
+	std::string filename = _req.get_raw_request().substr(_req.get_raw_request().find("filename=\"") + 10);
 	filename = filename.substr(0, filename.find_first_of('"'));
 	if (filename.empty())
 	{
@@ -188,7 +180,7 @@ static void process_post_request(Response *response_object, Request &req)
 
 	size_t total_content_length;
 
-	std::istringstream iss(req.get_headers().find("Content-Length")->second);
+	std::istringstream iss(_req.get_headers().find("Content-Length")->second);
 	iss >> total_content_length;
 	
 	int actual_body_length = total_content_length - ((start_boundary.length() * 2) + 2) - body_part_headers.length() - 2; // last 2 is the \r\n before the closing boundary
@@ -200,9 +192,9 @@ static void process_post_request(Response *response_object, Request &req)
 		limit = BUFFER_SIZE;
 	limit = limit - req_headers_length - (int)body_part_headers.length() - (((int)start_boundary.length() * 2) + 2) - 2;
 	
-	std::string actual_body = req.get_body().substr(req.get_body().find("\r\n\r\n") + 4);
+	std::string actual_body = _req.get_body().substr(_req.get_body().find("\r\n\r\n") + 4);
 	std::string path;
-	path = join_paths(get_current_dir_name(), req.get_config().get_root());
+	path = join_paths(get_current_dir_name(), _req.get_config().get_root());
 	path = join_paths(path, UPLOAD_PATH);
 	path = join_paths(path, filename);
 	std::fstream file(path.c_str(), std::ios::out | std::ios::binary);
@@ -222,24 +214,24 @@ static void process_post_request(Response *response_object, Request &req)
 		std::cerr << "Failed to open file for writing: " << path << std::endl;
 		status_line = "500 Internal Server Error";
 	}
-	response_object->set_response("HTTP/1.1 " + status_line + "\r\n\r\n");
+	set_response("HTTP/1.1 " + status_line + "\r\n\r\n");
 	return ;
 }
 
 
-static void process_delete_request(Response *response_object, Request &req)
+void Response::process_delete_request()
 {
 	// Basic implementation for now
-    int status = remove(req.get_uri().c_str());
+    int status = remove(_req.get_uri().c_str());
 
     if (status != 0) {
         perror("Error deleting file");
     }
     else {
-        std::cout << "File successfully deleted : " << req.get_uri() << std::endl;
+        std::cout << "File successfully deleted : " << _req.get_uri() << std::endl;
     }
 	
-	response_object->set_response("...");
+	set_response("...");
 }
 
 
@@ -267,12 +259,13 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 	// HERE : process redirection to CGI if needed (based on requested resource extension ?)
 
 	if (_req.get_method() == "GET")
-		process_get_request(this, _req);
+		process_get_request();
 	else if (_req.get_method() == "POST")
-		process_post_request(this, _req);
+		process_post_request();
 	else if (_req.get_method() == "DELETE")
-		process_delete_request(this, _req);
+		process_delete_request();
 }
+
 
 Response::~Response()
 {}

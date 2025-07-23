@@ -6,29 +6,11 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:48:10 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/21 16:52:46 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/23 17:13:11 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Request.hpp"
-
-static std::string join_paths(const std::string &path_left, const std::string &path_right)
-{
-	if (path_left.empty())
-		return path_right;
-	if (path_right.empty())
-		return path_left;
-
-	char left_last = path_left[path_left.length() - 1];
-	char right_first = path_right[0];
-
-	if (left_last == '/' && right_first == '/')
-		return path_left + path_right.substr(1);
-	else if (left_last != '/' && right_first != '/')
-		return path_left + "/" + path_right;
-	else
-		return path_left + path_right;
-}
 
 void Request::set_boundary()
 {
@@ -47,7 +29,7 @@ void Request::set_boundary()
 
 void Request::set_actual_body_length(void)
 {
-	int content_length;
+	int content_length = 0;
 
 	if (this->get_headers().find("Content-Length") != this->get_headers().end())
 	{
@@ -73,28 +55,28 @@ void Request::set_actual_body_length(void)
 	// DEBUG
 }
 
-static void parse_uri(Request *req)
+void Request::parse_uri()
 {
-	std::string uri = req->get_uri();
+	std::string uri = get_uri();
 
 	try 
 	{
 		if (uri.find("../") != std::string::npos || uri.find("..\\") != std::string::npos)
 		{
 			std::cerr << "The requested URL was rejected: " << uri << std::endl;
-			req->set_error_code(400);
+			set_error_code(400);
 			throw std::runtime_error("400 Bad Request");
 		}
 		else if (uri.length() > MAX_URI_LENGTH)
 		{
 			std::cerr << "The requested URL is too long: " << uri << std::endl;
-			req->set_error_code(414);
+			set_error_code(414);
 			throw std::runtime_error("414 URI Too Long");
 		}
 		else if (uri.find(" ") != std::string::npos)
 		{
 			std::cerr << "The requested URL contains spaces: " << uri << std::endl;
-			req->set_error_code(400);
+			set_error_code(400);
 			throw std::runtime_error("400 Bad Request");
 		}
 	}
@@ -106,56 +88,56 @@ static void parse_uri(Request *req)
 }
 
 
-static void normalize_uri(Request *req)
+void Request::normalize_uri()
 {
 	std::string root, uri, normalized_uri;
 
-	root = req->get_config().get_root();
+	root = get_config().get_root();
 	if (root.empty())
 	{
 		root = "/";
 	}
 
-	uri = req->get_uri();
+	uri = get_uri();
 	if (uri == "/" || uri.empty())
 	{
-		if (req->get_config().get_index().empty())
+		if (get_config().get_index().empty())
 			uri = "/index.html";
 		else
-			uri = req->get_config().get_index();
+			uri = get_config().get_index();
 	}
 
-	req->set_uri(join_paths(root, uri));
+	set_uri(join_paths(root, uri));
 }
 
 
-static void parse_headers(Request *req)
+void Request::parse_headers()
 {
 	std::map<std::string, std::string> headers_map;
 	
-	std::string raw_request = req->get_raw_request();
+	std::string raw_request = get_raw_request();
 	size_t pos = raw_request.find("\r\n");
 	size_t end_pos = raw_request.find("\r\n\r\n");
-	if (req->get_method() == "POST" && REQUIRE_HEADERS && (std::string::npos || end_pos == std::string::npos || end_pos <= pos))
+	if (get_method() == "POST" && REQUIRE_HEADERS && (std::string::npos || end_pos == std::string::npos || end_pos <= pos))
 	{
 		std::cerr << "Malformed request: missing headers" << std::endl;
-		req->set_error_code(400);
+		set_error_code(400);
 		return ;
 	}
 	std::string headers_string = raw_request.substr(raw_request.find("\r\n") + 2, raw_request.find("\r\n\r\n") + 4);
 	if (headers_string.length() > MAX_HEADER_LENGTH)
 	{
 		std::cerr << "Headers too long: " << headers_string.length() << " bytes" << std::endl;
-		req->set_error_code(431);
+		set_error_code(431);
 		return ;
 	}
-	if (headers_string.empty() && req->get_method() == "POST" && REQUIRE_HEADERS)
+	if (headers_string.empty() && get_method() == "POST" && REQUIRE_HEADERS)
 	{
 		std::cerr << "Malformed request: empty headers" << std::endl;
-		req->set_error_code(400);
+		set_error_code(400);
 		return ;
 	}
-	req->set_headers_string(headers_string);
+	set_headers_string(headers_string);
 	std::istringstream iss(headers_string);
 	std::string line;
 
@@ -172,13 +154,13 @@ static void parse_headers(Request *req)
 			headers_map.insert(std::make_pair(key, value));
 		}
 	}
-	req->set_headers(headers_map);
+	set_headers(headers_map);
 }
 
 
-static void extract_resource_info(Request *req)
+void Request::extract_resource_info()
 {
-	std::string uri = req->get_uri();
+	std::string uri = get_uri();
 	std::map<std::string, std::string> resource_info;
 
 	// Get extension
@@ -223,7 +205,7 @@ static void extract_resource_info(Request *req)
 	else if (extension == "ods")
 		mime_type = "application/vnd.oasis.opendocument.spreadsheet";
 	else if (extension == "jsonp")
-		mime_type = "application/javascript"; // JSONP is often served as JavaScript
+		mime_type = "application/javascript";
 	else if (extension == "jsonld")
 		mime_type = "application/ld+json";
 	else if (extension == "wasm")
@@ -306,21 +288,21 @@ static void extract_resource_info(Request *req)
 		mime_type = "image/jpeg";
 	else if (extension == "gif")
 		mime_type = "image/gif";
-	else if (extension == "webp") // WebP Image
+	else if (extension == "webp")
 		mime_type = "image/webp";
-	else if (extension == "bmp") // Bitmap Image
+	else if (extension == "bmp")
 		mime_type = "image/bmp";
-	else if (extension == "tiff" || extension == "tif") // TIFF Image
+	else if (extension == "tiff" || extension == "tif")
 		mime_type = "image/tiff";
-	else if (extension == "avif") // AV1 Image File Format
+	else if (extension == "avif")
 		mime_type = "image/avif";
-	else if (extension == "mpg" || extension == "mpeg") // MPEG Video
+	else if (extension == "mpg" || extension == "mpeg")
 		mime_type = "video/mpeg";
-	else if (extension == "avi") // AVI: Audio Video Interleave
+	else if (extension == "avi")
 		mime_type = "video/x-msvideo";
-	else if (extension == "mp4") // MPEG-4 Video
+	else if (extension == "mp4")
 		mime_type = "video/mp4";
-	else if (extension == "webm") // WebM Video
+	else if (extension == "webm")
 		mime_type = "video/webm";
 	else if (extension == "azw") // Amazon Kindle eBook format
 		mime_type = "application/vnd.amazon.ebook";
@@ -334,38 +316,38 @@ static void extract_resource_info(Request *req)
 
 	resource_info.insert(std::make_pair("extension", extension));
 	resource_info.insert(std::make_pair("mime_type", mime_type));
-	req->set_resource_info(resource_info);
+	set_resource_info(resource_info);
 }
 
 
-static void parse_body(Request *req)
+void Request::parse_body()
 {
 	std::string body;
 	
-	body = req->get_raw_request().substr(req->get_raw_request().find("\r\n\r\n") + 4);
-	if (body.empty() && req->get_method() == "POST")
+	body = get_raw_request().substr(get_raw_request().find("\r\n\r\n") + 4);
+	if (body.empty() && get_method() == "POST")
 	{
 		std::cerr << "Empty body in request." << std::endl;
-		req->set_error_code(400);
+		set_error_code(400);
 	}
 	else if (body.length() > MAX_BODY_LENGTH)
 	{
 		std::cerr << "Body too long: " << body.length() << " bytes" << std::endl;
-		req->set_error_code(413);
+		set_error_code(413);
 	}
-	req->set_body(body);
+	set_body(body);
 }
 
 Request::Request(const int fd, const std::string raw_request, Config &server_config)
 	: _fd(fd), _error_code(0), _timestamp(time(NULL)), _raw_request(raw_request), _config(server_config)
 {
 	parse_request_line();
-	parse_uri(this);
-	normalize_uri(this);
-	extract_resource_info(this);
+	parse_uri();
+	normalize_uri();
+	extract_resource_info();
 	set_boundary();
-	parse_headers(this);
-	parse_body(this);
+	parse_headers();
+	parse_body();
 }
 
 

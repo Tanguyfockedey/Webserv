@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:47:50 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/18 17:10:11 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/23 17:11:51 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,6 +71,12 @@ public:
 	void set_actual_body_length(void);
 	void set_error_code(int error_code) { _error_code = error_code; }
 
+	// Methods
 	void parse_request_line();
+	void parse_uri();
+	void parse_headers();
+	void parse_body();
+	void normalize_uri();
+	void extract_resource_info();
 	int is_allowed_method() const;
 };
