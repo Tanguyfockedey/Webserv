@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:48:10 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/23 17:13:11 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/23 19:46:32 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,11 +16,11 @@ void Request::set_boundary()
 {
 	std::string boundary;
 	
-	if (this->get_raw_request().find("boundary=") == std::string::npos)
+	if (get_raw_request().find("boundary=") == std::string::npos)
 		_boundary = "";
 	else
 	{
-		boundary = this->get_raw_request().substr(this->get_raw_request().find("boundary="));
+		boundary = get_raw_request().substr(get_raw_request().find("boundary="));
 		boundary = boundary.substr(boundary.find("boundary=") + 9);
 		boundary = boundary.substr(0, boundary.find_first_of('\r'));
 		_boundary = boundary;
@@ -31,28 +31,30 @@ void Request::set_actual_body_length(void)
 {
 	int content_length = 0;
 
-	if (this->get_headers().find("Content-Length") != this->get_headers().end())
+	if (get_headers().find("Content-Length") != get_headers().end())
 	{
-		std::istringstream iss(this->get_headers().find("Content-Length")->second);
+		std::istringstream iss(get_headers().find("Content-Length")->second);
 		iss >> content_length;
 	}
 	else
 	{
 		std::cerr << "Content-Length header not found." << std::endl;
-		_actual_body_length = 0;
+		_actual_body_length = 42;
 	}
-	std::string begin_boundary, end_boundary;
+	
+	std::string begin_boundary, end_boundary, multipart_headers, multipart_data;
+	
 	begin_boundary = "--" + _boundary + "\r\n";
-	end_boundary = "--" + _boundary + "--\r\n";
-	_actual_body_length = content_length - (begin_boundary.length() + end_boundary.length());
-	//_actual_body_length -= get_request_line().length();
-	//_actual_body_length -= get_headers_string().length();
-	_actual_body_length -= 4; // for the \r\n\r\n after the headers
-	_actual_body_length -= 2; // for the \r\n before the closing boundary
+	end_boundary   = "--" + _boundary + "--\r\n";
+	
+	multipart_headers = get_body().substr(get_body().find(begin_boundary) + begin_boundary.length());
+	multipart_headers = multipart_headers.substr(0, multipart_headers.find("\r\n\r\n") + 4);//NEED TO ADD 4 FOR THE \r\n\r\n AT THE END OF THE HEADERS
+	
+	_multipart_data = get_body().substr(get_body().find("\r\n\r\n") + 4);
 
-	//DEBUG print
-	std::cout << "Actual body length: " << _actual_body_length << std::endl; //DEBUG
-	// DEBUG
+	_actual_body_length  = content_length - (begin_boundary.length() + end_boundary.length());
+	_actual_body_length -= multipart_headers.length();
+	_actual_body_length -= 2; // for the \r\n before the closing boundary
 }
 
 void Request::parse_uri()
@@ -345,9 +347,18 @@ Request::Request(const int fd, const std::string raw_request, Config &server_con
 	parse_uri();
 	normalize_uri();
 	extract_resource_info();
-	set_boundary();
 	parse_headers();
 	parse_body();
+	if (get_method() == "POST" && get_headers().find("Content-Length") != get_headers().end())
+	{
+		set_boundary();
+		set_actual_body_length();
+	}
+	else
+	{
+		_boundary = "";
+		_actual_body_length = 0;
+	}
 }
 
 
@@ -371,9 +382,9 @@ void Request::parse_request_line()
 		std::istringstream iss(request_line);
 		iss >> method >> uri >> version;
 
-		this->set_method(method);
-		this->set_uri(uri);
-		this->set_version(version);
+		set_method(method);
+		set_uri(uri);
+		set_version(version);
 
 		if (method.empty() || uri.empty() || version.empty())
 		{
@@ -387,7 +398,7 @@ void Request::parse_request_line()
 			_error_code = 505;
 			throw std::runtime_error("505 HTTP Version Not Supported");
 		}
-		this->set_request_line(request_line);
+		set_request_line(request_line);
 	}
 	catch(const std::exception& e)
 	{

@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/23 17:20:26 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/23 20:15:38 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,23 +92,50 @@ void Response::process_get_request()
 
 void Response::handle_multipart_post()
 {
-	std::string boundary = _req.get_boundary();
-	
-	//DEBUG print
-	std::cout << "Multipart POST request handled." << std::endl;//DEBUG
-	size_t actual_body_length = this->get_req().get_actual_body_length();
+	std::string post_data, new_file_data, filename, path;
 
+	post_data = _req.get_multipart_data();
 
-	//DEBUG
-	std::cout << "Actual body length: " << actual_body_length << std::endl;//DEBUG
-	(void)boundary;//DEBUG
+	for (size_t i = 0; i < _req.get_actual_body_length(); ++i)
+	{
+		new_file_data[i] = post_data[i];
+	}
+
+	filename = _req.get_raw_request().substr(_req.get_raw_request().find("filename=\"") + 10);
+	filename = filename.substr(0, filename.find_first_of('"'));
+	if (filename.empty())
+	{
+		std::cerr << "No filename provided in POST request" << std::endl;
+		_status_line = "400 Bad Request";
+		_response = "HTTP/1.1 " + _status_line + "\r\n\r\n";
+		return ;
+	}
+
+	path = join_paths(get_current_dir_name(), _req.get_config().get_root());
+	path = join_paths(path, UPLOAD_PATH);
+	path = join_paths(path, filename);
+
+	std::fstream file(path.c_str(), std::ios::out | std::ios::binary);
+	if (file.is_open())
+	{
+		file << new_file_data;
+		file.close();
+		_status_line = "201 Created";
+	}
+	else
+	{
+		std::cerr << "Failed to open file for writing: " << path << std::endl;
+		_status_line = "500 Internal Server Error";
+	}
+	set_response("HTTP/1.1 " + _status_line + "\r\n\r\n");
 }
 
 
 void Response::handle_single_part_post()
 {
 	//DEBUG print
-	std::cout << "Single part POST request handled." << std::endl;//DEBUG
+	//std::cout << "Single part POST request handled." << std::endl;//DEBUG
+	
 	std::string body = _req.get_body();
 	if (body.empty())
 		return ;

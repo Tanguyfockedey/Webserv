@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:47:50 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/23 17:11:51 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/23 19:51:26 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,7 @@ private:
 	std::string _headers_string;
 	std::map<std::string, std::string> _headers;
 	std::string _boundary;
+	std::string _multipart_data;
 	size_t _actual_body_length;
 	std::string _body;
 	std::map<std::string, std::string> _resource_info;
@@ -54,6 +55,7 @@ public:
 	const std::map<std::string, std::string>& get_resource_info() const { return _resource_info; }
 	const std::string& get_body() const { return _body; }
 	const std::string& get_boundary() const { return _boundary; }
+	const std::string& get_multipart_data() const { return _multipart_data; }
 	size_t get_actual_body_length() const { return _actual_body_length; }
 	const Config& get_config() const { return _config; }
 	time_t get_timestamp() const { return _timestamp; }
