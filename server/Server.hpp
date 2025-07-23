@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
+/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:01:39 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/02 15:24:17 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/23 23:52:32 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,10 +32,7 @@ class Server
 		// Constructor and Destructor
 		Server(const Config& config);
 		~Server();
-		
-		// Getters and Setters
-		const std::string &get_server_name() const { return _config.get_server_name(); }
-		
+				
 		// Methods
 		void polling();
 		
