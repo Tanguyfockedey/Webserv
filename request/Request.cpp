@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:48:10 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/23 20:50:48 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/24 16:10:31 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -162,18 +162,31 @@ void Request::parse_headers()
 
 void Request::extract_resource_info()
 {
-	std::string uri = get_uri();
+	std::string uri, extension, mime_type;
 	std::map<std::string, std::string> resource_info;
+	
+	uri = get_uri();
 
 	// Get extension
-	std::string extension = uri.substr(uri.find_last_of('.') + 1);
-
-	// Make extension lowercase
-	for (size_t x = 0; x < extension.length(); x++)
-		extension[x] = tolower(extension[x]);
+	size_t dot_pos = uri.find_last_of('.');
+	if (dot_pos == std::string::npos || dot_pos == uri.length() - 1)
+	{
+		extension = "";
+		mime_type = "";
+		resource_info.insert(std::make_pair("extension", extension));
+		resource_info.insert(std::make_pair("mime_type", mime_type));
+		set_resource_info(resource_info);
+		return ;
+	}
+	else
+	{
+		extension = uri.substr(dot_pos + 1);
+		// Make extension lowercase
+		for (size_t x = 0; x < extension.length(); x++)
+			extension[x] = tolower(extension[x]);
+	}
 	
 	// Set MIME type
-	std::string mime_type;
 	if (extension == "html" || extension == "htm")
 		mime_type = "text/html";
 	else if (extension == "css")
@@ -312,7 +325,6 @@ void Request::extract_resource_info()
 		mime_type = "image/svg+xml";
 	else
 	{
-		std::cout << "Unknown extension: _" << extension << "_" << std::endl;
 		mime_type = "application/octet-stream"; // Default MIME type
 	}
 
