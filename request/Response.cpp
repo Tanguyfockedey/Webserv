@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/23 21:26:03 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/24 15:20:08 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,7 @@ void Response::build_response(std::fstream &path)
 		std::stringstream response;
 
 		response << "HTTP/1.1 " << get_status_line() << "\r\n";
+		response << "Host: " << get_req().get_headers().find("Host")->second << "\r\n";
 		response << "Date: " << get_http_date() << "\r\n";
 		response << "Content-Type:" << get_req().get_resource_info().find("mime_type")->second << "\r\n";
 		response << "Content-Length: " << body.length() << "\r\n";
