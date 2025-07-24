@@ -6,7 +6,7 @@
 #    By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/04/20 16:37:10 by tafocked          #+#    #+#              #
-#    Updated: 2025/06/19 19:03:11 by tafocked         ###   ########.fr        #
+#    Updated: 2025/07/23 17:46:33 by tafocked         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -21,7 +21,7 @@ FILES	= webserv.cpp \
 		server/Cluster.cpp \
 		server/Server.cpp \
 			
-CC		= c++
+CC		= g++
 CFLAGS	= -Wall -Wextra -Werror -std=c++98 -pedantic -g3
 LDLIBS	=
 

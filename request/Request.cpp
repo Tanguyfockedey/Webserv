@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
+/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:48:10 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/21 16:52:46 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/22 17:42:06 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -313,9 +313,10 @@ static void parse_body(Request *req)
 	req->set_body(body);
 }
 
-Request::Request(const int fd, const std::string raw_request, Config &server_config)
+Request::Request(const int fd, const std::string raw_request, const Config &server_config)
 	: _fd(fd), _error_code(0), _timestamp(time(NULL)), _raw_request(raw_request), _config(server_config)
 {
+	_is_complete = true; //a editer =>probablement true si pas de bodysize ou bodysize atteint, sinon false
 	parse_request_line();
 	parse_uri(this);
 	normalize_uri(this);

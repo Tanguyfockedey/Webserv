@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
+/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:00:55 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/18 16:17:07 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/23 23:50:31 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,8 +14,7 @@
 
 Server::Server(const Config& config): _config(config)
 {
-	_config = config;
-	std::cout << "Server '" << config.get_server_name() << "' is listening on port(s) : ";
+	std::cout << "Server '" << _config.get_token("", "server_name") << "' is listening on port(s) : ";
 	init_socket();
 	std::cout << std::endl;
 }
@@ -30,9 +29,9 @@ Server::~Server()
 			close(_poll_fds[i].fd);
 			std::cout << "Closed socket fd: " << _poll_fds[i].fd << std::endl;
 		}
-		_poll_fds.clear();
-		_sin.clear();
 	}
+	_poll_fds.clear();
+	_sin.clear();
 }
 
 void Server::init_socket()
@@ -162,7 +161,32 @@ void Server::read_request(pollfd &poll)
 	update_client_timeout(poll.fd);
 	std::string str = buffer;
 	_requests.push_back(Request(poll.fd, str, _config));
-	process_request(poll);
+	if (_requests.back().is_complete()) //verifier body size pour savoir si la requete est complete 
+	{
+		std::cout << GREEN << "Complete request received from client [" << poll.fd << "]" << RESET << std::endl;
+		process_request(poll);
+	}
+	// else
+	// {
+	// 	std::cout << BLUE << "Partial request received from client [" << poll.fd << "]" << RESET << std::endl;
+	// 	if (has_header())
+	// 	{
+	// 		//keep for later
+	// 	}
+	// 	else
+	// 	{
+	// 		//search for request with same fd, concatenate
+	// 		_requests.pop_back();
+	// 		if (_requests.back().is_complete())
+	// 		{
+	// 			process_request(poll);
+	// 		}
+	// 		else
+	// 		{
+	// 			//keep for later
+	// 		}
+	// 	}
+	// }
 }
 
 void Server::process_request(pollfd &poll)

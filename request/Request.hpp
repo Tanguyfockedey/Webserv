@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
+/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:47:50 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/18 17:10:11 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/22 17:29:55 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,7 @@ class Config;
 class Request
 {
 private:
+	bool _is_complete;
 	int _fd;
 	int _error_code;
 	time_t _timestamp;
@@ -36,12 +37,13 @@ private:
 
 public:
 	// Constructors and Destructor
-	Request(const int fd, const std::string raw_request, Config &server_config);
+	Request(const int fd, const std::string raw_request, const Config &server_config);
 	~Request();
 
 	// Getters
-	int get_fd() const { return _fd; }
-	int get_error_code() const { return _error_code; }
+	const bool& is_complete() const { return _is_complete; }
+	const int& get_fd() const { return _fd; }
+	const int& get_error_code() const { return _error_code; }
 	const std::string& get_raw_request() const { return _raw_request; }
 	const std::string& get_request_line() const { return _request_line; }
 	const std::string& get_method() const { return _method; }
@@ -65,6 +67,8 @@ public:
 	void set_body(const std::string &body) { _body = body; }
 	void set_error_code(int error_code) { _error_code = error_code; }
 
+	// Methods
+	
 	void parse_request_line();
 	int is_allowed_method() const;
 };
