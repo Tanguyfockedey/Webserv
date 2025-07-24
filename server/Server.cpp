@@ -205,7 +205,7 @@ void Server::send_response(pollfd &poll)
 				std::cerr << "Partial response sent to client." << std::endl;
 				_response[i].set_response(_response[i].get_response().substr(bytes_sent));
 			}
-			return;
+			return ;
 		}
 	}
 }

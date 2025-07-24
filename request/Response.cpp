@@ -17,16 +17,15 @@ void Response::build_response(std::fstream &path)
 {
 	if (path.is_open())
 	{
-		std::string body, status_line;
+		std::string body;
 		
-		status_line = 
 		body = std::string((std::istreambuf_iterator<char>(path)), std::istreambuf_iterator<char>());
 		std::stringstream response;
 
-		response << "HTTP/1.1 " << get_status_line() << "\r\n";
-		response << "Host: " << get_req().get_headers().find("Host")->second << "\r\n";
+		response << "HTTP/1.1 " << _status_line << "\r\n";
+		response << "Host: " << _req.get_config().get_server_name() << "\r\n";
 		response << "Date: " << get_http_date() << "\r\n";
-		response << "Content-Type:" << get_req().get_resource_info().find("mime_type")->second << "\r\n";
+		response << "Content-Type:" << _req.get_resource_info().find("mime_type")->second << "\r\n";
 		response << "Content-Length: " << body.length() << "\r\n";
 		response << "Connection: keep-alive\r\n";
 		response << "Cache-Control: no-store\r\n";
@@ -50,7 +49,6 @@ void Response::process_get_request()
 	
 	path = join_paths(get_current_dir_name(), _req.get_uri());
 	std::fstream file(path.c_str(), std::ios::in | std::ios::binary);
-
 	if (file.fail())
 	{
 		if (errno == 2) // No such file or directory (404)

@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:47:50 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/24 16:41:04 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/24 20:51:47 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,13 +22,14 @@ class Request
 private:
 	int _fd;
 	int _error_code;
+	int	_one_line_request;
 	time_t _timestamp;
 	std::string _raw_request;
 	std::string _request_line;
 	std::string _method;
 	std::string _uri;
-	std::string _uri_query;
-	std::string _uri_fragment;//the fragment follows the query
+	std::string _uri_query;    // ex: ?lang=php
+	std::string _uri_fragment; // ex: #anchor
 	std::string _version;
 	std::string _headers_string;
 	std::map<std::string, std::string> _headers;
