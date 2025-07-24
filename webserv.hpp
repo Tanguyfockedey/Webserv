@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/05 19:39:13 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/22 17:22:11 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/07/23 21:08:08 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 #include <errno.h>
 #include <string.h>
 #include <dirent.h>
+#include <sys/stat.h>
 
 // C++ Standard Library
 #include <iostream>
@@ -38,6 +39,9 @@
 #include <vector>
 #include <map>
 #include <utility>
+
+// Project helper functions
+#include "utils.hpp"
 
 // Constants
 #define CONNECTION_TIMEOUT 10

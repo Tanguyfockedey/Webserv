@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:00:55 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/23 23:50:31 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/07/24 15:39:43 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -220,7 +220,7 @@ void Server::send_response(pollfd &poll)
 			}
 			else if (bytes_sent == static_cast<ssize_t>(_response[i].get_response().size()))
 			{
-				std::cout << CYAN << "Response sent to client [" << poll.fd << "]:\n" << _response[i].get_response() << RESET << std::endl;
+				std::cout << CYAN << "Response sent to client [" << poll.fd << "]:\n" << _response[i].get_headers_string() << RESET << std::endl;
 				_response.erase(_response.begin() + i);
 				poll.events ^= POLLOUT;
 			}
@@ -229,7 +229,7 @@ void Server::send_response(pollfd &poll)
 				std::cerr << "Partial response sent to client." << std::endl;
 				_response[i].set_response(_response[i].get_response().substr(bytes_sent));
 			}
-			return;
+			return ;
 		}
 	}
 }

@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:47:50 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/22 17:29:55 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/07/24 20:51:47 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,14 +23,20 @@ private:
 	bool _is_complete;
 	int _fd;
 	int _error_code;
+	int	_one_line_request;
 	time_t _timestamp;
 	std::string _raw_request;
 	std::string _request_line;
 	std::string _method;
 	std::string _uri;
+	std::string _uri_query;    // ex: ?lang=php
+	std::string _uri_fragment; // ex: #anchor
 	std::string _version;
 	std::string _headers_string;
 	std::map<std::string, std::string> _headers;
+	std::string _boundary;
+	std::string _multipart_data;
+	size_t _actual_body_length;
 	std::string _body;
 	std::map<std::string, std::string> _resource_info;
 	Config _config;
@@ -48,11 +54,16 @@ public:
 	const std::string& get_request_line() const { return _request_line; }
 	const std::string& get_method() const { return _method; }
 	const std::string& get_uri() const { return _uri; }
+	const std::string& get_uri_query() const { return _uri_query; }
+	const std::string& get_uri_fragment() const { return _uri_fragment; }
 	const std::string& get_version() const { return _version; }
 	const std::string& get_headers_string() const { return _headers_string; }
 	const std::map<std::string, std::string>& get_headers() const { return _headers; }
 	const std::map<std::string, std::string>& get_resource_info() const { return _resource_info; }
 	const std::string& get_body() const { return _body; }
+	const std::string& get_boundary() const { return _boundary; }
+	const std::string& get_multipart_data() const { return _multipart_data; }
+	size_t get_actual_body_length() const { return _actual_body_length; }
 	const Config& get_config() const { return _config; }
 	time_t get_timestamp() const { return _timestamp; }
 
@@ -65,10 +76,16 @@ public:
 	void set_headers(const std::map<std::string, std::string> &headers) { _headers = headers; }
 	void set_resource_info(const std::map<std::string, std::string> &resource_info) { _resource_info = resource_info; }
 	void set_body(const std::string &body) { _body = body; }
+	void set_boundary(void);
+	void set_actual_body_length(void);
 	void set_error_code(int error_code) { _error_code = error_code; }
 
 	// Methods
-	
 	void parse_request_line();
+	void parse_uri();
+	void parse_headers();
+	void parse_body();
+	void normalize_uri();
+	void extract_resource_info();
 	int is_allowed_method() const;
 };

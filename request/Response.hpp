@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:21 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/18 22:19:47 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/24 15:31:23 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,10 +22,10 @@ private:
 	Request	_req;
 	std::string _response;
 	std::string _status_line;
+	std::string _headers_string;
 	std::map<std::string, std::string> _headers;
 	std::string _body;
 
-	
 
 public:
 	// Constructors and Destructor
@@ -36,6 +36,7 @@ public:
 	int get_fd() const { return _fd; }
 	const std::string& get_response() const { return _response; }
 	const std::string& get_status_line() const { return _status_line; }
+	const std::string& get_headers_string() const { return _headers_string; }
 	const std::map<std::string, std::string>& get_headers() const { return _headers; }
 	const std::string& get_body() const { return _body; }
 	const Request& get_req() const { return _req; }
@@ -47,5 +48,12 @@ public:
 	void set_body(const std::string& body) { _body = body; }
 	void set_req(const Request& req) { _req = req; }
 
+	// Methods
+	void handle_single_part_post();
+	void handle_multipart_post();
+	void process_delete_request();
+	void process_post_request();
+	void process_get_request();
+	void build_response(std::fstream &path);
 	const std::string get_http_date();
 };
