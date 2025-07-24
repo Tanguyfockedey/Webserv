@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:47:50 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/23 19:51:26 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/24 16:41:04 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,8 @@ private:
 	std::string _request_line;
 	std::string _method;
 	std::string _uri;
+	std::string _uri_query;
+	std::string _uri_fragment;//the fragment follows the query
 	std::string _version;
 	std::string _headers_string;
 	std::map<std::string, std::string> _headers;
@@ -49,6 +51,8 @@ public:
 	const std::string& get_request_line() const { return _request_line; }
 	const std::string& get_method() const { return _method; }
 	const std::string& get_uri() const { return _uri; }
+	const std::string& get_uri_query() const { return _uri_query; }
+	const std::string& get_uri_fragment() const { return _uri_fragment; }
 	const std::string& get_version() const { return _version; }
 	const std::string& get_headers_string() const { return _headers_string; }
 	const std::map<std::string, std::string>& get_headers() const { return _headers; }

@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:48:10 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/24 16:10:31 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/24 17:06:13 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,7 +48,7 @@ void Request::set_actual_body_length(void)
 	end_boundary   = "--" + _boundary + "--\r\n";
 	
 	multipart_headers = get_body().substr(get_body().find(begin_boundary) + begin_boundary.length());
-	multipart_headers = multipart_headers.substr(0, multipart_headers.find("\r\n\r\n") + 4);//NEED TO ADD 4 FOR THE \r\n\r\n AT THE END OF THE HEADERS
+	multipart_headers = multipart_headers.substr(0, multipart_headers.find("\r\n\r\n") + 4);
 	
 	_multipart_data = get_body().substr(get_body().find("\r\n\r\n") + 4);
 
@@ -59,12 +59,17 @@ void Request::set_actual_body_length(void)
 
 void Request::parse_uri()
 {
-	std::string uri = get_uri();
+	std::string uri, stripped_uri, query, fragment;
+	size_t separator;
+
+	uri = get_uri();
 
 	try 
 	{
 		if (uri.find("../") != std::string::npos || uri.find("..\\") != std::string::npos)
 		{
+			//DEBUG - A FIX, PAS CORRECT ACTUELLEMENT, "../" ne devrait etre un probleme
+			// que si ca entraine une sortie du repertoire racine
 			std::cerr << "The requested URL was rejected: " << uri << std::endl;
 			set_error_code(400);
 			throw std::runtime_error("400 Bad Request");
@@ -87,6 +92,41 @@ void Request::parse_uri()
 		std::cerr << e.what() << '\n';
 		return ;
 	}
+	separator = uri.find('?');
+	if (separator != std::string::npos)
+	{
+		stripped_uri = uri.substr(0, separator);
+		if (separator + 1 < uri.length())
+		{
+			query = uri.substr(separator + 1);
+			separator = query.find('#');
+			if (separator != std::string::npos)
+			{
+				query = query.substr(0, separator);
+				if (separator + 1 < query.length())
+					fragment = query.substr(separator + 1);
+				else
+					fragment = "";
+			}
+			else
+			{
+				fragment = "";
+			}
+		}
+		else
+			query = "";
+	} else { // no query part
+		separator = uri.find('#');
+		if (separator != std::string::npos)
+		{
+			stripped_uri = uri.substr(0, separator);
+			if (separator + 1 < uri.length())
+				fragment = uri.substr(separator + 1);
+		}
+	}
+	_uri = stripped_uri;
+	_uri_query = query;
+	_uri_fragment = fragment;
 }
 
 
@@ -186,6 +226,10 @@ void Request::extract_resource_info()
 			extension[x] = tolower(extension[x]);
 	}
 	
+
+	//DEBUG
+	std::cout << "Extension: " << extension << std::endl;//DEBUG
+
 	// Set MIME type
 	if (extension == "html" || extension == "htm")
 		mime_type = "text/html";
