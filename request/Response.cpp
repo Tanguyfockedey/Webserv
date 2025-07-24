@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/24 15:20:08 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/24 15:33:58 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,7 @@ void Response::build_response(std::fstream &path)
 		response << "Content-Length: " << body.length() << "\r\n";
 		response << "Connection: keep-alive\r\n";
 		response << "Cache-Control: no-store\r\n";
+		_headers_string = response.str();
 		response << "\r\n";
 		response << body;
 		set_response(response.str());
@@ -143,8 +144,7 @@ void Response::handle_single_part_post()
 			std::cout << body[i];
 }
 
-// zero size
-// single part vs multipart
+
 void Response::process_post_request()
 {
 	if (_req.get_boundary().empty())
@@ -168,73 +168,6 @@ void Response::process_post_request()
 	{
 		handle_multipart_post();
 	}
-
-	//DEBUG
-	return ;//DEBUG
-
-	int req_headers_length = _req.get_headers_string().length();
-
-	std::string response_body = _req.get_raw_request().substr(_req.get_raw_request().find("\r\n\r\n") + 4);
-
-	std::string start_boundary = response_body.substr(0, response_body.find("--" + boundary) + boundary.length() + 4); // +4 for the "--" before, and the "\r\n" after
-	std::string body_part_headers = response_body.substr(response_body.find("Content"));
-	body_part_headers = body_part_headers.substr(0, body_part_headers.find("\r\n\r\n") + 4);
-
-	if (boundary.empty())
-	{
-		std::cerr << "No boundary provided in POST request" << std::endl;
-		status_line = "400 Bad Request";
-		response = "HTTP/1.1 " + status_line + "\r\n\r\n";
-		return ;
-	}
-	std::string filename = _req.get_raw_request().substr(_req.get_raw_request().find("filename=\"") + 10);
-	filename = filename.substr(0, filename.find_first_of('"'));
-	if (filename.empty())
-	{
-		std::cerr << "No filename provided in POST request" << std::endl;
-		status_line = "400 Bad Request";
-		response = "HTTP/1.1 " + status_line + "\r\n\r\n";
-		return ;
-	}
-
-	size_t total_content_length;
-
-	std::istringstream iss(_req.get_headers().find("Content-Length")->second);
-	iss >> total_content_length;
-	
-	int actual_body_length = total_content_length - ((start_boundary.length() * 2) + 2) - body_part_headers.length() - 2; // last 2 is the \r\n before the closing boundary
-
-	int limit;
-	if (actual_body_length < (BUFFER_SIZE - req_headers_length - (int)body_part_headers.length() - (((int)start_boundary.length() * 2) + 2) - 2))
-		limit = actual_body_length;
-	else
-		limit = BUFFER_SIZE;
-	limit = limit - req_headers_length - (int)body_part_headers.length() - (((int)start_boundary.length() * 2) + 2) - 2;
-	
-	std::string actual_body = _req.get_body().substr(_req.get_body().find("\r\n\r\n") + 4);
-	std::string path;
-	path = join_paths(get_current_dir_name(), _req.get_config().get_root());
-	path = join_paths(path, UPLOAD_PATH);
-	path = join_paths(path, filename);
-	std::fstream file(path.c_str(), std::ios::out | std::ios::binary);
-	if (file.is_open())
-	{
-		for (int i = 0; i < limit; ++i)
-		{
-			file << actual_body[i];
-			if (i == actual_body_length - 1)
-				break;
-		}
-		file.close();
-		status_line = "201 Created";
-	}
-	else
-	{
-		std::cerr << "Failed to open file for writing: " << path << std::endl;
-		status_line = "500 Internal Server Error";
-	}
-	set_response("HTTP/1.1 " + status_line + "\r\n\r\n");
-	return ;
 }
 
 

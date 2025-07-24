@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:21 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/23 16:53:06 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/24 15:31:23 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,7 @@ private:
 	Request	_req;
 	std::string _response;
 	std::string _status_line;
+	std::string _headers_string;
 	std::map<std::string, std::string> _headers;
 	std::string _body;
 
@@ -35,6 +36,7 @@ public:
 	int get_fd() const { return _fd; }
 	const std::string& get_response() const { return _response; }
 	const std::string& get_status_line() const { return _status_line; }
+	const std::string& get_headers_string() const { return _headers_string; }
 	const std::map<std::string, std::string>& get_headers() const { return _headers; }
 	const std::string& get_body() const { return _body; }
 	const Request& get_req() const { return _req; }
