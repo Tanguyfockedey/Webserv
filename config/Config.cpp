@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Config.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
+/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/03 16:07:02 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/23 23:47:05 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/07/24 23:16:06 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,8 +31,8 @@ std::vector<Config> Config::parse_file(std::string file)
 				tmp = extract_server_block(str);
 				config.extract_address(tmp);
 				config.extract_location(tmp);
-				config.map_methods(tmp);
-				config.map_tokens(tmp);
+				//config.map_methods(tmp);
+				//config.map_tokens(tmp);
 				cluster.push_back(config);
 			}
 			catch(const std::exception& e)
