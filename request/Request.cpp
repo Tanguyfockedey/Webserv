@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:48:10 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/24 17:06:13 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/24 17:13:44 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -102,11 +102,11 @@ void Request::parse_uri()
 			separator = query.find('#');
 			if (separator != std::string::npos)
 			{
-				query = query.substr(0, separator);
 				if (separator + 1 < query.length())
 					fragment = query.substr(separator + 1);
 				else
 					fragment = "";
+				query = query.substr(0, separator);
 			}
 			else
 			{
@@ -127,6 +127,11 @@ void Request::parse_uri()
 	_uri = stripped_uri;
 	_uri_query = query;
 	_uri_fragment = fragment;
+
+	//DEBUG prints
+	std::cout << "Parsed URI: " << _uri << std::endl;
+	std::cout << "Parsed Query: " << _uri_query << std::endl;
+	std::cout << "Parsed Fragment: " << _uri_fragment << std::endl;
 }
 
 
@@ -150,6 +155,8 @@ void Request::normalize_uri()
 	}
 
 	set_uri(join_paths(root, uri));
+	// DEBUG print 
+	std::cout << "Normalized URI: " << get_uri() << std::endl;
 }
 
 
