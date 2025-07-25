@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:48:10 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/24 21:02:36 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/25 16:12:03 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -147,7 +147,7 @@ void Request::normalize_uri()
 {
 	std::string root, uri, normalized_uri;
 
-	root = get_config().get_root();
+	root = _config.get_token(_uri, "root");
 	if (root.empty())
 	{
 		root = "/";
@@ -156,10 +156,10 @@ void Request::normalize_uri()
 	uri = get_uri();
 	if (uri == "/" || uri.empty())
 	{
-		if (get_config().get_index().empty())
+		if (_config.get_token(_uri, "index").empty())
 			uri = "/index.html";
 		else
-			uri = get_config().get_index();
+			uri = _config.get_token(_uri, "index");
 	}
 	set_uri(join_paths(root, uri));
 }
@@ -474,6 +474,7 @@ void Request::parse_request_line()
 		else
 			_request_line = _raw_request.substr(0, _raw_request.find("\r\n"));
 		std::istringstream iss(_request_line);
+		// iss >> _method >> _uri >> _version; // ca marcherait ?
 		iss >> method >> uri >> version;
 		set_method(method);
 		set_uri(uri);

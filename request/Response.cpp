@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
+/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/24 15:33:58 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/25 16:15:29 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@ void Response::build_response(std::fstream &path)
 		std::stringstream response;
 
 		response << "HTTP/1.1 " << _status_line << "\r\n";
-		response << "Host: " << _req.get_config().get_server_name() << "\r\n";
+		response << "Host: " << _config.get_token("", "server_name") << "\r\n";
 		response << "Date: " << get_http_date() << "\r\n";
 		response << "Content-Type:" << _req.get_resource_info().find("mime_type")->second << "\r\n";
 		response << "Content-Length: " << body.length() << "\r\n";
@@ -106,7 +106,9 @@ void Response::handle_multipart_post()
 		return ;
 	}
 
-	path = join_paths(get_current_dir_name(), _req.get_config().get_root());
+	// path = join_paths(get_current_dir_name(), _req.get_config().get_root());
+	path = join_paths(get_current_dir_name(), _config.get_token(_req.get_uri(), "root"));
+
 	path = join_paths(path, UPLOAD_PATH);
 
 	mkdir(path.c_str(), 0755);
@@ -187,6 +189,7 @@ void Response::process_delete_request()
 
 Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 {
+	_config = req.get_config();
 	try
 	{
 		if (_req.get_error_code() != 0)
