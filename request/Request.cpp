@@ -128,6 +128,7 @@ void Request::parse_uri()
 		}
 		else
 			query = "";
+		_uri = stripped_uri;
 	} else { // no query part
 		separator = uri.find('#');
 		if (separator != std::string::npos)
@@ -135,9 +136,9 @@ void Request::parse_uri()
 			stripped_uri = uri.substr(0, separator);
 			if (separator + 1 < uri.length())
 				fragment = uri.substr(separator + 1);
+			_uri = stripped_uri;
 		}
 	}
-	_uri = stripped_uri;
 	_uri_query = query;
 	_uri_fragment = fragment;
 }
