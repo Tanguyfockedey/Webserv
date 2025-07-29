@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
+/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:48:10 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/25 16:12:03 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/07/28 15:31:24 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -128,6 +128,7 @@ void Request::parse_uri()
 		}
 		else
 			query = "";
+		_uri = stripped_uri;
 	} else { // no query part
 		separator = uri.find('#');
 		if (separator != std::string::npos)
@@ -135,9 +136,9 @@ void Request::parse_uri()
 			stripped_uri = uri.substr(0, separator);
 			if (separator + 1 < uri.length())
 				fragment = uri.substr(separator + 1);
+			_uri = stripped_uri;
 		}
 	}
-	_uri = stripped_uri;
 	_uri_query = query;
 	_uri_fragment = fragment;
 }
@@ -424,10 +425,7 @@ Request::Request(const int fd, const std::string raw_request, const Config &serv
 	parse_request_line();
 	parse_uri();
 	normalize_uri();
-	
-	
 	extract_resource_info();
-
 	if (!_one_line_request)
 	{
 		parse_headers();
@@ -443,10 +441,13 @@ Request::Request(const int fd, const std::string raw_request, const Config &serv
 			_actual_body_length = 0;
 		}
 	}
-	_headers_string = "";
-	_body = "";
-	_boundary = "";
-	_actual_body_length = 0;
+	else
+	{
+		_headers_string = "";
+		_body = "";
+		_boundary = "";
+		_actual_body_length = 0;
+	}
 }
 
 
