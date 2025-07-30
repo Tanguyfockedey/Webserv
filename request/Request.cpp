@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:48:10 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/30 14:34:03 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/07/30 17:07:53 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -417,7 +417,7 @@ void Request::parse_headers()
 		if (pos != std::string::npos)
 		{
 			std::string key = line.substr(0, pos);
-			std::string value = line.substr(pos + 1);
+			std::string value = line.substr(pos + 1, line.find_last_not_of("\r\n") - pos);
 			value.erase(0, value.find_first_not_of(" \t")); // trim leading whitespace
 			_headers.insert(std::make_pair(key, value));
 		}
@@ -518,11 +518,13 @@ int Request::is_allowed_method() const
 
 int Request::not_complete_request()
 {
+
 	if (_headers.find("Content-Length") != _headers.end())
 	{
-		int content_length = atoi(_headers.find("Content_length")->second.c_str()); 
+		char* content_length_str = const_cast<char *>(_headers.find("Content-Length")->second.c_str());
+		int content_length = atoi(content_length_str); 
 		if (content_length <= 0 || _body.length() != static_cast<size_t>(content_length))
-			return 1; // Not complete
+		return 1; // Not complete
 	}
 	return 0; // Complete
 }
