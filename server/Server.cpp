@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:00:55 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/30 18:06:56 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/07/30 19:04:14 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -165,12 +165,14 @@ void Server::read_request(pollfd &poll)
 	
 	if (!_requests.back().not_complete_request()) //verifier body size pour savoir si la requete est complete 
 	{
-		std::cout << GREEN << "Complete request received from client [" << poll.fd << "]" << RESET << std::endl;
+		std::cout << GREEN << "Complete request received [" << poll.fd << "]" << RESET << std::endl;
+		std::cout << MAGENTA << _requests.back().get_raw_request() << RESET << std::endl;
 		process_request(poll);
 	}
 	else
 	{
-		std::cout << GREEN << "Partial request received from client [" << poll.fd << "]" << RESET << std::endl;
+		std::cout << GREEN << "Partial request received [" << poll.fd << "]" << RESET << std::endl;
+		std::cout << MAGENTA << _requests.back().get_raw_request() << RESET << std::endl;
 	}
 		// 	if (has_header())
 	// 	{
@@ -197,7 +199,6 @@ void Server::process_request(pollfd &poll)
 	
 	std::string response;
 	
-	std::cout << MAGENTA << "Request received [" << poll.fd << "]:\n" << _requests.back().get_raw_request() << RESET << std::endl;
 	_response.push_back(Response(poll.fd, _requests.back()));
 	poll.events |= POLLOUT;
 	_requests.pop_back();
@@ -224,13 +225,13 @@ void Server::send_response(pollfd &poll)
 			}
 			else if (bytes_sent == static_cast<ssize_t>(_response[i].get_response().size()))
 			{
-				std::cout << CYAN << "Response sent to client [" << poll.fd << "]:\n" << _response[i].get_headers_string() << RESET << std::endl;
+				std::cout << GREEN << "Complete response sent [" << poll.fd << "]:\n" << CYAN << _response[i].get_headers_string() << RESET << std::endl;
 				_response.erase(_response.begin() + i);
 				poll.events ^= POLLOUT;
 			}
 			else
 			{
-				std::cerr << "Partial response sent to client." << std::endl;
+				std::cout << GREEN << "Partial response sent [" << poll.fd << "]:\n" << CYAN << _response[i].get_response().substr(bytes_sent) << RESET << std::endl;
 				_response[i].set_response(_response[i].get_response().substr(bytes_sent));
 			}
 			return ;
