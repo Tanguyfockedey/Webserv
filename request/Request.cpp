@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:48:10 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/30 13:44:42 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/07/30 14:34:03 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@ Request::Request(const int fd, const std::string raw_request, const Config &serv
 	{
 		parse_headers();
 		parse_body();
-		if (_method == "POST" && get_headers().find("Content-Length") != get_headers().end()) // verifier directement ici si multipart ou non
+		if (_method == "POST" && _headers.find("Content-Length") != _headers.end()) // verifier directement ici si multipart ou non
 		{
 			set_boundary();
 			set_actual_body_length();
@@ -50,7 +50,7 @@ Request::~Request()
 
 void Request::parse_request_line()
 {
-	std::string method, uri, version;
+	// std::string method, uri, version;
 
 	if (_raw_request.empty())
 	{
@@ -106,29 +106,30 @@ void Request::parse_request_line()
 
 void Request::parse_uri()
 {
-	std::string uri, stripped_uri, query, fragment;
+	// std::string uri, stripped_uri, query, fragment;
+	std::string stripped_uri;
 	size_t separator;
 
-	uri = get_uri();
+	// uri = get_uri();
 
 	try 
 	{
-		if (uri.find("../") != std::string::npos || uri.find("..\\") != std::string::npos)
+		if (_uri.find("../") != std::string::npos || _uri.find("..\\") != std::string::npos)
 		{
-			std::cerr << "The requested URL was rejected: " << uri << std::endl;
-			set_error_code(400);// verifier si c'est 403 ou 400, ... ?
+			std::cerr << "The requested URL was rejected: " << _uri << std::endl;
+			_error_code = 400;// verifier si c'est 403 ou 400, ... ?
 			throw std::runtime_error("400 Bad Request");
 		}
-		else if (uri.length() > MAX_URI_LENGTH)
+		else if (_uri.length() > MAX_URI_LENGTH)
 		{
-			std::cerr << "The requested URL is too long: " << uri << std::endl;
-			set_error_code(414);
+			std::cerr << "The requested URL is too long: " << _uri << std::endl;
+			_error_code = 414;
 			throw std::runtime_error("414 URI Too Long");
 		}
-		else if (uri.find(" ") != std::string::npos) // verifier si les espaces sont vmt invalides
+		else if (_uri.find(" ") != std::string::npos) // verifier si les espaces sont vmt invalides
 		{
-			std::cerr << "The requested URL contains spaces: " << uri << std::endl;
-			set_error_code(400);
+			std::cerr << "The requested URL contains spaces: " << _uri << std::endl;
+			_error_code = 400;
 			throw std::runtime_error("400 Bad Request");
 		}
 	}
@@ -137,47 +138,48 @@ void Request::parse_uri()
 		std::cerr << e.what() << '\n';
 		return ;
 	}
-	separator = uri.find('?');
+	separator = _uri.find('?');
 	if (separator != std::string::npos)
 	{
-		stripped_uri = uri.substr(0, separator);
-		if (separator + 1 < uri.length())
+		stripped_uri = _uri.substr(0, separator);
+		if (separator + 1 < _uri.length())
 		{
-			query = uri.substr(separator + 1);
-			separator = query.find('#');
+			_uri_query = _uri.substr(separator + 1);
+			separator = _uri_query.find('#');
 			if (separator != std::string::npos)
 			{
-				if (separator + 1 < query.length())
-					fragment = query.substr(separator + 1);
+				if (separator + 1 < _uri_query.length())
+					_uri_fragment = _uri_query.substr(separator + 1);
 				else
-					fragment = "";
-				query = query.substr(0, separator);
+					_uri_fragment = "";
+				_uri_query = _uri_query.substr(0, separator);
 			}
 			else
 			{
-				fragment = "";
+				_uri_fragment = "";
 			}
 		}
 		else
-			query = "";
+			_uri_query = "";
 		_uri = stripped_uri;
 	} else { // no query part
-		separator = uri.find('#');
+		separator = _uri.find('#');
 		if (separator != std::string::npos)
 		{
-			stripped_uri = uri.substr(0, separator);
-			if (separator + 1 < uri.length())
-				fragment = uri.substr(separator + 1);
+			stripped_uri = _uri.substr(0, separator);
+			if (separator + 1 < _uri.length())
+				_uri_fragment = _uri.substr(separator + 1);
 			_uri = stripped_uri;
 		}
 	}
-	_uri_query = query;
-	_uri_fragment = fragment;
+	_uri_query = _uri_query;
+	_uri_fragment = _uri_fragment;
 }
 
 void Request::normalize_uri()
 {
-	std::string root, uri, normalized_uri;
+	std::string root;
+	// stf::string uri, normalized_uri;
 
 	root = _config.get_token(_uri, "root");
 	if (root.empty())
@@ -185,38 +187,39 @@ void Request::normalize_uri()
 		root = "/";
 	}
 
-	uri = get_uri();
-	if (uri == "/" || uri.empty())
+	// uri = get_uri();
+	if (_uri == "/" || _uri.empty())
 	{
 		if (_config.get_token(_uri, "index").empty())
-			uri = "/index.html";
+			_uri = "/index.html";
 		else
-			uri = _config.get_token(_uri, "index");
+			_uri = _config.get_token(_uri, "index");
 	}
-	set_uri(join_paths(root, uri));
+	_uri = (join_paths(root, _uri));
 }
 
 void Request::extract_resource_info()
 {
-	std::string uri, extension, mime_type;
-	std::map<std::string, std::string> resource_info;
+	// std::string uri;
+	std::string extension, mime_type;
+	// std::map<std::string, std::string> resource_info;
 	
-	uri = get_uri();
+	// uri = get_uri();
 
 	// Get extension
-	size_t dot_pos = uri.find_last_of('.');
-	if (dot_pos == std::string::npos || dot_pos == uri.length() - 1)
+	size_t dot_pos = _uri.find_last_of('.');
+	if (dot_pos == std::string::npos || dot_pos == _uri.length() - 1)
 	{
 		extension = "";
 		mime_type = "";
-		resource_info.insert(std::make_pair("extension", extension));
-		resource_info.insert(std::make_pair("mime_type", mime_type));
-		set_resource_info(resource_info);
+		_resource_info.insert(std::make_pair("extension", extension));
+		_resource_info.insert(std::make_pair("mime_type", mime_type));
+		// set_resource_info(resource_info);
 		return ;
 	}
 	else
 	{
-		extension = uri.substr(dot_pos + 1);
+		extension = _uri.substr(dot_pos + 1);
 		// Make extension lowercase
 		for (size_t x = 0; x < extension.length(); x++)
 			extension[x] = tolower(extension[x]);
@@ -363,22 +366,22 @@ void Request::extract_resource_info()
 		mime_type = "application/octet-stream"; // Default MIME type
 	}
 
-	resource_info.insert(std::make_pair("extension", extension));
-	resource_info.insert(std::make_pair("mime_type", mime_type));
-	set_resource_info(resource_info);
+	_resource_info.insert(std::make_pair("extension", extension));
+	_resource_info.insert(std::make_pair("mime_type", mime_type));
+	// set_resource_info(resource_info);
 }
 
 void Request::parse_headers()
 {
-	std::map<std::string, std::string> headers_map;
+	// std::map<std::string, std::string> headers_map;
 	
-	std::string raw_request = get_raw_request();
-	size_t pos = raw_request.find("\r\n");
-	size_t end_pos = raw_request.find("\r\n\r\n");
-	if (get_method() == "POST" && REQUIRE_HEADERS && (std::string::npos || end_pos == std::string::npos || end_pos <= pos))
+	// std::string raw_request = get_raw_request();
+	size_t pos = _raw_request.find("\r\n");
+	size_t end_pos = _raw_request.find("\r\n\r\n");
+	if (_method == "POST" && REQUIRE_HEADERS && (std::string::npos || end_pos == std::string::npos || end_pos <= pos))
 	{
 		std::cerr << "Malformed request: missing headers" << std::endl;
-		set_error_code(400);
+		_error_code = 400;
 		return ;
 	}
 	//pos = raw_request.find("\r\n");
@@ -386,24 +389,24 @@ void Request::parse_headers()
 	if (pos == std::string::npos || end_pos == std::string::npos || end_pos <= pos)
 	{
 		std::cerr << "Malformed request: missing headers" << std::endl;
-		set_error_code(400);
+		_error_code = 400;
 		return ;
 	}
-	std::string headers_string = raw_request.substr(pos + 2, end_pos);
-	if (headers_string.length() > MAX_HEADER_LENGTH)
+	_headers_string = _raw_request.substr(pos + 2, end_pos);
+	if (_headers_string.length() > MAX_HEADER_LENGTH)
 	{
-		std::cerr << "Headers too long: " << headers_string.length() << " bytes" << std::endl;
-		set_error_code(431);
+		std::cerr << "Headers too long: " << _headers_string.length() << " bytes" << std::endl;
+		_error_code = 431;
 		return ;
 	}
-	if (headers_string.empty() && get_method() == "POST" && REQUIRE_HEADERS)
+	if (_headers_string.empty() && _method == "POST" && REQUIRE_HEADERS)
 	{
 		std::cerr << "Malformed request: empty headers" << std::endl;
-		set_error_code(400);
+		_error_code = 400;
 		return ;
 	}
-	set_headers_string(headers_string);
-	std::istringstream iss(headers_string);
+	// set_headers_string(headers_string);
+	std::istringstream iss(_headers_string);
 	std::string line;
 
 	while (std::getline(iss, line))
@@ -416,48 +419,47 @@ void Request::parse_headers()
 			std::string key = line.substr(0, pos);
 			std::string value = line.substr(pos + 1);
 			value.erase(0, value.find_first_not_of(" \t")); // trim leading whitespace
-			headers_map.insert(std::make_pair(key, value));
+			_headers.insert(std::make_pair(key, value));
 		}
 	}
-	set_headers(headers_map);
+	// set_headers(headers_map);
 }
 
 void Request::parse_body()
 {
-	std::string body;
+	// std::string body;
 	size_t pos = _raw_request.find("\r\n\r\n");
 	if (pos == std::string::npos)
 	{
 		std::cerr << "Malformed request: missing body" << std::endl;
-		set_error_code(400);
+		_error_code = 400;
 		return ;
 	}
-	body = _raw_request.substr(pos + 4);
+	_body = _raw_request.substr(pos + 4);
 	// if (body.empty() && get_method() == "POST") // protocole autorise requete sans headers/body
 	// {
 	// 	std::cerr << "Empty body in request." << std::endl;
 	// 	set_error_code(400);
 	// }
 	//else 
-	if (body.length() > MAX_BODY_LENGTH)
+	if (_body.length() > MAX_BODY_LENGTH)
 	{
-		std::cerr << "Body too long: " << body.length() << " bytes" << std::endl;
-		set_error_code(413);
+		std::cerr << "Body too long: " << _body.length() << " bytes" << std::endl;
+		_error_code = 413;
 	}
-	set_body(body);
+	// set_body(body);
 }
 
 void Request::set_boundary()
 {
-	std::string boundary;
+	// std::string boundary;
 	
 	if (_raw_request.find("boundary=") == std::string::npos)
 		_boundary = "";
 	else
 	{
-		boundary = _raw_request.substr(_raw_request.find("boundary=") + 9);
-		boundary = boundary.substr(0, boundary.find_first_of('\r'));
-		_boundary = boundary;
+		_boundary = _raw_request.substr(_raw_request.find("boundary=") + 9);
+		_boundary = _boundary.substr(0, _boundary.find_first_of('\r'));
 	}
 }
 
@@ -465,9 +467,9 @@ void Request::set_actual_body_length(void)
 {
 	int content_length = 0;
 
-	if (get_headers().find("Content-Length") != get_headers().end())
+	if (_headers.find("Content-Length") != _headers.end())
 	{
-		std::istringstream iss(get_headers().find("Content-Length")->second);
+		std::istringstream iss(_headers.find("Content-Length")->second);
 		iss >> content_length;
 	}
 	else
@@ -475,15 +477,16 @@ void Request::set_actual_body_length(void)
 		std::cerr << "Content-Length header not found." << std::endl;
 	}
 	
-	std::string begin_boundary, end_boundary, multipart_headers, multipart_data;
+	std::string begin_boundary, end_boundary, multipart_headers;
+	// multipart_data;
 	
 	begin_boundary = "--" + _boundary + "\r\n";
 	end_boundary   = "--" + _boundary + "--\r\n";
 	
-	size_t begin_pos = get_body().find(begin_boundary);
+	size_t begin_pos = _body.find(begin_boundary);
 	if (begin_pos == std::string::npos)
 	{
-		multipart_data = _body;
+		_multipart_data = _body;
 		multipart_headers = "";
 		_actual_body_length = content_length;
 		return ;
@@ -494,7 +497,7 @@ void Request::set_actual_body_length(void)
 	begin_pos = _body.find("\r\n\r\n");
 	if (begin_pos == std::string::npos)
 	{
-		multipart_data = _body;
+		_multipart_data = _body;
 		_actual_body_length = content_length;
 		return ;
 	}
@@ -515,9 +518,9 @@ int Request::is_allowed_method() const
 
 int Request::not_complete_request()
 {
-	if (get_headers().find("Content-Length") != get_headers().end())
+	if (_headers.find("Content-Length") != _headers.end())
 	{
-		int content_length = atoi(get_headers().find("Content_length")->second.c_str()); 
+		int content_length = atoi(_headers.find("Content_length")->second.c_str()); 
 		if (content_length <= 0 || _body.length() != static_cast<size_t>(content_length))
 			return 1; // Not complete
 	}

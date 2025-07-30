@@ -3,17 +3,16 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+         #
+#    By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/04/20 16:37:10 by tafocked          #+#    #+#              #
-#    Updated: 2025/07/23 17:14:48 by jrichir          ###   ########.fr        #
+#    Updated: 2025/07/30 14:00:06 by tafocked         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 NAME	= webserv
 
 FILES	= webserv.cpp \
-		utils.cpp \
 		config/Config.cpp \
 		config/Location.cpp \
 		request/Request.cpp \
@@ -21,6 +20,7 @@ FILES	= webserv.cpp \
 		server/Client.cpp \
 		server/Cluster.cpp \
 		server/Server.cpp \
+		utils/utils.cpp \
 			
 CC		= g++
 CFLAGS	= -Wall -Wextra -Werror -std=c++98 -pedantic -g3

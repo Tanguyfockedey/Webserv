@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/05 19:39:13 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/29 17:23:15 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/07/30 13:59:23 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,7 @@
 #include <utility>
 
 // Project helper functions
-#include "utils.hpp"
+#include "utils/utils.hpp"
 
 // Constants
 #define CONNECTION_TIMEOUT 10

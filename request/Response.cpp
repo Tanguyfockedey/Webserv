@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/30 13:55:45 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/07/30 14:51:00 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,7 +49,9 @@ Response::~Response()
 
 void Response::process_get_request()
 {
-	std::string path, status_line, error_msg, error_page;
+	std::string path, error_msg, error_page;
+	// std::string status_line;
+	
 	//                    server root       , config root + path
 	path = join_paths(get_current_dir_name(), _req.get_uri());
 	std::fstream file(path.c_str(), std::ios::in | std::ios::binary);
@@ -99,16 +101,17 @@ void Response::process_post_request()
 		handle_single_part_post();
 		return ;
 	}
-	std::string boundary, status_line, response;
+	std::string boundary;
+	// status_line, response;
 	
 	boundary = _req.get_boundary();
 
 	if (boundary.length() > 70)
 	{
 		std::cerr << "Boundary too long: " << boundary.length() << " characters" << std::endl;
-		status_line = "400 Bad Request";
-		response = "HTTP/1.1 " + status_line + "\r\n\r\n";
-		set_response(response);
+		_status_line = "400 Bad Request";
+		_response = "HTTP/1.1 " + _status_line + "\r\n\r\n";
+		// _response = response;
 		return ;
 	}
 	else if (boundary.length() > 0)
@@ -129,7 +132,7 @@ void Response::process_delete_request()
         std::cout << "File successfully deleted : " << _req.get_uri() << std::endl;
     }
 	
-	set_response("...");
+	_response = "...";
 }
 
 void Response::build_response(std::fstream &path)
@@ -139,24 +142,25 @@ void Response::build_response(std::fstream &path)
 		std::string body;
 		
 		body = std::string((std::istreambuf_iterator<char>(path)), std::istreambuf_iterator<char>());
-		std::stringstream response;
+		// std::stringstream response;
 
-		response << "HTTP/1.1 " << _status_line << "\r\n";
-		response << "Host: " << _config.get_token("", "server_name") << "\r\n";
-		response << "Date: " << get_http_date() << "\r\n";
-		response << "Content-Type:" << _req.get_resource_info().find("mime_type")->second << "\r\n";
-		response << "Content-Length: " << body.length() << "\r\n";
+		_response += "HTTP/1.1 " + _status_line + "\r\n";
+		_response += "Host: " + _config.get_token("", "server_name") + "\r\n";
+		_response += "Date: " + get_http_date() + "\r\n";
+		_response += "Content-Type:" + _req.get_resource_info().find("mime_type")->second + "\r\n";
+		_response += "Content-Length: " + body.length();
+		_response += "\r\n";
 		//response << "Connection: keep-alive\r\n";
 		//response << "Cache-Control: no-store\r\n";
-		_headers_string = response.str();
-		response << "\r\n";
-		response << body;
-		set_response(response.str());
+		_headers_string = _response;
+		_response += "\r\n";
+		_response += body;
+		// _response = response.str();
 	}
 	else
 	{
 		std::cerr << "Failed to open file for reading." << std::endl;
-		set_response("HTTP/1.1 500 Internal Server Error\r\n\r\n");
+		_response = "HTTP/1.1 500 Internal Server Error\r\n\r\n";
 	}
 	path.close();
 }
@@ -212,7 +216,7 @@ void Response::handle_multipart_post()
 		std::cerr << "Failed to open file for writing: " << path << std::endl;
 		_status_line = "500 Internal Server Error";
 	}
-	set_response("HTTP/1.1 " + _status_line + "\r\n\r\n");
+	_response = "HTTP/1.1 " + _status_line + "\r\n\r\n";
 }
 
 const std::string Response::get_http_date() {
