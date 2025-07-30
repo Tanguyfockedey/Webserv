@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:21 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/25 15:04:13 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/07/30 13:55:58 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,11 +50,11 @@ public:
 	void set_req(const Request& req) { _req = req; }
 
 	// Methods
+	void process_get_request();
+	void process_post_request();
+	void process_delete_request();
+	void build_response(std::fstream &path);
 	void handle_single_part_post();
 	void handle_multipart_post();
-	void process_delete_request();
-	void process_post_request();
-	void process_get_request();
-	void build_response(std::fstream &path);
 	const std::string get_http_date();
 };

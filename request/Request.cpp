@@ -6,68 +6,102 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:48:10 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/30 13:25:00 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/07/30 13:44:42 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Request.hpp"
 
-void Request::set_boundary()
+Request::Request(const int fd, const std::string raw_request, const Config &server_config)
+	: _fd(fd), _error_code(0), _timestamp(time(NULL)), _raw_request(raw_request), _config(server_config)
 {
-	std::string boundary;
-	
-	if (_raw_request.find("boundary=") == std::string::npos)
-		_boundary = "";
+	parse_request_line();
+	parse_uri();
+	normalize_uri();
+	extract_resource_info();
+	if (!_one_line_request)
+	{
+		parse_headers();
+		parse_body();
+		if (_method == "POST" && get_headers().find("Content-Length") != get_headers().end()) // verifier directement ici si multipart ou non
+		{
+			set_boundary();
+			set_actual_body_length();
+		}
+		else
+		{
+			_boundary = "";
+			_actual_body_length = 0;
+		}
+	}
 	else
 	{
-		boundary = _raw_request.substr(_raw_request.find("boundary=") + 9);
-		boundary = boundary.substr(0, boundary.find_first_of('\r'));
-		_boundary = boundary;
+		_headers_string = "";
+		_body = "";
+		_boundary = "";
+		_actual_body_length = 0;
 	}
+	not_complete_request();
+	_is_complete = true; //a editer =>probablement true si pas de bodysize ou bodysize atteint, sinon false
 }
 
-void Request::set_actual_body_length(void)
+Request::~Request()
+{}
+
+void Request::parse_request_line()
 {
-	int content_length = 0;
+	std::string method, uri, version;
 
-	if (get_headers().find("Content-Length") != get_headers().end())
+	if (_raw_request.empty())
 	{
-		std::istringstream iss(get_headers().find("Content-Length")->second);
-		iss >> content_length;
-	}
-	else
-	{
-		std::cerr << "Content-Length header not found." << std::endl;
+		std::cerr << "Empty request received." << std::endl;
+		_error_code = 400;
+		throw std::runtime_error("400 Bad Request");
 	}
 	
-	std::string begin_boundary, end_boundary, multipart_headers, multipart_data;
-	
-	begin_boundary = "--" + _boundary + "\r\n";
-	end_boundary   = "--" + _boundary + "--\r\n";
-	
-	size_t begin_pos = get_body().find(begin_boundary);
-	if (begin_pos == std::string::npos)
+	try
 	{
-		multipart_data = _body;
-		multipart_headers = "";
-		_actual_body_length = content_length;
+		if (_raw_request.find("\r\n") == std::string::npos)
+		{
+			_request_line = _raw_request;
+			_one_line_request = 1;
+		}
+		else
+			_request_line = _raw_request.substr(0, _raw_request.find("\r\n"));
+		std::istringstream iss(_request_line);
+		iss >> _method >> _uri >> _version;
+		if (_method.empty() || _uri.empty() || _version.empty())
+		{
+			std::cerr << "Malformed request line: " << _request_line << std::endl;
+			_error_code = 400;
+			throw std::runtime_error("400 Bad Request");
+		}
+		if (_version != "HTTP/1.1" && _version != "HTTP/1.0" && _version != "undefined")
+		{
+			std::cerr << "Unsupported HTTP version: " << _version << std::endl;
+			_error_code = 505;
+			throw std::runtime_error("505 HTTP Version Not Supported");
+		}
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+	}
+
+	if (_method != "GET" && _method != "POST" && _method != "DELETE")
+	{
+		std::cerr << "Unsupported HTTP method: " << _method << std::endl;
+		_error_code = 501;
+		throw std::runtime_error("501 Not Implemented");
 		return ;
 	}
-	multipart_headers = _body.substr(begin_pos + begin_boundary.length());
-	multipart_headers = multipart_headers.substr(0, multipart_headers.find("\r\n\r\n") + 4);
-	
-	begin_pos = _body.find("\r\n\r\n");
-	if (begin_pos == std::string::npos)
+	else if (!is_allowed_method()) // verifier si la methode est autorisee dans la configuration (location)
 	{
-		multipart_data = _body;
-		_actual_body_length = content_length;
+		std::cerr << "Method not allowed: " << _method << std::endl;
+		throw std::runtime_error("405 Method Not Allowed");
+		_error_code = 405;
 		return ;
 	}
-	_multipart_data = _body.substr(begin_pos + 4);
-
-	_actual_body_length  = content_length - (begin_boundary.length() + end_boundary.length());
-	_actual_body_length -= multipart_headers.length();
-	_actual_body_length -= 2; // for the \r\n before the closing boundary
 }
 
 void Request::parse_uri()
@@ -160,60 +194,6 @@ void Request::normalize_uri()
 			uri = _config.get_token(_uri, "index");
 	}
 	set_uri(join_paths(root, uri));
-}
-
-void Request::parse_headers()
-{
-	std::map<std::string, std::string> headers_map;
-	
-	std::string raw_request = get_raw_request();
-	size_t pos = raw_request.find("\r\n");
-	size_t end_pos = raw_request.find("\r\n\r\n");
-	if (get_method() == "POST" && REQUIRE_HEADERS && (std::string::npos || end_pos == std::string::npos || end_pos <= pos))
-	{
-		std::cerr << "Malformed request: missing headers" << std::endl;
-		set_error_code(400);
-		return ;
-	}
-	//pos = raw_request.find("\r\n");
-	//end_pos = raw_request.find("\r\n\r\n");
-	if (pos == std::string::npos || end_pos == std::string::npos || end_pos <= pos)
-	{
-		std::cerr << "Malformed request: missing headers" << std::endl;
-		set_error_code(400);
-		return ;
-	}
-	std::string headers_string = raw_request.substr(pos + 2, end_pos);
-	if (headers_string.length() > MAX_HEADER_LENGTH)
-	{
-		std::cerr << "Headers too long: " << headers_string.length() << " bytes" << std::endl;
-		set_error_code(431);
-		return ;
-	}
-	if (headers_string.empty() && get_method() == "POST" && REQUIRE_HEADERS)
-	{
-		std::cerr << "Malformed request: empty headers" << std::endl;
-		set_error_code(400);
-		return ;
-	}
-	set_headers_string(headers_string);
-	std::istringstream iss(headers_string);
-	std::string line;
-
-	while (std::getline(iss, line))
-	{
-		if (line.empty())
-			continue; // skip empty lines
-		size_t pos = line.find(':');
-		if (pos != std::string::npos)
-		{
-			std::string key = line.substr(0, pos);
-			std::string value = line.substr(pos + 1);
-			value.erase(0, value.find_first_not_of(" \t")); // trim leading whitespace
-			headers_map.insert(std::make_pair(key, value));
-		}
-	}
-	set_headers(headers_map);
 }
 
 void Request::extract_resource_info()
@@ -388,6 +368,60 @@ void Request::extract_resource_info()
 	set_resource_info(resource_info);
 }
 
+void Request::parse_headers()
+{
+	std::map<std::string, std::string> headers_map;
+	
+	std::string raw_request = get_raw_request();
+	size_t pos = raw_request.find("\r\n");
+	size_t end_pos = raw_request.find("\r\n\r\n");
+	if (get_method() == "POST" && REQUIRE_HEADERS && (std::string::npos || end_pos == std::string::npos || end_pos <= pos))
+	{
+		std::cerr << "Malformed request: missing headers" << std::endl;
+		set_error_code(400);
+		return ;
+	}
+	//pos = raw_request.find("\r\n");
+	//end_pos = raw_request.find("\r\n\r\n");
+	if (pos == std::string::npos || end_pos == std::string::npos || end_pos <= pos)
+	{
+		std::cerr << "Malformed request: missing headers" << std::endl;
+		set_error_code(400);
+		return ;
+	}
+	std::string headers_string = raw_request.substr(pos + 2, end_pos);
+	if (headers_string.length() > MAX_HEADER_LENGTH)
+	{
+		std::cerr << "Headers too long: " << headers_string.length() << " bytes" << std::endl;
+		set_error_code(431);
+		return ;
+	}
+	if (headers_string.empty() && get_method() == "POST" && REQUIRE_HEADERS)
+	{
+		std::cerr << "Malformed request: empty headers" << std::endl;
+		set_error_code(400);
+		return ;
+	}
+	set_headers_string(headers_string);
+	std::istringstream iss(headers_string);
+	std::string line;
+
+	while (std::getline(iss, line))
+	{
+		if (line.empty())
+			continue; // skip empty lines
+		size_t pos = line.find(':');
+		if (pos != std::string::npos)
+		{
+			std::string key = line.substr(0, pos);
+			std::string value = line.substr(pos + 1);
+			value.erase(0, value.find_first_not_of(" \t")); // trim leading whitespace
+			headers_map.insert(std::make_pair(key, value));
+		}
+	}
+	set_headers(headers_map);
+}
+
 void Request::parse_body()
 {
 	std::string body;
@@ -413,96 +447,62 @@ void Request::parse_body()
 	set_body(body);
 }
 
-Request::Request(const int fd, const std::string raw_request, const Config &server_config)
-	: _fd(fd), _error_code(0), _timestamp(time(NULL)), _raw_request(raw_request), _config(server_config)
+void Request::set_boundary()
 {
-	parse_request_line();
-	parse_uri();
-	normalize_uri();
-	extract_resource_info();
-	if (!_one_line_request)
+	std::string boundary;
+	
+	if (_raw_request.find("boundary=") == std::string::npos)
+		_boundary = "";
+	else
 	{
-		parse_headers();
-		parse_body();
-		if (get_method() == "POST" && get_headers().find("Content-Length") != get_headers().end()) // verifier directement ici si multipart ou non
-		{
-			set_boundary();
-			set_actual_body_length();
-		}
-		else
-		{
-			_boundary = "";
-			_actual_body_length = 0;
-		}
+		boundary = _raw_request.substr(_raw_request.find("boundary=") + 9);
+		boundary = boundary.substr(0, boundary.find_first_of('\r'));
+		_boundary = boundary;
+	}
+}
+
+void Request::set_actual_body_length(void)
+{
+	int content_length = 0;
+
+	if (get_headers().find("Content-Length") != get_headers().end())
+	{
+		std::istringstream iss(get_headers().find("Content-Length")->second);
+		iss >> content_length;
 	}
 	else
 	{
-		_headers_string = "";
-		_body = "";
-		_boundary = "";
-		_actual_body_length = 0;
-	}
-	not_complete_request();
-	_is_complete = true; //a editer =>probablement true si pas de bodysize ou bodysize atteint, sinon false
-}
-
-Request::~Request()
-{}
-
-void Request::parse_request_line()
-{
-	std::string method, uri, version;
-
-	if (_raw_request.empty())
-	{
-		std::cerr << "Empty request received." << std::endl;
-		_error_code = 400;
-		throw std::runtime_error("400 Bad Request");
+		std::cerr << "Content-Length header not found." << std::endl;
 	}
 	
-	try
+	std::string begin_boundary, end_boundary, multipart_headers, multipart_data;
+	
+	begin_boundary = "--" + _boundary + "\r\n";
+	end_boundary   = "--" + _boundary + "--\r\n";
+	
+	size_t begin_pos = get_body().find(begin_boundary);
+	if (begin_pos == std::string::npos)
 	{
-		if (_raw_request.find("\r\n") == std::string::npos)
-		{
-			_request_line = _raw_request;
-			_one_line_request = 1;
-		}
-		else
-			_request_line = _raw_request.substr(0, _raw_request.find("\r\n"));
-		std::istringstream iss(_request_line);
-		iss >> _method >> _uri >> _version;
-		if (_method.empty() || _uri.empty() || _version.empty())
-		{
-			std::cerr << "Malformed request line: " << _request_line << std::endl;
-			_error_code = 400;
-			throw std::runtime_error("400 Bad Request");
-		}
-		if (version != "HTTP/1.1" && version != "HTTP/1.0" && version != "undefined")
-		{
-			std::cerr << "Unsupported HTTP version: " << version << std::endl;
-			_error_code = 505;
-			throw std::runtime_error("505 HTTP Version Not Supported");
-		}
+		multipart_data = _body;
+		multipart_headers = "";
+		_actual_body_length = content_length;
+		return ;
 	}
-	catch(const std::exception& e)
+	multipart_headers = _body.substr(begin_pos + begin_boundary.length());
+	multipart_headers = multipart_headers.substr(0, multipart_headers.find("\r\n\r\n") + 4);
+	
+	begin_pos = _body.find("\r\n\r\n");
+	if (begin_pos == std::string::npos)
 	{
-		std::cerr << e.what() << '\n';
+		multipart_data = _body;
+		_actual_body_length = content_length;
+		return ;
 	}
+	_multipart_data = _body.substr(begin_pos + 4);
 
-	if (_method != "GET" && _method != "POST" && _method != "DELETE")
-	{
-		std::cerr << "Unsupported HTTP method: " << _method << std::endl;
-		_error_code = 501;
-		throw std::runtime_error("501 Not Implemented");
-		return ;
-	}
-	else if (!is_allowed_method()) // verifier si la methode est autorisee dans la configuration (location)
-	{
-		std::cerr << "Method not allowed: " << _method << std::endl;
-		throw std::runtime_error("405 Method Not Allowed");
-		_error_code = 405;
-		return ;
-	}
+	_actual_body_length  = content_length - (begin_boundary.length() + end_boundary.length());
+	_actual_body_length -= multipart_headers.length();
+	_actual_body_length -= 2; // for the \r\n before the closing boundary
 }
 
 int Request::is_allowed_method() const

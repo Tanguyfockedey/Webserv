@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:47:50 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/29 14:58:40 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/07/30 13:50:13 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,12 +81,12 @@ public:
 	void set_error_code(int error_code) { _error_code = error_code; }
 
 	// Methods
-	int not_complete_request();
 	void parse_request_line();
 	void parse_uri();
-	void parse_headers();
-	void parse_body();
 	void normalize_uri();
 	void extract_resource_info();
+	void parse_headers();
+	void parse_body();
 	int is_allowed_method() const;
+	int not_complete_request();
 };
