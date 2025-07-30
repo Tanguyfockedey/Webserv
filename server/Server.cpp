@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:00:55 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/24 15:39:43 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/29 16:26:07 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -160,8 +160,10 @@ void Server::read_request(pollfd &poll)
 	}
 	update_client_timeout(poll.fd);
 	std::string str = buffer;
+	
 	_requests.push_back(Request(poll.fd, str, _config));
-	if (_requests.back().is_complete()) //verifier body size pour savoir si la requete est complete 
+	
+	if (!_requests.back().not_complete_request()) //verifier body size pour savoir si la requete est complete 
 	{
 		std::cout << GREEN << "Complete request received from client [" << poll.fd << "]" << RESET << std::endl;
 		process_request(poll);
@@ -191,6 +193,7 @@ void Server::read_request(pollfd &poll)
 
 void Server::process_request(pollfd &poll)
 {
+	
 	std::string response;
 	
 	std::cout << MAGENTA << "Request received [" << poll.fd << "]:\n" << _requests.back().get_raw_request() << RESET << std::endl;

@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/25 16:15:29 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/07/30 13:24:51 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,8 +27,8 @@ void Response::build_response(std::fstream &path)
 		response << "Date: " << get_http_date() << "\r\n";
 		response << "Content-Type:" << _req.get_resource_info().find("mime_type")->second << "\r\n";
 		response << "Content-Length: " << body.length() << "\r\n";
-		response << "Connection: keep-alive\r\n";
-		response << "Cache-Control: no-store\r\n";
+		//response << "Connection: keep-alive\r\n";
+		//response << "Cache-Control: no-store\r\n";
 		_headers_string = response.str();
 		response << "\r\n";
 		response << body;
@@ -42,11 +42,10 @@ void Response::build_response(std::fstream &path)
 	path.close();
 }
 
-
 void Response::process_get_request()
 {
 	std::string path, status_line, error_msg, error_page;
-	
+	//                    server root       , config root + path
 	path = join_paths(get_current_dir_name(), _req.get_uri());
 	std::fstream file(path.c_str(), std::ios::in | std::ios::binary);
 	if (file.fail())
@@ -65,7 +64,7 @@ void Response::process_get_request()
 		}
 		else if (errno == 21) // Is a directory (ou tenter 20, si c'est pas 21)
 		{
-			// Handle directory access / listing (peut-etre pas ici, ici on est dans le cas FAIL)
+			// Opening a directory failed ; aussi erreur 403 ?
 		}
 		else
 		{
@@ -77,7 +76,7 @@ void Response::process_get_request()
 		set_status_line(status_line);
 		
 		std::string err_path;
-		err_path = join_paths(get_current_dir_name(), "/pages/");
+		err_path = join_paths(get_current_dir_name(), "/pages/"); // to do : aussi gerer pages d erreur custom de la config
 		err_path = join_paths(err_path, error_page);
 		std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
 		build_response(file_err);
@@ -89,7 +88,7 @@ void Response::process_get_request()
 	}
 }
 
-
+// fonctionne avec requete unique
 void Response::handle_multipart_post()
 {
 	std::string post_data, filename, path;
@@ -133,7 +132,6 @@ void Response::handle_multipart_post()
 	set_response("HTTP/1.1 " + _status_line + "\r\n\r\n");
 }
 
-
 void Response::handle_single_part_post()
 {
 	std::string body = _req.get_body();
@@ -143,7 +141,6 @@ void Response::handle_single_part_post()
 		for (size_t i = 0; i < body.length(); ++i)
 			std::cout << body[i];
 }
-
 
 void Response::process_post_request()
 {
@@ -170,7 +167,6 @@ void Response::process_post_request()
 	}
 }
 
-
 void Response::process_delete_request()
 {
 	// Basic implementation for now
@@ -185,7 +181,6 @@ void Response::process_delete_request()
 	
 	set_response("...");
 }
-
 
 Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 {
@@ -218,7 +213,6 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 	else if (_req.get_method() == "DELETE")
 		process_delete_request();
 }
-
 
 Response::~Response()
 {}

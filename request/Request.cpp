@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
+/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:48:10 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/28 15:31:24 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/30 13:25:00 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,10 +81,8 @@ void Request::parse_uri()
 	{
 		if (uri.find("../") != std::string::npos || uri.find("..\\") != std::string::npos)
 		{
-			//DEBUG - A FIX, PAS CORRECT ACTUELLEMENT, "../" ne devrait etre un probleme
-			// que si ca entraine une sortie du repertoire racine
 			std::cerr << "The requested URL was rejected: " << uri << std::endl;
-			set_error_code(400);
+			set_error_code(400);// verifier si c'est 403 ou 400, ... ?
 			throw std::runtime_error("400 Bad Request");
 		}
 		else if (uri.length() > MAX_URI_LENGTH)
@@ -93,7 +91,7 @@ void Request::parse_uri()
 			set_error_code(414);
 			throw std::runtime_error("414 URI Too Long");
 		}
-		else if (uri.find(" ") != std::string::npos)
+		else if (uri.find(" ") != std::string::npos) // verifier si les espaces sont vmt invalides
 		{
 			std::cerr << "The requested URL contains spaces: " << uri << std::endl;
 			set_error_code(400);
@@ -143,7 +141,6 @@ void Request::parse_uri()
 	_uri_fragment = fragment;
 }
 
-
 void Request::normalize_uri()
 {
 	std::string root, uri, normalized_uri;
@@ -165,7 +162,6 @@ void Request::normalize_uri()
 	set_uri(join_paths(root, uri));
 }
 
-
 void Request::parse_headers()
 {
 	std::map<std::string, std::string> headers_map;
@@ -179,15 +175,15 @@ void Request::parse_headers()
 		set_error_code(400);
 		return ;
 	}
-	pos = raw_request.find("\r\n");
-	end_pos = raw_request.find("\r\n\r\n");
+	//pos = raw_request.find("\r\n");
+	//end_pos = raw_request.find("\r\n\r\n");
 	if (pos == std::string::npos || end_pos == std::string::npos || end_pos <= pos)
 	{
 		std::cerr << "Malformed request: missing headers" << std::endl;
 		set_error_code(400);
 		return ;
 	}
-	std::string headers_string = raw_request.substr(pos + 2, end_pos + 4);
+	std::string headers_string = raw_request.substr(pos + 2, end_pos);
 	if (headers_string.length() > MAX_HEADER_LENGTH)
 	{
 		std::cerr << "Headers too long: " << headers_string.length() << " bytes" << std::endl;
@@ -220,7 +216,6 @@ void Request::parse_headers()
 	set_headers(headers_map);
 }
 
-
 void Request::extract_resource_info()
 {
 	std::string uri, extension, mime_type;
@@ -246,7 +241,7 @@ void Request::extract_resource_info()
 		for (size_t x = 0; x < extension.length(); x++)
 			extension[x] = tolower(extension[x]);
 	}
-	// Set MIME type
+	// Set MIME type		// utiliser une structure dans webserv.hpp
 	if (extension == "html" || extension == "htm")
 		mime_type = "text/html";
 	else if (extension == "css")
@@ -393,7 +388,6 @@ void Request::extract_resource_info()
 	set_resource_info(resource_info);
 }
 
-
 void Request::parse_body()
 {
 	std::string body;
@@ -405,12 +399,13 @@ void Request::parse_body()
 		return ;
 	}
 	body = _raw_request.substr(pos + 4);
-	if (body.empty() && get_method() == "POST")
-	{
-		std::cerr << "Empty body in request." << std::endl;
-		set_error_code(400);
-	}
-	else if (body.length() > MAX_BODY_LENGTH)
+	// if (body.empty() && get_method() == "POST") // protocole autorise requete sans headers/body
+	// {
+	// 	std::cerr << "Empty body in request." << std::endl;
+	// 	set_error_code(400);
+	// }
+	//else 
+	if (body.length() > MAX_BODY_LENGTH)
 	{
 		std::cerr << "Body too long: " << body.length() << " bytes" << std::endl;
 		set_error_code(413);
@@ -421,7 +416,6 @@ void Request::parse_body()
 Request::Request(const int fd, const std::string raw_request, const Config &server_config)
 	: _fd(fd), _error_code(0), _timestamp(time(NULL)), _raw_request(raw_request), _config(server_config)
 {
-	_is_complete = true; //a editer =>probablement true si pas de bodysize ou bodysize atteint, sinon false
 	parse_request_line();
 	parse_uri();
 	normalize_uri();
@@ -430,7 +424,7 @@ Request::Request(const int fd, const std::string raw_request, const Config &serv
 	{
 		parse_headers();
 		parse_body();
-		if (get_method() == "POST" && get_headers().find("Content-Length") != get_headers().end())
+		if (get_method() == "POST" && get_headers().find("Content-Length") != get_headers().end()) // verifier directement ici si multipart ou non
 		{
 			set_boundary();
 			set_actual_body_length();
@@ -448,11 +442,12 @@ Request::Request(const int fd, const std::string raw_request, const Config &serv
 		_boundary = "";
 		_actual_body_length = 0;
 	}
+	not_complete_request();
+	_is_complete = true; //a editer =>probablement true si pas de bodysize ou bodysize atteint, sinon false
 }
 
-
-Request::~Request() {}
-
+Request::~Request()
+{}
 
 void Request::parse_request_line()
 {
@@ -469,18 +464,14 @@ void Request::parse_request_line()
 	{
 		if (_raw_request.find("\r\n") == std::string::npos)
 		{
-			_request_line = _raw_request; // _request_line = _raw_request + "\r\n";
+			_request_line = _raw_request;
 			_one_line_request = 1;
 		}
 		else
 			_request_line = _raw_request.substr(0, _raw_request.find("\r\n"));
 		std::istringstream iss(_request_line);
-		// iss >> _method >> _uri >> _version; // ca marcherait ?
-		iss >> method >> uri >> version;
-		set_method(method);
-		set_uri(uri);
-		set_version(version);
-		if (method.empty() || uri.empty() || version.empty())
+		iss >> _method >> _uri >> _version;
+		if (_method.empty() || _uri.empty() || _version.empty())
 		{
 			std::cerr << "Malformed request line: " << _request_line << std::endl;
 			_error_code = 400;
@@ -498,22 +489,21 @@ void Request::parse_request_line()
 		std::cerr << e.what() << '\n';
 	}
 
-	if (method != "GET" && method != "POST" && method != "DELETE")
+	if (_method != "GET" && _method != "POST" && _method != "DELETE")
 	{
-		std::cerr << "Unsupported HTTP method: " << method << std::endl;
+		std::cerr << "Unsupported HTTP method: " << _method << std::endl;
 		_error_code = 501;
 		throw std::runtime_error("501 Not Implemented");
 		return ;
 	}
-	else if (!is_allowed_method())
+	else if (!is_allowed_method()) // verifier si la methode est autorisee dans la configuration (location)
 	{
-		std::cerr << "Method not allowed: " << method << std::endl;
+		std::cerr << "Method not allowed: " << _method << std::endl;
 		throw std::runtime_error("405 Method Not Allowed");
 		_error_code = 405;
 		return ;
 	}
 }
-
 
 int Request::is_allowed_method() const
 {
@@ -521,4 +511,15 @@ int Request::is_allowed_method() const
 	
 	// temporarily, return 1
 	return 1;
+}
+
+int Request::not_complete_request()
+{
+	if (get_headers().find("Content-Length") != get_headers().end())
+	{
+		int content_length = atoi(get_headers().find("Content_length")->second.c_str()); 
+		if (content_length <= 0 || _body.length() != static_cast<size_t>(content_length))
+			return 1; // Not complete
+	}
+	return 0; // Complete
 }
