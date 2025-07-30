@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/30 15:30:29 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/07/30 15:55:01 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -139,23 +139,22 @@ void Response::build_response(std::fstream &path)
 {
 	if (path.is_open())
 	{
-		std::string body;
+		// std::string body;
 		
-		body = std::string((std::istreambuf_iterator<char>(path)), std::istreambuf_iterator<char>());
-		// std::stringstream response;
+		_body = std::string((std::istreambuf_iterator<char>(path)), std::istreambuf_iterator<char>());
+		std::stringstream response;
 
-		_response += "HTTP/1.1 " + _status_line + "\r\n";
-		_response += "Host: " + _config.get_token("", "server_name") + "\r\n";
-		_response += "Date: " + get_http_date() + "\r\n";
-		_response += "Content-Type:" + _req.get_resource_info().find("mime_type")->second + "\r\n";
-		_response += "Content-Length: " + body.length();
-		_response += "\r\n";
+		response << "HTTP/1.1 " << _status_line << "\r\n";
+		response << "Host: " << _config.get_token("", "server_name") << "\r\n";
+		response << "Date: " << get_http_date() << "\r\n";
+		response << "Content-Type:" << _req.get_resource_info().find("mime_type")->second << "\r\n";
+		response << "Content-Length: " << _body.length() << "\r\n";
 		//response << "Connection: keep-alive\r\n";
 		//response << "Cache-Control: no-store\r\n";
 		_headers_string = _response;
-		_response += "\r\n";
-		_response += body;
-		// _response = response.str();
+		response << "\r\n";
+		response << _body;
+		_response = response.str();
 	}
 	else
 	{
