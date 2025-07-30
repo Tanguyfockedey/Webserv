@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/30 14:51:00 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/07/30 15:30:29 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,7 +53,7 @@ void Response::process_get_request()
 	// std::string status_line;
 	
 	//                    server root       , config root + path
-	path = join_paths(get_current_dir_name(), _req.get_uri());
+	path = join_paths(root_directory(), _req.get_uri());
 	std::fstream file(path.c_str(), std::ios::in | std::ios::binary);
 	if (file.fail())
 	{
@@ -82,7 +82,7 @@ void Response::process_get_request()
 		std::cerr << error_msg;
 		
 		std::string err_path;
-		err_path = join_paths(get_current_dir_name(), "/pages/"); // to do : aussi gerer pages d erreur custom de la config
+		err_path = join_paths(root_directory(), "/pages/"); // to do : aussi gerer pages d erreur custom de la config
 		err_path = join_paths(err_path, error_page);
 		std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
 		build_response(file_err);
@@ -192,8 +192,7 @@ void Response::handle_multipart_post()
 		return ;
 	}
 
-	// path = join_paths(get_current_dir_name(), _req.get_config().get_root());
-	path = join_paths(get_current_dir_name(), _config.get_token(_req.get_uri(), "root"));
+	path = join_paths(root_directory(), _config.get_token(_req.get_uri(), "root"));
 
 	path = join_paths(path, UPLOAD_PATH);
 

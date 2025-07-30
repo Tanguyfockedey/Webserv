@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:21 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/30 14:37:56 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/07/30 14:58:10 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,16 +34,16 @@ public:
 	~Response();
 
 	// Getters
-	// int get_fd() const { return _fd; }
-	// const std::string& get_response() const { return _response; }
+	int get_fd() const { return _fd; }
+	const std::string& get_response() const { return _response; }
 	// const std::string& get_status_line() const { return _status_line; }
-	// const std::string& get_headers_string() const { return _headers_string; }
+	const std::string& get_headers_string() const { return _headers_string; }
 	// const std::map<std::string, std::string>& get_headers() const { return _headers; }
 	// const std::string& get_body() const { return _body; }
 	// const Request& get_req() const { return _req; }
 
 	// Setters
-	// void set_response(const std::string& response) { _response = response; }
+	void set_response(const std::string& response) { _response = response; }
 	// void set_status_line(const std::string& status_line) { _status_line = status_line; }
 	// void set_headers(const std::map<std::string, std::string>& headers) { _headers = headers; }
 	// void set_body(const std::string& body) { _body = body; }
