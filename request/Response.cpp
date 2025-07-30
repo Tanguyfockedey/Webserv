@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/30 15:55:01 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/07/30 18:06:48 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -151,7 +151,7 @@ void Response::build_response(std::fstream &path)
 		response << "Content-Length: " << _body.length() << "\r\n";
 		//response << "Connection: keep-alive\r\n";
 		//response << "Cache-Control: no-store\r\n";
-		_headers_string = _response;
+		_headers_string = response.str();
 		response << "\r\n";
 		response << _body;
 		_response = response.str();

@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:00:55 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/29 16:26:07 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/07/30 18:06:56 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -168,10 +168,11 @@ void Server::read_request(pollfd &poll)
 		std::cout << GREEN << "Complete request received from client [" << poll.fd << "]" << RESET << std::endl;
 		process_request(poll);
 	}
-	// else
-	// {
-	// 	std::cout << BLUE << "Partial request received from client [" << poll.fd << "]" << RESET << std::endl;
-	// 	if (has_header())
+	else
+	{
+		std::cout << GREEN << "Partial request received from client [" << poll.fd << "]" << RESET << std::endl;
+	}
+		// 	if (has_header())
 	// 	{
 	// 		//keep for later
 	// 	}
