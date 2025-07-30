@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
+/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 17:22:08 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/09 10:29:31 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/07/29 15:52:18 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@ class Client
 	private:
 		int _fd;
 		time_t _last_activity;
+		bool _waiting_request;
 
 	public:
 		// Constructor and Destructor
@@ -29,4 +30,6 @@ class Client
 		int get_fd() const {return _fd;}
 		time_t get_last_activity() const {return _last_activity;}
 		void set_last_activity() {_last_activity = time(NULL);}
+		bool get_waiting_request() const {return _waiting_request;}
+		void set_waiting_request(bool waiting) {_waiting_request = waiting;}
 };
