@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:00:55 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/30 19:04:14 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/08/01 22:00:08 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -80,23 +80,28 @@ void Server::init_socket()
 
 void Server::polling()
 {
-	int poll_count = poll(_poll_fds.data(), _poll_fds.size(), 0);
+	int poll_count = poll(_poll_fds.data(), _poll_fds.size(), 10);
 	if (poll_count < 0)
 	{
 		std::cerr << "Polling error: " << strerror(errno) << std::endl;
 		return;
 	}
-	for (size_t i = 0; i < _poll_fds.size(); i++)
+	if (poll_count > 0)
 	{
-		if (_poll_fds[i].revents & POLLIN)
+		size_t i = 0;
+		while (i < _poll_fds.size())
 		{
-			if (i < _sin.size())
-				add_client(i);
-			else
-				read_request(_poll_fds[i]);
+			if (_poll_fds[i].revents & POLLOUT)
+				send_response(_poll_fds[i]);
+			if (_poll_fds[i].revents & POLLIN)
+			{
+				if (i < _sin.size())
+					add_client(i);
+				else
+					read_request(_poll_fds[i]);
+			}
+			i++;
 		}
-		if (_poll_fds[i].revents & POLLOUT)
-			send_response(_poll_fds[i]);
 	}
 	check_clients_timeout();
 	check_requests_timeout();
@@ -116,7 +121,6 @@ void Server::add_client(int i)
 	new_fd.revents = 0;
 	_poll_fds.push_back(new_fd);
 	_clients.push_back(Client(new_fd.fd));
-	std::cout << YELLOW << "Client [" << new_fd.fd << "] connected." << RESET << std::endl;
 }
 
 void Server::remove_client(int fd)
@@ -155,6 +159,7 @@ void Server::read_request(pollfd &poll)
 	}
 	if (bytes_read == 0)
 	{
+		std::cout << YELLOW << "Client [" << poll.fd << "] closed connection on read." << RESET << std::endl;
 		remove_client(poll.fd);
 		return;
 	}
@@ -165,13 +170,13 @@ void Server::read_request(pollfd &poll)
 	
 	if (!_requests.back().not_complete_request()) //verifier body size pour savoir si la requete est complete 
 	{
-		std::cout << GREEN << "Complete request received [" << poll.fd << "]" << RESET << std::endl;
+		std::cout << PURPLE << "Complete request received [" << poll.fd << "]" << RESET << std::endl;
 		std::cout << MAGENTA << _requests.back().get_raw_request() << RESET << std::endl;
 		process_request(poll);
 	}
 	else
 	{
-		std::cout << GREEN << "Partial request received [" << poll.fd << "]" << RESET << std::endl;
+		std::cout << PURPLE << "Partial request received [" << poll.fd << "]" << RESET << std::endl;
 		std::cout << MAGENTA << _requests.back().get_raw_request() << RESET << std::endl;
 	}
 		// 	if (has_header())
@@ -197,7 +202,7 @@ void Server::read_request(pollfd &poll)
 void Server::process_request(pollfd &poll)
 {
 	
-	std::string response;
+	// std::string response;
 	
 	_response.push_back(Response(poll.fd, _requests.back()));
 	poll.events |= POLLOUT;
@@ -219,19 +224,21 @@ void Server::send_response(pollfd &poll)
 			}
 			else if (bytes_sent == 0)
 			{
-				std::cout << YELLOW << "Client [" << poll.fd << "] closed connection." << RESET << std::endl;
+				std::cout << YELLOW << "Client [" << poll.fd << "] closed connection on send." << RESET << std::endl;
 				_response.erase(_response.begin() + i);
 				remove_client(poll.fd);
 			}
 			else if (bytes_sent == static_cast<ssize_t>(_response[i].get_response().size()))
 			{
-				std::cout << GREEN << "Complete response sent [" << poll.fd << "]:\n" << CYAN << _response[i].get_headers_string() << RESET << std::endl;
+				std::cout << BLUE << "Complete response sent [" << poll.fd << "]:\n" << RESET;
+				std::cout << CYAN << _response[i].get_headers_string() << RESET << std::endl;
 				_response.erase(_response.begin() + i);
 				poll.events ^= POLLOUT;
 			}
 			else
 			{
-				std::cout << GREEN << "Partial response sent [" << poll.fd << "]:\n" << CYAN << _response[i].get_response().substr(bytes_sent) << RESET << std::endl;
+				std::cout << BLUE << "Partial response sent [" << poll.fd << "]:\n" << RESET;
+				std::cout << CYAN << bytes_sent << RESET << std::endl << std::endl;
 				_response[i].set_response(_response[i].get_response().substr(bytes_sent));
 			}
 			return ;

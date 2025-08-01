@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/05 19:39:13 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/30 15:35:57 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/08/01 18:44:24 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,10 +55,12 @@
 
 // Colors
 #define RED "\033[31m"
-#define GREEN "\033[32m"
+#define ORANGE "\033[38;5;208m"
 #define YELLOW "\033[33m"
-#define BLUE "\033[34m"
-#define MAGENTA "\033[35m"
+#define GREEN "\033[32m"
 #define CYAN "\033[36m"
+#define BLUE "\033[1;34m"
+#define MAGENTA "\033[35m"
+#define PURPLE "\033[1;38;5;93m"
 #define WHITE "\033[37m"
 #define RESET "\033[0m"
