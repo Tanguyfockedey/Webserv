@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:48:10 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/30 17:07:53 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/08/01 19:25:13 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,7 +67,10 @@ void Request::parse_request_line()
 			_one_line_request = 1;
 		}
 		else
+		{
 			_request_line = _raw_request.substr(0, _raw_request.find("\r\n"));
+			_one_line_request = 0;
+		}
 		std::istringstream iss(_request_line);
 		iss >> _method >> _uri >> _version;
 		if (_method.empty() || _uri.empty() || _version.empty())
@@ -523,8 +526,8 @@ int Request::not_complete_request()
 	{
 		char* content_length_str = const_cast<char *>(_headers.find("Content-Length")->second.c_str());
 		int content_length = atoi(content_length_str); 
-		if (content_length <= 0 || _body.length() != static_cast<size_t>(content_length))
-		return 1; // Not complete
+		if (_body.length() != static_cast<size_t>(content_length))
+			return 1; // Not complete
 	}
 	return 0; // Complete
 }

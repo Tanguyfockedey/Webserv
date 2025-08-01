@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 17:22:31 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/29 15:52:36 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/08/01 18:52:50 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 Client::Client(int fd): _fd(fd), _last_activity(time(NULL)), _waiting_request(false)
 {
-	std::cout << "Client created with fd: " << _fd << std::endl;
+	std::cout << YELLOW << "Client [" << _fd << "] connected." << RESET << std::endl;
 }
 
 Client::~Client()
