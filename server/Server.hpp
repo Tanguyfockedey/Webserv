@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:01:39 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/23 23:52:32 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/08/05 18:46:48 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,9 @@
 #include "../request/Request.hpp"
 #include "../request/Response.hpp"
 #include "Client.hpp"
+
+class Client;
+class Response;
 
 class Server
 {
@@ -46,4 +49,7 @@ class Server
 		void update_client_timeout(int fd);
 		void check_clients_timeout();
 		void check_requests_timeout();
+		bool pending_response(int fd) const;
+		// Client* find_client(int fd);
+		Request* find_request(int fd);
 };

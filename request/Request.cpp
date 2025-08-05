@@ -6,44 +6,15 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:48:10 by tafocked          #+#    #+#             */
-/*   Updated: 2025/08/01 19:25:13 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/08/05 18:46:09 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Request.hpp"
 
 Request::Request(const int fd, const std::string raw_request, const Config &server_config)
-	: _fd(fd), _error_code(0), _timestamp(time(NULL)), _raw_request(raw_request), _config(server_config)
-{
-	parse_request_line();
-	parse_uri();
-	normalize_uri();
-	extract_resource_info();
-	if (!_one_line_request)
-	{
-		parse_headers();
-		parse_body();
-		if (_method == "POST" && _headers.find("Content-Length") != _headers.end()) // verifier directement ici si multipart ou non
-		{
-			set_boundary();
-			set_actual_body_length();
-		}
-		else
-		{
-			_boundary = "";
-			_actual_body_length = 0;
-		}
-	}
-	else
-	{
-		_headers_string = "";
-		_body = "";
-		_boundary = "";
-		_actual_body_length = 0;
-	}
-	not_complete_request();
-	_is_complete = true; //a editer =>probablement true si pas de bodysize ou bodysize atteint, sinon false
-}
+	: _fd(fd), _error_code(0), _headers_parsed(false), _timestamp(time(NULL)), _raw_request(raw_request), _config(server_config)
+{}
 
 Request::~Request()
 {}
@@ -519,15 +490,65 @@ int Request::is_allowed_method() const
 	return 1;
 }
 
-int Request::not_complete_request()
+bool Request::is_complete()
 {
-
-	if (_headers.find("Content-Length") != _headers.end())
+	if (!_headers_parsed && _raw_request.find("\r\n\r\n") == std::string::npos)
+		return false;
+	else
 	{
-		char* content_length_str = const_cast<char *>(_headers.find("Content-Length")->second.c_str());
-		int content_length = atoi(content_length_str); 
-		if (_body.length() != static_cast<size_t>(content_length))
-			return 1; // Not complete
+		parse_request_line();
+		parse_uri();
+		normalize_uri();
+		extract_resource_info();
+		if (!_one_line_request)
+		{
+			parse_headers();
+			parse_body();
+			if (_method == "POST" && _headers.find("Content-Length") != _headers.end()) // verifier directement ici si multipart ou non
+			{
+				set_boundary();
+				set_actual_body_length();
+			}
+			else
+				_actual_body_length = 0;
+		}
+		else
+			_actual_body_length = 0;
+		_headers_parsed = true;
 	}
-	return 0; // Complete
+	if (_headers_parsed)
+	{
+		if (_headers.find("Content-Length") == _headers.end())
+			return true;
+		else
+		{
+			std::string body = _raw_request.substr(_raw_request.find("\r\n\r\n") + 4);
+			size_t content_length = 0;
+			std::istringstream iss(_headers.find("Content-Length")->second);
+			iss >> content_length;
+			if (body.length() < content_length)
+				return false;
+			else if (body.length() > content_length)
+			{
+				std::cerr << "Request body too long: " << body.length() << " bytes" << std::endl;
+				_error_code = 413;
+				return false;
+			}
+			else
+			{
+				parse_body();
+				if (_method == "POST" && _headers.find("Content-Length") != _headers.end()) // verifier directement ici si multipart ou non
+				{
+					set_boundary();
+					set_actual_body_length();
+				}
+				else
+					_actual_body_length = 0;
+				return true;
+			}
+		}
+	}
+		
+
+	return true;
 }

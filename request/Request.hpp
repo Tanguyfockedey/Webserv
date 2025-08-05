@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:47:50 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/30 14:37:24 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/08/05 18:38:46 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,10 +20,10 @@ class Config;
 class Request
 {
 private:
-	bool _is_complete;
 	int _fd;
 	int _error_code;
 	int	_one_line_request;
+	bool _headers_parsed;
 	time_t _timestamp;
 	std::string _raw_request;
 	std::string _request_line;
@@ -47,8 +47,7 @@ public:
 	~Request();
 
 	// Getters
-	const bool& is_complete() const { return _is_complete; }
-	// const int& get_fd() const { return _fd; }
+	const int& get_fd() const { return _fd; }
 	const int& get_error_code() const { return _error_code; }
 	const std::string& get_raw_request() const { return _raw_request; }
 	// const std::string& get_request_line() const { return _request_line; }
@@ -68,6 +67,7 @@ public:
 	time_t get_timestamp() const { return _timestamp; }
 
 	// Setters
+	void set_raw_request(const std::string &raw_request) { _raw_request = raw_request; }
 	// void set_request_line(const std::string &request_line) { _request_line = request_line; }
 	// void set_method(const std::string &method) { _method = method; }
 	// void set_uri(const std::string &uri) { _uri = uri; }
@@ -88,5 +88,5 @@ public:
 	void parse_headers();
 	void parse_body();
 	int is_allowed_method() const;
-	int not_complete_request();
+	bool is_complete();
 };

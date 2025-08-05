@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:00:55 by tafocked          #+#    #+#             */
-/*   Updated: 2025/08/01 22:00:08 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/08/05 18:51:52 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -80,7 +80,7 @@ void Server::init_socket()
 
 void Server::polling()
 {
-	int poll_count = poll(_poll_fds.data(), _poll_fds.size(), 10);
+	int poll_count = poll(_poll_fds.data(), _poll_fds.size(), 1);
 	if (poll_count < 0)
 	{
 		std::cerr << "Polling error: " << strerror(errno) << std::endl;
@@ -91,15 +91,15 @@ void Server::polling()
 		size_t i = 0;
 		while (i < _poll_fds.size())
 		{
-			if (_poll_fds[i].revents & POLLOUT)
-				send_response(_poll_fds[i]);
 			if (_poll_fds[i].revents & POLLIN)
 			{
 				if (i < _sin.size())
-					add_client(i);
+				add_client(i);
 				else
-					read_request(_poll_fds[i]);
+				read_request(_poll_fds[i]);
 			}
+			if (_poll_fds[i].revents & POLLOUT)
+				send_response(_poll_fds[i]);
 			i++;
 		}
 	}
@@ -159,26 +159,60 @@ void Server::read_request(pollfd &poll)
 	}
 	if (bytes_read == 0)
 	{
-		std::cout << YELLOW << "Client [" << poll.fd << "] closed connection on read." << RESET << std::endl;
-		remove_client(poll.fd);
+		// std::cout << YELLOW << "Client [" << poll.fd << "] closed connection on read." << RESET << std::endl;
+		if (!pending_response(poll.fd))
+			remove_client(poll.fd);
 		return;
 	}
 	update_client_timeout(poll.fd);
 	std::string str = buffer;
 	
-	_requests.push_back(Request(poll.fd, str, _config));
-	
-	if (!_requests.back().not_complete_request()) //verifier body size pour savoir si la requete est complete 
+	// Client *client = find_client(poll.fd);
+	Request *request = find_request(poll.fd);
+
+	if (!request)
 	{
-		std::cout << PURPLE << "Complete request received [" << poll.fd << "]" << RESET << std::endl;
-		std::cout << MAGENTA << _requests.back().get_raw_request() << RESET << std::endl;
-		process_request(poll);
+		_requests.push_back(Request(poll.fd, str, _config));
+		request = &_requests.back();
+		if (request->is_complete())
+		{
+			std::cout << PURPLE << "Complete request received [" << poll.fd << "]:\n" << RESET;
+			std::cout << MAGENTA << _requests.back().get_raw_request() << RESET << std::endl;
+			process_request(poll);
+		}
+		else
+		{
+			std::cout << PURPLE << "Partial request received [" << poll.fd << "]:\n" << RESET;
+			std::cout << MAGENTA << bytes_read << RESET << std::endl;
+		}
 	}
 	else
 	{
-		std::cout << PURPLE << "Partial request received [" << poll.fd << "]" << RESET << std::endl;
-		std::cout << MAGENTA << _requests.back().get_raw_request() << RESET << std::endl;
+		request->set_raw_request(request->get_raw_request() + str);
+		if (request->is_complete())
+		{
+			std::cout << PURPLE << "Complete request received [" << poll.fd << "]:\n" << RESET;
+			std::cout << MAGENTA << _requests.back().get_raw_request() << RESET << std::endl;
+			process_request(poll);
+		}
+		else
+		{
+			std::cout << PURPLE << "Partial request received [" << poll.fd << "]:\n" << RESET;
+			std::cout << MAGENTA << bytes_read << RESET << std::endl;
+		}
 	}
+	
+	// if (!_requests.back().not_complete_request()) //verifier body size pour savoir si la requete est complete 
+	// {
+	// 	std::cout << PURPLE << "Complete request received [" << poll.fd << "]" << RESET << std::endl;
+	// 	std::cout << MAGENTA << _requests.back().get_raw_request() << RESET << std::endl;
+	// 	process_request(poll);
+	// }
+	// else
+	// {
+	// 	std::cout << PURPLE << "Partial request received [" << poll.fd << "]" << RESET << std::endl;
+	// 	std::cout << MAGENTA << _requests.back().get_raw_request() << RESET << std::endl;
+	// }
 		// 	if (has_header())
 	// 	{
 	// 		//keep for later
@@ -224,7 +258,7 @@ void Server::send_response(pollfd &poll)
 			}
 			else if (bytes_sent == 0)
 			{
-				std::cout << YELLOW << "Client [" << poll.fd << "] closed connection on send." << RESET << std::endl;
+				// std::cout << YELLOW << "Client [" << poll.fd << "] closed connection on send." << RESET << std::endl;
 				_response.erase(_response.begin() + i);
 				remove_client(poll.fd);
 			}
@@ -285,3 +319,34 @@ void Server::check_requests_timeout()
 		}
 	}
 }
+
+bool Server::pending_response(int fd) const
+{
+	for (std::vector<Response>::const_iterator i = _response.begin(); i != _response.end(); i++)
+	{
+		if (i->get_fd() == fd)
+			return true;
+	}
+	return false;
+}
+
+// Client* Server::find_client(int fd)
+// {
+// 	for (size_t i = 0; i < _clients.size(); i++)
+// 	{
+// 		if (_clients[i].get_fd() == fd)
+// 			return &_clients[i];
+// 	}
+// 	return nullptr;
+// }
+
+Request* Server::find_request(int fd)
+{
+	for (size_t i = 0; i < _requests.size(); i++)
+	{
+		if (_requests[i].get_fd() == fd)
+			return &_requests[i];
+	}
+	return NULL;
+}
+
