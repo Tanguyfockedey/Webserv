@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:47:50 by tafocked          #+#    #+#             */
-/*   Updated: 2025/08/05 18:38:46 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/08/07 16:16:21 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,7 @@ class Request
 private:
 	int _fd;
 	int _error_code;
-	int	_one_line_request;
+	int _one_line_request;
 	bool _headers_parsed;
 	time_t _timestamp;
 	std::string _raw_request;
@@ -36,8 +36,8 @@ private:
 	std::map<std::string, std::string> _headers;
 	std::string _boundary;
 	std::string _multipart_data;
-	size_t _actual_body_length;
 	std::string _body;
+	size_t _actual_body_length;
 	std::map<std::string, std::string> _resource_info;
 	Config _config;
 
@@ -76,11 +76,13 @@ public:
 	// void set_headers(const std::map<std::string, std::string> &headers) { _headers = headers; }
 	// void set_resource_info(const std::map<std::string, std::string> &resource_info) { _resource_info = resource_info; }
 	// void set_body(const std::string &body) { _body = body; }
+	// void set_error_code(int error_code) { _error_code = error_code; }
+	
+	// Methods
+	bool is_complete();
+private:
 	void set_boundary(void);
 	void set_actual_body_length(void);
-	// void set_error_code(int error_code) { _error_code = error_code; }
-
-	// Methods
 	void parse_request_line();
 	void parse_uri();
 	void normalize_uri();
@@ -88,5 +90,4 @@ public:
 	void parse_headers();
 	void parse_body();
 	int is_allowed_method() const;
-	bool is_complete();
 };

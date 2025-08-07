@@ -6,14 +6,14 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:48:10 by tafocked          #+#    #+#             */
-/*   Updated: 2025/08/05 18:46:09 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/08/07 16:58:51 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Request.hpp"
 
 Request::Request(const int fd, const std::string raw_request, const Config &server_config)
-	: _fd(fd), _error_code(0), _headers_parsed(false), _timestamp(time(NULL)), _raw_request(raw_request), _config(server_config)
+	: _fd(fd), _error_code(0), _headers_parsed(false), _timestamp(time(NULL)), _raw_request(raw_request), _actual_body_length(0), _config(server_config)
 {}
 
 Request::~Request()
@@ -492,29 +492,22 @@ int Request::is_allowed_method() const
 
 bool Request::is_complete()
 {
-	if (!_headers_parsed && _raw_request.find("\r\n\r\n") == std::string::npos)
-		return false;
-	else
+	if (!_headers_parsed)
 	{
-		parse_request_line();
-		parse_uri();
-		normalize_uri();
-		extract_resource_info();
-		if (!_one_line_request)
+		if (_raw_request.find("\r\n\r\n") == std::string::npos)
+			return false;
+		else
 		{
-			parse_headers();
-			parse_body();
-			if (_method == "POST" && _headers.find("Content-Length") != _headers.end()) // verifier directement ici si multipart ou non
-			{
-				set_boundary();
-				set_actual_body_length();
-			}
+			parse_request_line();
+			parse_uri();
+			normalize_uri();
+			extract_resource_info();
+			if (!_one_line_request)
+				parse_headers();
 			else
 				_actual_body_length = 0;
+			_headers_parsed = true;
 		}
-		else
-			_actual_body_length = 0;
-		_headers_parsed = true;
 	}
 	if (_headers_parsed)
 	{
@@ -526,11 +519,13 @@ bool Request::is_complete()
 			size_t content_length = 0;
 			std::istringstream iss(_headers.find("Content-Length")->second);
 			iss >> content_length;
-			if (body.length() < content_length)
+			
+			size_t body_length = body.size();
+			if (body_length < content_length)
 				return false;
-			else if (body.length() > content_length)
+			else if (body_length > content_length)
 			{
-				std::cerr << "Request body too long: " << body.length() << " bytes" << std::endl;
+				std::cerr << "Request body too long: " << body_length << " bytes" << std::endl;
 				_error_code = 413;
 				return false;
 			}
@@ -548,7 +543,5 @@ bool Request::is_complete()
 			}
 		}
 	}
-		
-
 	return true;
 }

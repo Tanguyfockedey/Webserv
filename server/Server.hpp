@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:01:39 by tafocked          #+#    #+#             */
-/*   Updated: 2025/08/05 18:46:48 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/08/07 17:27:29 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,7 +44,7 @@ class Server
 		void add_client(int i);
 		void remove_client(int fd);
 		void read_request(pollfd &poll);
-		void process_request(pollfd &poll);
+		void process_request(pollfd &poll, Request *request);
 		void send_response(pollfd &poll);
 		void update_client_timeout(int fd);
 		void check_clients_timeout();

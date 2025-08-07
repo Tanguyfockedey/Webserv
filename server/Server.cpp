@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:00:55 by tafocked          #+#    #+#             */
-/*   Updated: 2025/08/05 18:51:52 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/08/07 17:38:47 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -149,8 +149,8 @@ void Server::read_request(pollfd &poll)
 {
 	char buffer[BUFFER_SIZE];
 
-	memset(buffer, 0, sizeof(buffer));
-	ssize_t bytes_read = recv(poll.fd, buffer, sizeof(buffer) - 1, MSG_DONTWAIT);
+	memset(buffer, 0, BUFFER_SIZE);
+	ssize_t bytes_read = recv(poll.fd, buffer, BUFFER_SIZE, MSG_DONTWAIT);
 	if (bytes_read < 0)
 	{
 		std::cerr << "Error reading from client: " << strerror(errno) << std::endl;
@@ -165,9 +165,7 @@ void Server::read_request(pollfd &poll)
 		return;
 	}
 	update_client_timeout(poll.fd);
-	std::string str = buffer;
-	
-	// Client *client = find_client(poll.fd);
+	std::string str(buffer, bytes_read);
 	Request *request = find_request(poll.fd);
 
 	if (!request)
@@ -178,7 +176,7 @@ void Server::read_request(pollfd &poll)
 		{
 			std::cout << PURPLE << "Complete request received [" << poll.fd << "]:\n" << RESET;
 			std::cout << MAGENTA << _requests.back().get_raw_request() << RESET << std::endl;
-			process_request(poll);
+			process_request(poll, request);
 		}
 		else
 		{
@@ -193,7 +191,7 @@ void Server::read_request(pollfd &poll)
 		{
 			std::cout << PURPLE << "Complete request received [" << poll.fd << "]:\n" << RESET;
 			std::cout << MAGENTA << _requests.back().get_raw_request() << RESET << std::endl;
-			process_request(poll);
+			process_request(poll, request);
 		}
 		else
 		{
@@ -201,46 +199,20 @@ void Server::read_request(pollfd &poll)
 			std::cout << MAGENTA << bytes_read << RESET << std::endl;
 		}
 	}
-	
-	// if (!_requests.back().not_complete_request()) //verifier body size pour savoir si la requete est complete 
-	// {
-	// 	std::cout << PURPLE << "Complete request received [" << poll.fd << "]" << RESET << std::endl;
-	// 	std::cout << MAGENTA << _requests.back().get_raw_request() << RESET << std::endl;
-	// 	process_request(poll);
-	// }
-	// else
-	// {
-	// 	std::cout << PURPLE << "Partial request received [" << poll.fd << "]" << RESET << std::endl;
-	// 	std::cout << MAGENTA << _requests.back().get_raw_request() << RESET << std::endl;
-	// }
-		// 	if (has_header())
-	// 	{
-	// 		//keep for later
-	// 	}
-	// 	else
-	// 	{
-	// 		//search for request with same fd, concatenate
-	// 		_requests.pop_back();
-	// 		if (_requests.back().is_complete())
-	// 		{
-	// 			process_request(poll);
-	// 		}
-	// 		else
-	// 		{
-	// 			//keep for later
-	// 		}
-	// 	}
-	// }
 }
 
-void Server::process_request(pollfd &poll)
+void Server::process_request(pollfd &poll, Request *request)
 {
-	
-	// std::string response;
-	
-	_response.push_back(Response(poll.fd, _requests.back()));
+	_response.push_back(Response(poll.fd, *request));
 	poll.events |= POLLOUT;
-	_requests.pop_back();
+	for (std::vector<Request>::iterator it = _requests.begin(); it != _requests.end(); it++)
+	{
+		if (&(*it) == request)
+		{
+			_requests.erase(it);
+			break;
+		}	
+	}
 }
 
 void Server::send_response(pollfd &poll)
@@ -249,7 +221,7 @@ void Server::send_response(pollfd &poll)
 	{
 		if (_response[i].get_fd() == poll.fd)
 		{
-			ssize_t bytes_sent = send(poll.fd, _response[i].get_response().c_str(), _response[i].get_response().size(), MSG_DONTWAIT);
+			ssize_t bytes_sent = send(poll.fd, _response[i].get_response().data(), _response[i].get_response().size(), MSG_DONTWAIT);
 			if (bytes_sent < 0)
 			{
 				std::cerr << "Error sending response to client: " << strerror(errno) << std::endl;
@@ -329,16 +301,6 @@ bool Server::pending_response(int fd) const
 	}
 	return false;
 }
-
-// Client* Server::find_client(int fd)
-// {
-// 	for (size_t i = 0; i < _clients.size(); i++)
-// 	{
-// 		if (_clients[i].get_fd() == fd)
-// 			return &_clients[i];
-// 	}
-// 	return nullptr;
-// }
 
 Request* Server::find_request(int fd)
 {
