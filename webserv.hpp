@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/05 19:39:13 by tafocked          #+#    #+#             */
-/*   Updated: 2025/08/07 15:23:46 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/08/09 14:22:38 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,9 +44,9 @@
 #include "utils/utils.hpp"
 
 // Constants
-#define CONNECTION_TIMEOUT 3600
-#define REQUEST_TIMEOUT 3600
-#define BUFFER_SIZE 1001 //65536 // 64 KB
+#define CONNECTION_TIMEOUT 10
+#define REQUEST_TIMEOUT 10
+#define BUFFER_SIZE 1000 //65536 // 64 KB
 #define MAX_URI_LENGTH 2048 // 2 KB
 #define MAX_HEADER_LENGTH 8192 // 8 KB
 #define MAX_BODY_LENGTH 4294967296 // 4GB 

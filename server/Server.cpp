@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:00:55 by tafocked          #+#    #+#             */
-/*   Updated: 2025/08/07 17:38:47 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/08/09 13:56:20 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -190,7 +190,7 @@ void Server::read_request(pollfd &poll)
 		if (request->is_complete())
 		{
 			std::cout << PURPLE << "Complete request received [" << poll.fd << "]:\n" << RESET;
-			std::cout << MAGENTA << _requests.back().get_raw_request() << RESET << std::endl;
+			std::cout << MAGENTA << request->get_headers_string() << RESET << std::endl;
 			process_request(poll, request);
 		}
 		else

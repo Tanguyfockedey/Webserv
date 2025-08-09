@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:47:50 by tafocked          #+#    #+#             */
-/*   Updated: 2025/08/07 16:16:21 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/08/09 13:56:14 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,7 +56,7 @@ public:
 	// const std::string& get_uri_query() const { return _uri_query; }
 	// const std::string& get_uri_fragment() const { return _uri_fragment; }
 	// const std::string& get_version() const { return _version; }
-	// const std::string& get_headers_string() const { return _headers_string; }
+	const std::string& get_headers_string() const { return _headers_string; }
 	// const std::map<std::string, std::string>& get_headers() const { return _headers; }
 	const std::map<std::string, std::string>& get_resource_info() const { return _resource_info; }
 	const std::string& get_body() const { return _body; }

@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:48:10 by tafocked          #+#    #+#             */
-/*   Updated: 2025/08/07 16:58:51 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/08/09 14:09:44 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -366,7 +366,7 @@ void Request::parse_headers()
 		_error_code = 400;
 		return ;
 	}
-	_headers_string = _raw_request.substr(pos + 2, end_pos);
+	_headers_string = _raw_request.substr(pos + 2, end_pos - (pos + 2));
 	if (_headers_string.length() > MAX_HEADER_LENGTH)
 	{
 		std::cerr << "Headers too long: " << _headers_string.length() << " bytes" << std::endl;
@@ -397,6 +397,7 @@ void Request::parse_headers()
 		}
 	}
 	// set_headers(headers_map);
+	_headers_string = _raw_request.substr(0, end_pos);
 }
 
 void Request::parse_body()
