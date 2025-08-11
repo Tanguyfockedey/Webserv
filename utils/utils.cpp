@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/23 16:38:05 by jrichir           #+#    #+#             */
-/*   Updated: 2025/07/30 15:27:03 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/08/09 14:23:27 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,6 +42,6 @@ std::string root_directory()
 	}
 	str = malloc_str;
 	free(malloc_str);
-	str = str.substr(0, str.find("Webserv") + 7);
+	// str = str.substr(0, str.find("Webserv") + 7); //uncomment for debugging, remove for production
 	return str;
 }
