@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
+/*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:47:50 by tafocked          #+#    #+#             */
-/*   Updated: 2025/08/09 13:56:14 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/08/19 13:13:13 by mcygan           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,11 +53,11 @@ public:
 	// const std::string& get_request_line() const { return _request_line; }
 	const std::string& get_method() const { return _method; }
 	const std::string& get_uri() const { return _uri; }
-	// const std::string& get_uri_query() const { return _uri_query; }
-	// const std::string& get_uri_fragment() const { return _uri_fragment; }
+	const std::string& get_uri_query() const { return _uri_query; }
+	const std::string& get_uri_fragment() const { return _uri_fragment; }
 	// const std::string& get_version() const { return _version; }
 	const std::string& get_headers_string() const { return _headers_string; }
-	// const std::map<std::string, std::string>& get_headers() const { return _headers; }
+	const std::map<std::string, std::string>& get_headers() const { return _headers; }
 	const std::map<std::string, std::string>& get_resource_info() const { return _resource_info; }
 	const std::string& get_body() const { return _body; }
 	const std::string& get_boundary() const { return _boundary; }
