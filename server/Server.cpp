@@ -221,7 +221,7 @@ void Server::send_response(pollfd &poll)
 	{
 		if (_response[i].get_fd() == poll.fd)
 		{
-			ssize_t bytes_sent = send(poll.fd, _response[i].get_response().data(), _response[i].get_response().size(), MSG_DONTWAIT);
+			ssize_t bytes_sent = send(poll.fd, _response[i].get_response().data(), _response[i].get_response().size(), MSG_DONTWAIT | MSG_NOSIGNAL);
 			if (bytes_sent < 0)
 			{
 				std::cerr << "Error sending response to client: " << strerror(errno) << std::endl;
