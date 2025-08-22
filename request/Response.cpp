@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
+/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/08/11 16:10:59 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/08/22 16:27:50 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,6 +49,10 @@ Response::~Response()
 
 void Response::process_get_request()
 {
+	
+	std::cout << "We are here" << std::endl;//DEBUG
+
+	
 	std::string path, error_msg, error_page;
 	// std::string status_line;
 	
@@ -72,6 +76,8 @@ void Response::process_get_request()
 		else if (errno == 21) // Is a directory (ou tenter 20, si c'est pas 21)
 		{
 			// Opening a directory failed ; aussi erreur 403 ?
+			std::cout << "Bardaff c'est l'embardee" << std::endl;//DEBUG
+			error_msg =  "Bardaff c'est l'embardee";//DEBUG
 		}
 		else
 		{
@@ -172,6 +178,23 @@ void Response::handle_single_part_post()
 	else
 		for (size_t i = 0; i < body.length(); ++i)
 			std::cout << body[i];
+}
+
+// TO BE TESTED
+int Response::getdir (std::string dir, std::vector<std::string> &files)
+{
+    DIR *dp;
+    struct dirent *dirp;
+    if((dp  = opendir(dir.c_str())) == NULL) {
+        std::cout << "Error(" << errno << ") opening " << dir << std::endl;
+        return errno;
+    }
+
+    while ((dirp = readdir(dp)) != NULL) {
+        files.push_back(std::string(dirp->d_name));
+    }
+    closedir(dp);
+    return 0;
 }
 
 // fonctionne avec requete unique
