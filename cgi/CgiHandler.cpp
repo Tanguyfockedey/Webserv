@@ -1,9 +1,9 @@
 #include "CgiHandler.hpp"
 
-CgiHandler::CgiHandler(Request &request, Config &config)
+CgiHandler::CgiHandler(Request &request)
 {
 	this->_body = request.get_body();
-	this->init_env(request, config);
+	this->init_env(request);
 }
 
 CgiHandler::CgiHandler(CgiHandler &src)
@@ -20,17 +20,21 @@ CgiHandler	&CgiHandler::operator=(CgiHandler &src)
 		return (*this);
 	this->_body = src._body;
 	this->_env = src._env;
+	return (*this);
 }
 
-void	CgiHandler::init_env(Request &request, Config &config)
+void	CgiHandler::init_env(Request &request)
 {
 	std::map<std::string, std::string>	headers = request.get_headers();
+
+	std::ostringstream	str1;
+	str1 << this->_body.length();
 
 	this->_env["REDIRECT_STATUS"] = "200";
 	/* if (headers.find("Auth-Scheme") != headers.end() && headers["Auth-Scheme"] != "")
 		this->_env["AUTH_TYPE"] = headers["Authorization"]; */
 	/* this->_env["AUTH_TYPE"] = headers["Authorization"]; */
-	this->_env["CONTENT_LENGTH"] = std::to_string(this->_body.length());
+	this->_env["CONTENT_LENGTH"] = str1.str();
 	this->_env["CONTENT_TYPE"] = headers["Content-type"];
 	this->_env["GATEWAY_INTERFACE"] = "CGI/1.1";
 	this->_env["PATH_INFO"] = request.get_uri_fragment();
@@ -48,7 +52,7 @@ void	CgiHandler::init_env(Request &request, Config &config)
 	this->_env["SERVER_SOFTWARE"] = "Webserv/0.1";
 }
 
-std::string	CgiHandler::executeCgi(std::string& scriptName)
+std::string	CgiHandler::executeCgi(const std::string scriptName)
 {
 	int			stdin_save = dup(STDIN_FILENO);
 	int			stdout_save = dup(STDOUT_FILENO);
@@ -57,8 +61,9 @@ std::string	CgiHandler::executeCgi(std::string& scriptName)
 	int			fd_in = fileno(file_in);
 	int			fd_out = fileno(file_out);
 
+	char* const* nll = NULL;
+
 	pid_t		pid;
-	char		**env;
 	std::string	ret;
 
 	write(fd_in, _body.c_str(), _body.size());
@@ -66,7 +71,7 @@ std::string	CgiHandler::executeCgi(std::string& scriptName)
 	{
 		dup2(fd_in, STDIN_FILENO);
 		dup2(fd_out, STDOUT_FILENO);
-		execve(scriptName.c_str(), NULL, env);
+		execve(scriptName.c_str(), nll, nll);
 	}
 	else
 	{

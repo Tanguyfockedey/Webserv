@@ -3,14 +3,15 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
+/*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/08/11 16:10:59 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/08/25 14:19:58 by mcygan           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Response.hpp"
+#include "../cgi/CgiHandler.hpp"
 
 Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 {
@@ -52,6 +53,12 @@ void Response::process_get_request()
 	std::string path, error_msg, error_page;
 	// std::string status_line;
 	
+	if (!_req.get_uri().std::string::compare(0, 8, "/cgi-bin/"))
+	{
+		CgiHandler cgi(_req);
+		cgi.executeCgi(_req.get_uri());
+	}
+
 	//                    server root       , config root + path
 	path = join_paths(root_directory(), _req.get_uri());
 	std::fstream file(path.c_str(), std::ios::in | std::ios::binary);

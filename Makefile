@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+         #
+#    By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/04/20 16:37:10 by tafocked          #+#    #+#              #
-#    Updated: 2025/07/30 14:00:06 by tafocked         ###   ########.fr        #
+#    Updated: 2025/08/25 14:13:31 by mcygan           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -20,6 +20,7 @@ FILES	= webserv.cpp \
 		server/Client.cpp \
 		server/Cluster.cpp \
 		server/Server.cpp \
+		cgi/CgiHandler.cpp \
 		utils/utils.cpp \
 			
 CC		= g++

@@ -4,6 +4,7 @@
 #include "../request/Request.hpp"
 #include "../config/Config.hpp"
 #include <sys/wait.h>
+#include <string>
 
 class CgiHandler {
 	private:
@@ -11,12 +12,12 @@ class CgiHandler {
 		std::map<std::string, std::string>	_env;
 	public:
 		// constructors & destructors
-		CgiHandler(Request &request, Config &config);
+		CgiHandler(Request &request);
 		CgiHandler(CgiHandler &src);
 		virtual ~CgiHandler(void);
 		// operators
 		CgiHandler		&operator=(CgiHandler &src);
 		// methods
-		void			init_env(Request &request, Config &config);
-		std::string		executeCgi(std::string &scriptName);
+		void			init_env(Request &request);
+		std::string		executeCgi(const std::string scriptName);
 };
