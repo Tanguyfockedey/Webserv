@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/08/22 16:27:50 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/08/27 13:06:27 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,9 +49,19 @@ Response::~Response()
 
 void Response::process_get_request()
 {
+	std::cerr << "Entered process_get_request()" << std::endl;//DEBUG
+	bool is_dir = _req.get_uri_is_directory();
+	bool is_file = _req.get_uri_is_regular_file();
 	
-	std::cout << "We are here" << std::endl;//DEBUG
-
+	if (is_dir)
+	{
+		std::cout << "Requested resource is a directory: " << _req.get_uri() << std::endl;
+		//return ;
+	}
+	else if (is_file)
+		std::cout << "Requested resource is a regular file: " << _req.get_uri() << std::endl;
+	else
+		std::cout << "Requested resource is neither a directory nor a regular file: " << _req.get_uri() << std::endl;
 	
 	std::string path, error_msg, error_page;
 	// std::string status_line;
@@ -76,8 +86,9 @@ void Response::process_get_request()
 		else if (errno == 21) // Is a directory (ou tenter 20, si c'est pas 21)
 		{
 			// Opening a directory failed ; aussi erreur 403 ?
-			std::cout << "Bardaff c'est l'embardee" << std::endl;//DEBUG
-			error_msg =  "Bardaff c'est l'embardee";//DEBUG
+			std::cout << "Failed opening a directory" << std::endl;//DEBUG
+			error_msg =  "Failed opening a directory";//DEBUG
+			//_status_line = "403 Forbidden";//403???
 		}
 		else
 		{
@@ -98,6 +109,7 @@ void Response::process_get_request()
 		_status_line = "200 OK";
 		build_response(file);
 	}
+	std::cerr << "Exited process_get_request()" << std::endl;//DEBUG
 }
 
 void Response::process_post_request()
@@ -143,6 +155,7 @@ void Response::process_delete_request()
 
 void Response::build_response(std::fstream &path)
 {
+	std::cerr << "Entered build_response()" << std::endl;//DEBUG
 	if (path.is_open())
 	{
 		// std::string body;
@@ -168,6 +181,7 @@ void Response::build_response(std::fstream &path)
 		_response = "HTTP/1.1 500 Internal Server Error\r\n\r\n";
 	}
 	path.close();
+	std::cerr << "Exited build_response()" << std::endl;//DEBUG
 }
 
 void Response::handle_single_part_post()

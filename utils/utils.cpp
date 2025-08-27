@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/23 16:38:05 by jrichir           #+#    #+#             */
-/*   Updated: 2025/08/21 12:55:55 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/08/27 13:04:46 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,4 +44,24 @@ std::string root_directory()
 	free(malloc_str);
 	// str = str.substr(0, str.find("Webserv") + 7); //uncomment for debugging, remove for production
 	return str;
+}
+
+bool	is_directory(std::string path)
+{
+	struct stat s;
+
+	if (path.length() > 0 && path[path.length() - 1] == '/')
+		return true;
+	if (lstat(path.c_str(), &s) == 0 && S_ISDIR(s.st_mode))
+		return true;
+	return false;
+}
+
+bool	is_regular_file(std::string path)
+{
+	struct stat s;
+
+	if (lstat(path.c_str(), &s) == 0 && S_ISREG(s.st_mode))
+		return true;
+	return false;
 }

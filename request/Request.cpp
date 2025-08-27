@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:48:10 by tafocked          #+#    #+#             */
-/*   Updated: 2025/08/21 12:52:38 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/08/27 12:50:25 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -170,6 +170,16 @@ void Request::normalize_uri()
 			_uri = _config.get_token(_uri, "index");
 	}
 	_uri = (join_paths(root, _uri));
+}
+
+std::string Request::get_uri_type(std::string path)
+{
+	if (is_directory(path))
+		return "directory";
+	else if (is_regular_file(path))
+		return "regular_file";
+	else
+		return "nonexistent";
 }
 
 void Request::extract_resource_info()
@@ -502,7 +512,19 @@ bool Request::is_complete()
 			parse_request_line();
 			parse_uri();
 			normalize_uri();
-			extract_resource_info();
+			if (get_uri_type(join_paths(root_directory(), _uri)) == "directory")
+				set_uri_is_directory(true);
+			else
+			{
+				set_uri_is_directory(false);
+				if (get_uri_type(join_paths(root_directory(), _uri)) == "regular_file")
+				{
+					set_uri_is_regular_file(true);
+					extract_resource_info();
+				}
+				else
+					set_uri_is_regular_file(false);
+			}
 			if (!_one_line_request)
 				parse_headers();
 			else
