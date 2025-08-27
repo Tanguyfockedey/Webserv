@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/08/27 13:06:27 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/08/27 15:55:32 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,6 +46,25 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 
 Response::~Response()
 {}
+
+void Response::get_directory()
+{
+	std::string path = _req.get_uri();
+	std::vector<std::string> files;
+	
+	if (getdir(path, files) != -1)
+	{
+		std::string body;
+		for (size_t i = 0; i < files.size(); i++)
+			body += files[i] + "\n";
+		_body = body;
+	}
+	else
+	{
+		std::cerr << "Failed to open directory: " << path << std::endl;
+		_body = "Failed to open directory: " + path + "\n";
+	}
+}
 
 void Response::process_get_request()
 {
