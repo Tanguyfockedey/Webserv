@@ -23,6 +23,7 @@ private:
 	std::string _response;
 	std::string _status_line;
 	std::string _headers_string;
+	bool _file_error;
 	std::map<std::string, std::string> _headers;
 	std::string _body;
 	Config _config;

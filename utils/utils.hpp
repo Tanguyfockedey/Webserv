@@ -18,3 +18,5 @@ std::string join_paths(const std::string &path_left, const std::string &path_rig
 std::string root_directory();
 bool	is_directory(std::string path);
 bool	is_regular_file(std::string path);
+bool	is_symlink(std::string path);
+std::string get_file_type(const std::string path);
