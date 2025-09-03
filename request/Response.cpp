@@ -35,7 +35,7 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 	}
 
 	// HERE : process redirection to CGI if needed (based on requested resource extension ?)
-
+	_file_error = false;
 	if (_req.get_method() == "GET")
 		process_get_request();
 	else if (_req.get_method() == "POST")
@@ -88,8 +88,10 @@ void Response::process_get_request()
 	//                    server root       , config root + path
 	path = join_paths(root_directory(), _req.get_uri());
 	std::fstream file(path.c_str(), std::ios::in | std::ios::binary);
+	_file_error = false;
 	if (file.fail())
 	{
+		_file_error = true;
 		if (errno == 2) // No such file or directory (404)
 		{
 			error_msg = "File Not Found: " + path + "\n";
@@ -174,18 +176,22 @@ void Response::process_delete_request()
 
 void Response::build_response(std::fstream &path)
 {
+	std::string content_type;
+
+	if (_file_error)
+		content_type = "text/html";
+	else
+		content_type = _req.get_resource_info().find("mime_type")->second;
+	
 	std::cerr << "Entered build_response()" << std::endl;//DEBUG
 	if (path.is_open())
 	{
-		// std::string body;
-		
 		_body = std::string((std::istreambuf_iterator<char>(path)), std::istreambuf_iterator<char>());
 		std::stringstream response;
-
 		response << "HTTP/1.1 " << _status_line << "\r\n";
 		response << "Host: " << _config.get_token("", "server_name") << "\r\n";
 		response << "Date: " << get_http_date() << "\r\n";
-		response << "Content-Type:" << _req.get_resource_info().find("mime_type")->second << "\r\n";
+		response << "Content-Type:" << content_type << "\r\n";
 		response << "Content-Length: " << _body.length() << "\r\n";
 		//response << "Connection: keep-alive\r\n";
 		//response << "Cache-Control: no-store\r\n";
@@ -193,13 +199,13 @@ void Response::build_response(std::fstream &path)
 		response << "\r\n";
 		response << _body;
 		_response = response.str();
+		path.close();
 	}
 	else
 	{
 		std::cerr << "Failed to open file for reading." << std::endl;
 		_response = "HTTP/1.1 500 Internal Server Error\r\n\r\n";
 	}
-	path.close();
 	std::cerr << "Exited build_response()" << std::endl;//DEBUG
 }
 

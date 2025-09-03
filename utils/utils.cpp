@@ -65,3 +65,24 @@ bool	is_regular_file(std::string path)
 		return true;
 	return false;
 }
+
+bool	is_symlink(std::string path)
+{
+	struct stat s;
+
+	if (lstat(path.c_str(), &s) == 0 && S_ISLNK(s.st_mode))
+		return true;
+	return false;
+}
+
+std::string get_file_type(const std::string path)
+{
+	if (is_symlink(path))
+		return "symlink";
+	else if (is_directory(path))
+		return "directory";
+	else if (is_regular_file(path))
+		return "regular_file";
+	else
+		return "nonexistent";
+}
