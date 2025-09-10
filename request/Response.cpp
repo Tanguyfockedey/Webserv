@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/08/27 15:55:32 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/09/10 15:01:53 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,11 +69,46 @@ void Response::get_directory()
 void Response::process_get_request()
 {
 	std::cerr << "Entered process_get_request()" << std::endl;//DEBUG
+	
+	std::string index, path, error_msg, error_page;
 	bool is_dir = _req.get_uri_is_directory();
 	bool is_file = _req.get_uri_is_regular_file();
 	
 	if (is_dir)
 	{
+		// check if index or location-specific index
+		index = _config.get_token(_req.get_uri(), "index");
+		if (!index.empty())
+		{
+			path = join_paths(root_directory(), _req.get_uri());
+			path = join_paths(path, index);
+			std::cerr << "Oops" << std::endl;//DEBUG
+			std::cerr << "Index path : " << path << std::endl;//DEBUG
+		}
+		else
+		{
+			// check if autoindex on
+			if (_config.get_token(_req.get_uri(), "autoindex") == "on")
+			{
+				// generate directory listing
+				get_directory();
+				_status_line = "200 OK";
+			}
+			else
+			{
+				// autoindex off, error 403
+				error_msg = "Autoindex is off for this directory: " + _req.get_uri() + "\n";
+				error_page = "error_403.html";
+				_status_line = "403 Forbidden";
+				std::cerr << error_msg;
+				std::string err_path;
+				err_path = join_paths(root_directory(), "/data/error_pages/"); // to do : aussi gerer pages d erreur custom de la config
+				err_path = join_paths(err_path, error_page);
+				std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
+				build_response(file_err);
+				return ;
+			}
+		}
 		std::cout << "Requested resource is a directory: " << _req.get_uri() << std::endl;
 		//return ;
 	}
@@ -82,7 +117,7 @@ void Response::process_get_request()
 	else
 		std::cout << "Requested resource is neither a directory nor a regular file: " << _req.get_uri() << std::endl;
 	
-	std::string path, error_msg, error_page;
+	
 	// std::string status_line;
 	
 	//                    server root       , config root + path
