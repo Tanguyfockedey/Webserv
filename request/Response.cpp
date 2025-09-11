@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/09/11 13:39:41 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/09/11 14:02:03 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,7 +92,6 @@ void Response::get_dir()
 	index = _config.get_token(_req.get_uri(), "index");
 	if (!index.empty())
 	{
-
 		index_path = join_paths(dir_path, index);
 		if (get_file_type(index_path) == "nonexistent")
 		{
@@ -138,6 +137,7 @@ void Response::get_dir()
 			else
 			{
 				_status_line = "200 OK";
+				_file_error = true;
 				build_response(file);
 				return ;
 			}
