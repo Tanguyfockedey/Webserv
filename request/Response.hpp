@@ -59,5 +59,7 @@ public:
 	void handle_multipart_post();
 	int getdir (std::string dir, std::vector<std::string> &files);
 	void get_directory();
+	void get_dir();
+	void get_file();
 	const std::string get_http_date();
 };

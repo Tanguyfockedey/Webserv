@@ -41,7 +41,7 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 	else if (_req.get_method() == "POST")
 		process_post_request();
 	else if (_req.get_method() == "DELETE")
-		process_delete_request();
+		process_delete_request();	
 }
 
 Response::~Response()
@@ -66,56 +66,57 @@ void Response::get_directory()
 	}
 }
 
-void Response::process_get_request()
+void Response::get_dir()
 {
-	std::cerr << "Entered process_get_request()" << std::endl;//DEBUG
-	
+	//std::string	path;
 	std::string index, path, error_msg, error_page;
-	bool is_dir = _req.get_uri_is_directory();
-	bool is_file = _req.get_uri_is_regular_file();
+
+	_config = _req.get_config();
 	
-	if (is_dir)
+	// check if index or location-specific index
+	index = _config.get_token(_req.get_uri(), "index");
+	if (!index.empty())
 	{
-		// check if index or location-specific index
-		index = _config.get_token(_req.get_uri(), "index");
-		if (!index.empty())
+		path = join_paths(root_directory(), _req.get_uri());
+		path = join_paths(path, index);
+		std::cerr << "Oops" << std::endl;//DEBUG
+		std::cerr << "Index path : " << path << std::endl;//DEBUG
+	}
+	else
+	{
+		// check if autoindex on
+		if (_config.get_token(_req.get_uri(), "autoindex") == "on")
 		{
-			path = join_paths(root_directory(), _req.get_uri());
-			path = join_paths(path, index);
-			std::cerr << "Oops" << std::endl;//DEBUG
-			std::cerr << "Index path : " << path << std::endl;//DEBUG
+			// generate directory listing
+			get_directory();
+			_status_line = "200 OK";
 		}
 		else
 		{
-			// check if autoindex on
-			if (_config.get_token(_req.get_uri(), "autoindex") == "on")
-			{
-				// generate directory listing
-				get_directory();
-				_status_line = "200 OK";
-			}
-			else
-			{
-				// autoindex off, error 403
-				error_msg = "Autoindex is off for this directory: " + _req.get_uri() + "\n";
-				error_page = "error_403.html";
-				_status_line = "403 Forbidden";
-				std::cerr << error_msg;
-				std::string err_path;
-				err_path = join_paths(root_directory(), "/data/error_pages/"); // to do : aussi gerer pages d erreur custom de la config
-				err_path = join_paths(err_path, error_page);
-				std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
-				build_response(file_err);
-				return ;
-			}
+			// autoindex off, error 403
+			error_msg = "Autoindex is off for this directory: " + _req.get_uri() + "\n";
+			error_page = "error_403.html";
+			_status_line = "403 Forbidden";
+			std::cerr << error_msg;
+			std::string err_path;
+			err_path = join_paths(root_directory(), "/data/error_pages/"); // to do : aussi gerer pages d erreur custom de la config
+			err_path = join_paths(err_path, error_page);
+			std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
+			build_response(file_err);
+			return ;
 		}
-		std::cout << "Requested resource is a directory: " << _req.get_uri() << std::endl;
-		//return ;
 	}
-	else if (is_file)
-		std::cout << "Requested resource is a regular file: " << _req.get_uri() << std::endl;
-	else
-		std::cout << "Requested resource is neither a directory nor a regular file: " << _req.get_uri() << std::endl;
+	std::cout << "Requested resource is a directory: " << _req.get_uri() << std::endl;
+	return;//DEBUG
+	//return ;
+}
+
+void Response::get_file()
+{
+	std::string index, path, error_msg, error_page;
+	
+	//DEBUG
+	std::cout << "Requested resource is a regular file: " << _req.get_uri() << std::endl;//DEBUG
 	
 	
 	// std::string status_line;
@@ -165,6 +166,40 @@ void Response::process_get_request()
 		_status_line = "200 OK";
 		build_response(file);
 	}
+
+}
+
+void Response::process_get_request()
+{
+	std::string allowed_methods = _config.get_token(_req.get_uri(), "method"); // just to test
+	
+	std::cerr << "Req_get_uri() : " << _req.get_uri() << std::endl;//DEBUG
+	std::cerr << "Allowed methods : " << allowed_methods << std::endl;//DEBUG
+	
+	if (!allowed_methods.empty() && allowed_methods.find("GET") == std::string::npos)
+	{
+		std::cerr << "Blah bloum not allowed method " << std::endl;//DEBUG
+		_status_line = "405 Method Not Allowed";
+		_response = "HTTP/1.1 " + _status_line + "\r\n\r\n";
+		return ;
+	}
+	std::cerr << "Entered process_get_request()" << std::endl;//DEBUG
+	
+
+	bool is_dir = _req.get_uri_is_directory();
+	bool is_file = _req.get_uri_is_regular_file();
+	
+	if (is_dir)
+	{
+		get_dir();
+	}
+	else if (is_file)
+	{
+		get_file();
+	}
+	else
+		std::cout << "Requested resource is neither a directory nor a regular file: " << _req.get_uri() << std::endl;
+
 	std::cerr << "Exited process_get_request()" << std::endl;//DEBUG
 }
 
