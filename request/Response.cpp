@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/09/11 12:10:23 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/09/11 12:28:58 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,6 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 			ss << "HTTP/1.1 " << _req.get_error_code() << " Error\r\n\r\n";
 			_response = ss.str();
 			
-			// redirect to error page if needed
 			return ;
 		}
 	}
@@ -58,10 +57,9 @@ void Response::get_directory(std::string &dir_path)
 		body += "<h1>Index of " + _req.get_raw_uri() + "</h1>\n";
 		for (size_t i = 0; i < files.size(); i++)
 		{
-			if (files[i] == ".")
+			if (files[i] == "." || files[i] == "..")
 				continue ;
 			body += "<p><a href=\"" + files[i] + "\">" + files[i] + "</a></p>\n";
-			std::cerr << "Filename : " << files[i] << std::endl;//DEBUG
 		}
 	}
 	else
@@ -100,15 +98,12 @@ void Response::get_dir()
 		index_path = join_paths(dir_path, index);
 		if (get_file_type(index_path) == "nonexistent")
 		{
-			std::cerr << "Index file does not exist: " << index_path << std::endl;//DEBUG
 			
 			// check for autoindex option
 			std::string option = _config.get_token(_req.get_uri(), "autoindex");
-			std::cerr << "Autoindex ? : " << option << std::endl;//DEBUG
 			
 			if (_config.get_token(_req.get_uri(), "autoindex") == "on")
 			{
-				//std::cerr << "Autoindex is on, generating directory listing" << std::endl;//DEBUG
 				get_directory(dir_path);
 				return ;
 			}
@@ -128,17 +123,15 @@ void Response::get_dir()
 		}
 		else
 		{
-			std::cerr << "Index file exists: " << index_path << std::endl;//DEBUG
 			std::fstream file(index_path.c_str(), std::ios::in | std::ios::binary);
 			if (file.fail())
 			{
-				std::cerr << "Failed to open index file: " << index_path << std::endl;//DEBUG
 				error_msg = "Failed to open index file: " + index_path + "\n";
 				error_page = "error_403.html";
 				_status_line = "403 Forbidden";
 				std::cerr << error_msg;
 				std::string err_path;
-				err_path = join_paths(root_directory(), "/data/error_pages/"); // to do : aussi gerer pages d erreur custom de la config
+				err_path = join_paths(root_directory(), "/data/error_pages/");
 				err_path = join_paths(err_path, error_page);
 				std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
 				build_response(file_err);
@@ -151,8 +144,6 @@ void Response::get_dir()
 				return ;
 			}
 		}
-		//std::cerr << "Oops" << std::endl;//DEBUG
-		//std::cerr << "Index path : " << index_path << std::endl;//DEBUG
 	}
 	else
 	{
