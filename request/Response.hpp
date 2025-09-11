@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:21 by tafocked          #+#    #+#             */
-/*   Updated: 2025/08/27 15:52:57 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/09/11 11:01:09 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,7 +58,7 @@ public:
 	void handle_single_part_post();
 	void handle_multipart_post();
 	int getdir (std::string dir, std::vector<std::string> &files);
-	void get_directory();
+	void get_directory(std::string &dir_path);
 	void get_dir();
 	void get_file();
 	const std::string get_http_date();

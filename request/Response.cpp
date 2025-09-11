@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/09/10 15:01:53 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/09/11 12:02:57 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,6 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		return ;
 	}
 
-	// HERE : process redirection to CGI if needed (based on requested resource extension ?)
 	_file_error = false;
 	if (_req.get_method() == "GET")
 		process_get_request();
@@ -47,40 +46,112 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 Response::~Response()
 {}
 
-void Response::get_directory()
+void Response::get_directory(std::string &dir_path)
 {
-	std::string path = _req.get_uri();
 	std::vector<std::string> files;
 	
-	if (getdir(path, files) != -1)
+	std::string body = "<html><head><title>Index of " + _req.get_raw_uri() + "</title></head><body>";
+	if (getdir(dir_path, files) != -1)
 	{
-		std::string body;
+		_status_line = "200 OK";
+		body += "<h1>Index of " + _req.get_raw_uri() + "</h1>\n";
 		for (size_t i = 0; i < files.size(); i++)
-			body += files[i] + "\n";
-		_body = body;
+		{
+			if (files[i] == ".")
+				continue ;
+			body += "<p><a href=\"" + files[i] + "\">" + files[i] + "</a></p>\n";
+			std::cerr << "Filename : " << files[i] << std::endl;//DEBUG
+		}
 	}
 	else
 	{
-		std::cerr << "Failed to open directory: " << path << std::endl;
-		_body = "Failed to open directory: " + path + "\n";
+		_status_line = "500 Internal Server Error";
+		std::cerr << "Failed to open directory: " << dir_path << std::endl;
+		body += "Failed to open directory: " + dir_path + "\n";
 	}
+	body += "</body></html>\r\n\r\n";
+	_body = body;
+	std::string content_type = " text/html";
+	std::stringstream response;
+	response << "HTTP/1.1 " << _status_line << "\r\n";
+	response << "Host: " << _config.get_token("", "server_name") << "\r\n";
+	response << "Date: " << get_http_date() << "\r\n";
+	response << "Content-Type: " << content_type << "\r\n";
+	response << "Content-Length: " << _body.length() << "\r\n";
+	_headers_string = response.str();
+	response << "\r\n";
+	response << _body;
+	_response = response.str();
 }
 
 void Response::get_dir()
 {
-	//std::string	path;
-	std::string index, path, error_msg, error_page;
+	std::string index, index_path, dir_path, error_msg, error_page;
 
 	_config = _req.get_config();
-	
+	dir_path = join_paths(root_directory(), _req.get_uri());
+
 	// check if index or location-specific index
 	index = _config.get_token(_req.get_uri(), "index");
 	if (!index.empty())
 	{
-		path = join_paths(root_directory(), _req.get_uri());
-		path = join_paths(path, index);
-		std::cerr << "Oops" << std::endl;//DEBUG
-		std::cerr << "Index path : " << path << std::endl;//DEBUG
+
+		index_path = join_paths(dir_path, index);
+		if (get_file_type(index_path) == "nonexistent")
+		{
+			std::cerr << "Index file does not exist: " << index_path << std::endl;//DEBUG
+			
+			// check for autoindex option
+			std::string option = _config.get_token(_req.get_uri(), "autoindex");
+			std::cerr << "Autoindex ? : " << option << std::endl;//DEBUG
+			
+			if (_config.get_token(_req.get_uri(), "autoindex") == "on")
+			{
+				//std::cerr << "Autoindex is on, generating directory listing" << std::endl;//DEBUG
+				get_directory(dir_path);
+				return ;
+			}
+			else
+			{
+				error_msg = "Index file does not exist: " + index_path + "\n";
+				error_page = "error_403.html";
+				_status_line = "403 Forbidden";
+				std::cerr << error_msg;
+				std::string err_path;
+				err_path = join_paths(root_directory(), "/data/error_pages/");
+				err_path = join_paths(err_path, error_page);
+				std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
+				build_response(file_err);
+				return ;
+			}
+		}
+		else
+		{
+			std::cerr << "Index file exists: " << index_path << std::endl;//DEBUG
+			std::fstream file(index_path.c_str(), std::ios::in | std::ios::binary);
+			if (file.fail())
+			{
+				std::cerr << "Failed to open index file: " << index_path << std::endl;//DEBUG
+				error_msg = "Failed to open index file: " + index_path + "\n";
+				error_page = "error_403.html";
+				_status_line = "403 Forbidden";
+				std::cerr << error_msg;
+				std::string err_path;
+				err_path = join_paths(root_directory(), "/data/error_pages/"); // to do : aussi gerer pages d erreur custom de la config
+				err_path = join_paths(err_path, error_page);
+				std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
+				build_response(file_err);
+				return ;
+			}
+			else
+			{
+				_status_line = "200 OK";
+				build_response(file);
+				return ;
+			}
+		}
+		//std::cerr << "Oops" << std::endl;//DEBUG
+		//std::cerr << "Index path : " << index_path << std::endl;//DEBUG
 	}
 	else
 	{
@@ -88,7 +159,7 @@ void Response::get_dir()
 		if (_config.get_token(_req.get_uri(), "autoindex") == "on")
 		{
 			// generate directory listing
-			get_directory();
+			get_directory(dir_path);
 			_status_line = "200 OK";
 		}
 		else
@@ -171,9 +242,9 @@ void Response::get_file()
 
 void Response::process_get_request()
 {
-	std::string allowed_methods = _config.get_token(_req.get_uri(), "method"); // just to test
+	std::string allowed_methods = _config.get_token(_req.get_raw_uri(), "method"); // just to test
 	
-	std::cerr << "Req_get_uri() : " << _req.get_uri() << std::endl;//DEBUG
+	std::cerr << "Req_get_raw_uri() : " << _req.get_raw_uri() << std::endl;//DEBUG
 	std::cerr << "Allowed methods : " << allowed_methods << std::endl;//DEBUG
 	
 	if (!allowed_methods.empty() && allowed_methods.find("GET") == std::string::npos)

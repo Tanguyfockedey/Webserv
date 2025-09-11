@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:48:10 by tafocked          #+#    #+#             */
-/*   Updated: 2025/08/27 12:50:25 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/09/11 10:16:06 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -80,11 +80,10 @@ void Request::parse_request_line()
 
 void Request::parse_uri()
 {
+	
 	// std::string uri, stripped_uri, query, fragment;
 	std::string stripped_uri;
 	size_t separator;
-
-	// uri = get_uri();
 
 	try 
 	{
@@ -153,7 +152,7 @@ void Request::parse_uri()
 void Request::normalize_uri()
 {
 	std::string root;
-	// stf::string uri, normalized_uri;
+	// std::string uri, normalized_uri;
 
 	root = _config.get_token(_uri, "root");
 	if (root.empty())
@@ -161,7 +160,7 @@ void Request::normalize_uri()
 		root = "/";
 	}
 
-	// uri = get_uri();
+	_raw_uri = get_uri();
 	if (_uri == "/" || _uri.empty())
 	{
 		if (_config.get_token(_uri, "index").empty())

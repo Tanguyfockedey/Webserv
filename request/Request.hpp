@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:47:50 by tafocked          #+#    #+#             */
-/*   Updated: 2025/08/27 12:42:45 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/09/11 10:05:38 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,7 @@ private:
 	std::string _raw_request;
 	std::string _request_line;
 	std::string _method;
+	std::string _raw_uri;
 	std::string _uri;
 	std::string _uri_query;    // ex: ?lang=php
 	std::string _uri_fragment; // ex: #anchor
@@ -54,6 +55,7 @@ public:
 	const std::string& get_raw_request() const { return _raw_request; }
 	// const std::string& get_request_line() const { return _request_line; }
 	const std::string& get_method() const { return _method; }
+	const std::string& get_raw_uri() const { return _raw_uri; }
 	const std::string& get_uri() const { return _uri; }
 	const std::string& get_uri_query() const { return _uri_query; }
 	const std::string& get_uri_fragment() const { return _uri_fragment; }
