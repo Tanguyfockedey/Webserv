@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/09/11 14:02:03 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/09/11 14:16:04 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,7 @@ void Response::get_directory(std::string &dir_path)
 		body += "<h1>Index of " + _req.get_raw_uri() + "</h1>\n";
 		for (size_t i = 0; i < files.size(); i++)
 		{
-			if (files[i] == "." || files[i] == "..")
+			if (files[i] == ".")
 				continue ;
 			body += "<p><a href=\"" + files[i] + "\">" + files[i] + "</a></p>\n";
 		}
