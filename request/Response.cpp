@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/09/11 14:16:04 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/09/11 14:22:31 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -109,6 +109,7 @@ void Response::get_dir()
 				error_msg = "Index file does not exist: " + index_path + "\n";
 				error_page = "error_403.html";
 				_status_line = "403 Forbidden";
+				_file_error = true;
 				std::cerr << error_msg;
 				std::string err_path;
 				err_path = join_paths(root_directory(), "/data/error_pages/");
