@@ -6,7 +6,7 @@
 /*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/09/11 03:24:59 by mcygan           ###   ########.fr       */
+/*   Updated: 2025/09/11 05:32:31 by mcygan           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,7 +52,7 @@ void Response::process_get_request()
 {
 	std::string path, error_msg, error_page;
 
-	if (!_config.is_allowed("GET"))
+	if (!_config.is_allowed(_req.get_uri(), "GET"))
 	{
 		errno = 405;
 		_status_line = "405 Method not allowed";
@@ -109,7 +109,7 @@ void Response::process_post_request()
 {
 	std::string path, error_msg, error_page;
 	
-	if (!_config.is_allowed("POST"))
+	if (!_config.is_allowed(_req.get_uri(), "POST"))
 	{
 		errno = 405;
 		_status_line = "405 Method not allowed";
@@ -149,7 +149,7 @@ void Response::process_delete_request()
 {
 	std::string path, error_msg, error_page;
 	
-	if (!_config.is_allowed("DELETE"))
+	if (!_config.is_allowed(_req.get_uri(), "DELETE"))
 	{
 		errno = 405;
 		_status_line = "405 Method not allowed";

@@ -6,7 +6,7 @@
 /*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/03 16:07:02 by tafocked          #+#    #+#             */
-/*   Updated: 2025/09/11 02:37:32 by mcygan           ###   ########.fr       */
+/*   Updated: 2025/09/11 05:30:38 by mcygan           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -191,9 +191,11 @@ const std::string Config::get_token(const std::string &path, const char* token)
 		return "";
 }
 
-bool Config::is_allowed(std::string method)
+bool Config::is_allowed(std::string path, std::string method)
 {
-	if (_tokens[method] == "true")
-		return true;
-	return false;
+	// checks whether location has own config rule
+	try {return (_locations.at(path)).is_allowed(method);}
+	catch (const std::exception& e) {}
+	
+	return _tokens[method] == "true";
 }

@@ -6,7 +6,7 @@
 /*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/03 16:06:16 by tafocked          #+#    #+#             */
-/*   Updated: 2025/09/11 02:35:17 by mcygan           ###   ########.fr       */
+/*   Updated: 2025/09/11 05:07:21 by mcygan           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,7 +42,7 @@ class Config
 		static std::string extract_token(std::string& str, const char* token);
 
 		// Other methods
-		bool is_allowed(std::string method);
+		bool is_allowed(std::string path, std::string method);
 
 	private:
 		static std::string extract_server_block(std::string& str);

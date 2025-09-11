@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Location.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
+/*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/19 18:35:09 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/23 21:54:06 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/09/11 05:22:31 by mcygan           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,4 +51,9 @@ void Location::map_tokens(std::string& str)
 		if (!key.empty() && !value.empty())
 			_tokens[key] = value;
 	}
+}
+
+bool Location::is_allowed(std::string method)
+{
+	return _tokens[method] == "true";
 }
