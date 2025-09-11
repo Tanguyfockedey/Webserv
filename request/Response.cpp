@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/09/11 13:33:17 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/09/11 13:39:41 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,6 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 			std::stringstream ss(error_msg);
 			ss << "HTTP/1.1 " << _req.get_error_code() << " Error\r\n\r\n";
 			_response = ss.str();
-			
 			return ;
 		}
 	}
@@ -33,7 +32,6 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		std::cerr << e.what() << '\n';
 		return ;
 	}
-
 	_file_error = false;
 	if (_req.get_method() == "GET")
 		process_get_request();
@@ -162,29 +160,19 @@ void Response::get_dir()
 			_status_line = "403 Forbidden";
 			std::cerr << error_msg;
 			std::string err_path;
-			err_path = join_paths(root_directory(), "/data/error_pages/"); // to do : aussi gerer pages d erreur custom de la config
+			err_path = join_paths(root_directory(), "/data/error_pages/");
 			err_path = join_paths(err_path, error_page);
 			std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
 			build_response(file_err);
-			return ;
 		}
 	}
-	std::cout << "Requested resource is a directory: " << _req.get_uri() << std::endl;
-	return;//DEBUG
-	//return ;
 }
 
 void Response::get_file()
 {
 	std::string index, path, error_msg, error_page;
 	
-	//DEBUG
-	std::cout << "Requested resource is a regular file: " << _req.get_uri() << std::endl;//DEBUG
-	
-	
-	// std::string status_line;
-	
-	//                    server root       , config root + path
+	//                  server root   , config root + path
 	path = join_paths(root_directory(), _req.get_uri());
 	std::fstream file(path.c_str(), std::ios::in | std::ios::binary);
 	_file_error = false;
@@ -206,7 +194,6 @@ void Response::get_file()
 		else if (errno == 21) // Is a directory (ou tenter 20, si c'est pas 21)
 		{
 			// Opening a directory failed ; aussi erreur 403 ?
-			std::cout << "Failed opening a directory" << std::endl;//DEBUG
 			error_msg =  "Failed opening a directory";//DEBUG
 			//_status_line = "403 Forbidden";//403???
 		}
@@ -265,7 +252,6 @@ void Response::process_get_request()
 		std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
 		build_response(file_err);
 	}
-	std::cerr << "Exited process_get_request()" << std::endl;//DEBUG
 }
 
 void Response::process_post_request()
@@ -346,7 +332,6 @@ void Response::build_response(std::fstream &path)
 	else
 		content_type = _req.get_resource_info().find("mime_type")->second;
 	
-	std::cerr << "Entered build_response()" << std::endl;//DEBUG
 	if (path.is_open())
 	{
 		_body = std::string((std::istreambuf_iterator<char>(path)), std::istreambuf_iterator<char>());
@@ -356,8 +341,6 @@ void Response::build_response(std::fstream &path)
 		response << "Date: " << get_http_date() << "\r\n";
 		response << "Content-Type:" << content_type << "\r\n";
 		response << "Content-Length: " << _body.length() << "\r\n";
-		//response << "Connection: keep-alive\r\n";
-		//response << "Cache-Control: no-store\r\n";
 		_headers_string = response.str();
 		response << "\r\n";
 		response << _body;
@@ -369,7 +352,6 @@ void Response::build_response(std::fstream &path)
 		std::cerr << "Failed to open file for reading." << std::endl;
 		_response = "HTTP/1.1 500 Internal Server Error\r\n\r\n";
 	}
-	std::cerr << "Exited build_response()" << std::endl;//DEBUG
 }
 
 void Response::handle_single_part_post()
@@ -382,7 +364,6 @@ void Response::handle_single_part_post()
 			std::cout << body[i];
 }
 
-// TO BE TESTED
 int Response::getdir (std::string dir, std::vector<std::string> &files)
 {
     DIR *dp;
