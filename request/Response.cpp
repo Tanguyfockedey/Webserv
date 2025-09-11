@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/09/11 12:28:58 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/09/11 13:33:17 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -234,21 +234,15 @@ void Response::get_file()
 
 void Response::process_get_request()
 {
-	std::string allowed_methods = _config.get_token(_req.get_raw_uri(), "method"); // just to test
-	
-	std::cerr << "Req_get_raw_uri() : " << _req.get_raw_uri() << std::endl;//DEBUG
-	std::cerr << "Allowed methods : " << allowed_methods << std::endl;//DEBUG
+	std::string allowed_methods = _config.get_token(_req.get_raw_uri(), "method");
 	
 	if (!allowed_methods.empty() && allowed_methods.find("GET") == std::string::npos)
 	{
-		std::cerr << "Blah bloum not allowed method " << std::endl;//DEBUG
 		_status_line = "405 Method Not Allowed";
 		_response = "HTTP/1.1 " + _status_line + "\r\n\r\n";
 		return ;
 	}
-	std::cerr << "Entered process_get_request()" << std::endl;//DEBUG
 	
-
 	bool is_dir = _req.get_uri_is_directory();
 	bool is_file = _req.get_uri_is_regular_file();
 	
@@ -261,8 +255,16 @@ void Response::process_get_request()
 		get_file();
 	}
 	else
-		std::cout << "Requested resource is neither a directory nor a regular file: " << _req.get_uri() << std::endl;
-
+	{
+		std::string error_page = "error_404.html";
+		_status_line = "404 Not Found";
+		_file_error = true;
+		std::string err_path;
+		err_path = join_paths(root_directory(), "/data/error_pages/");
+		err_path = join_paths(err_path, error_page);
+		std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
+		build_response(file_err);
+	}
 	std::cerr << "Exited process_get_request()" << std::endl;//DEBUG
 }
 
