@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Config.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
+/*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/03 16:06:16 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/25 15:20:34 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/09/11 02:35:17 by mcygan           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,6 +40,9 @@ class Config
 		// Method to parse configuration
 		static std::vector<Config> parse_file(std::string file);
 		static std::string extract_token(std::string& str, const char* token);
+
+		// Other methods
+		bool is_allowed(std::string method);
 
 	private:
 		static std::string extract_server_block(std::string& str);

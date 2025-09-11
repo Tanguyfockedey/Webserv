@@ -6,7 +6,7 @@
 /*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/09/11 01:02:26 by mcygan           ###   ########.fr       */
+/*   Updated: 2025/09/11 03:24:59 by mcygan           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,8 +51,18 @@ Response::~Response()
 void Response::process_get_request()
 {
 	std::string path, error_msg, error_page;
-	// std::string status_line;
 
+	if (!_config.is_allowed("GET"))
+	{
+		errno = 405;
+		_status_line = "405 Method not allowed";
+		std::cerr << "405 Method not allowed" << std::endl;
+		std::string err_path = 
+			root_directory() + "/data/error_pages/error_" + _status_line.std::string::substr(0, 3) + ".html"; 
+		std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
+		build_response(file_err);
+		return ;
+	}
 	//                    server root       , config root + path
 	path = join_paths(root_directory(), _req.get_uri());
 	std::fstream file(path.c_str(), std::ios::in | std::ios::binary);
@@ -83,7 +93,7 @@ void Response::process_get_request()
 		std::cerr << error_msg;
 		
 		std::string err_path;
-		err_path = join_paths(root_directory(), "/data/error_pages/"); // to do : aussi gerer pages d erreur custom de la config
+		err_path = join_paths(root_directory(), "/data/error_pages/");
 		err_path = join_paths(err_path, error_page);
 		std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
 		build_response(file_err);
@@ -97,6 +107,20 @@ void Response::process_get_request()
 
 void Response::process_post_request()
 {
+	std::string path, error_msg, error_page;
+	
+	if (!_config.is_allowed("POST"))
+	{
+		errno = 405;
+		_status_line = "405 Method not allowed";
+		std::cerr << "405 Method not allowed" << std::endl;
+		std::string err_path = 
+			root_directory() + "/data/error_pages/error_" + _status_line.std::string::substr(0, 3) + ".html"; 
+		std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
+		build_response(file_err);
+		return ;
+	}
+	
 	if (_req.get_boundary().empty())
 	{
 		handle_single_part_post();
@@ -123,6 +147,20 @@ void Response::process_post_request()
 
 void Response::process_delete_request()
 {
+	std::string path, error_msg, error_page;
+	
+	if (!_config.is_allowed("DELETE"))
+	{
+		errno = 405;
+		_status_line = "405 Method not allowed";
+		std::cerr << "405 Method not allowed" << std::endl;
+		std::string err_path = 
+			root_directory() + "/data/error_pages/error_" + _status_line.std::string::substr(0, 3) + ".html"; 
+		std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
+		build_response(file_err);
+		return ;
+	}
+
 	// Basic implementation for now
     int status = remove(_req.get_uri().c_str());
 
