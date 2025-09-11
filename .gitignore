@@ -1,3 +1,6 @@
+webserv
+data/www/uploads/
+
 # Folders
 .vscode/
 
@@ -33,4 +36,3 @@
 *.exe
 *.out
 *.app
-webserv
