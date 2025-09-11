@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   utils.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
+/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/23 16:38:05 by jrichir           #+#    #+#             */
-/*   Updated: 2025/08/09 14:23:27 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/08/27 13:04:46 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,4 +44,45 @@ std::string root_directory()
 	free(malloc_str);
 	// str = str.substr(0, str.find("Webserv") + 7); //uncomment for debugging, remove for production
 	return str;
+}
+
+bool	is_directory(std::string path)
+{
+	struct stat s;
+
+	if (path.length() > 0 && path[path.length() - 1] == '/')
+		return true;
+	if (lstat(path.c_str(), &s) == 0 && S_ISDIR(s.st_mode))
+		return true;
+	return false;
+}
+
+bool	is_regular_file(std::string path)
+{
+	struct stat s;
+
+	if (lstat(path.c_str(), &s) == 0 && S_ISREG(s.st_mode))
+		return true;
+	return false;
+}
+
+bool	is_symlink(std::string path)
+{
+	struct stat s;
+
+	if (lstat(path.c_str(), &s) == 0 && S_ISLNK(s.st_mode))
+		return true;
+	return false;
+}
+
+std::string get_file_type(const std::string path)
+{
+	if (is_symlink(path))
+		return "symlink";
+	else if (is_directory(path))
+		return "directory";
+	else if (is_regular_file(path))
+		return "regular_file";
+	else
+		return "nonexistent";
 }

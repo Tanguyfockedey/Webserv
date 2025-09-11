@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
+/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:21 by tafocked          #+#    #+#             */
-/*   Updated: 2025/08/05 18:38:07 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/09/11 11:01:09 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@ private:
 	std::string _response;
 	std::string _status_line;
 	std::string _headers_string;
+	bool _file_error;
 	std::map<std::string, std::string> _headers;
 	std::string _body;
 	Config _config;
@@ -56,5 +57,9 @@ public:
 	void build_response(std::fstream &path);
 	void handle_single_part_post();
 	void handle_multipart_post();
+	int getdir (std::string dir, std::vector<std::string> &files);
+	void get_directory(std::string &dir_path);
+	void get_dir();
+	void get_file();
 	const std::string get_http_date();
 };

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
+/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:48:10 by tafocked          #+#    #+#             */
-/*   Updated: 2025/08/09 14:09:44 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/09/11 10:16:06 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -80,11 +80,10 @@ void Request::parse_request_line()
 
 void Request::parse_uri()
 {
+	
 	// std::string uri, stripped_uri, query, fragment;
 	std::string stripped_uri;
 	size_t separator;
-
-	// uri = get_uri();
 
 	try 
 	{
@@ -153,7 +152,7 @@ void Request::parse_uri()
 void Request::normalize_uri()
 {
 	std::string root;
-	// stf::string uri, normalized_uri;
+	// std::string uri, normalized_uri;
 
 	root = _config.get_token(_uri, "root");
 	if (root.empty())
@@ -161,7 +160,7 @@ void Request::normalize_uri()
 		root = "/";
 	}
 
-	// uri = get_uri();
+	_raw_uri = get_uri();
 	if (_uri == "/" || _uri.empty())
 	{
 		if (_config.get_token(_uri, "index").empty())
@@ -170,6 +169,16 @@ void Request::normalize_uri()
 			_uri = _config.get_token(_uri, "index");
 	}
 	_uri = (join_paths(root, _uri));
+}
+
+std::string Request::get_uri_type(std::string path)
+{
+	if (is_directory(path))
+		return "directory";
+	else if (is_regular_file(path))
+		return "regular_file";
+	else
+		return "nonexistent";
 }
 
 void Request::extract_resource_info()
@@ -502,7 +511,19 @@ bool Request::is_complete()
 			parse_request_line();
 			parse_uri();
 			normalize_uri();
-			extract_resource_info();
+			if (get_uri_type(join_paths(root_directory(), _uri)) == "directory")
+				set_uri_is_directory(true);
+			else
+			{
+				set_uri_is_directory(false);
+				if (get_uri_type(join_paths(root_directory(), _uri)) == "regular_file")
+				{
+					set_uri_is_regular_file(true);
+					extract_resource_info();
+				}
+				else
+					set_uri_is_regular_file(false);
+			}
 			if (!_one_line_request)
 				parse_headers();
 			else

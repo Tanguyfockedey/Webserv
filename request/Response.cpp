@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
+/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/09/11 03:24:59 by mcygan           ###   ########.fr       */
+/*   Updated: 2025/09/11 12:10:23 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,39 +35,171 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		return ;
 	}
 
-	// HERE : process redirection to CGI if needed (based on requested resource extension ?)
-
+	_file_error = false;
 	if (_req.get_method() == "GET")
 		process_get_request();
 	else if (_req.get_method() == "POST")
 		process_post_request();
 	else if (_req.get_method() == "DELETE")
-		process_delete_request();
+		process_delete_request();	
 }
 
 Response::~Response()
 {}
 
-void Response::process_get_request()
+void Response::get_directory(std::string &dir_path)
 {
-	std::string path, error_msg, error_page;
-
-	if (!_config.is_allowed("GET"))
+	std::vector<std::string> files;
+	
+	std::string body = "<html><head><title>Index of " + _req.get_raw_uri() + "</title></head><body>";
+	if (getdir(dir_path, files) != -1)
 	{
-		errno = 405;
-		_status_line = "405 Method not allowed";
-		std::cerr << "405 Method not allowed" << std::endl;
-		std::string err_path = 
-			root_directory() + "/data/error_pages/error_" + _status_line.std::string::substr(0, 3) + ".html"; 
-		std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
-		build_response(file_err);
-		return ;
+		_status_line = "200 OK";
+		body += "<h1>Index of " + _req.get_raw_uri() + "</h1>\n";
+		for (size_t i = 0; i < files.size(); i++)
+		{
+			if (files[i] == ".")
+				continue ;
+			body += "<p><a href=\"" + files[i] + "\">" + files[i] + "</a></p>\n";
+			std::cerr << "Filename : " << files[i] << std::endl;//DEBUG
+		}
 	}
+	else
+	{
+		_status_line = "500 Internal Server Error";
+		std::cerr << "Failed to open directory: " << dir_path << std::endl;
+		body += "Failed to open directory: " + dir_path + "\n";
+	}
+	body += "</body></html>\r\n\r\n";
+	_body = body;
+	std::string content_type = " text/html";
+	std::stringstream response;
+	response << "HTTP/1.1 " << _status_line << "\r\n";
+	response << "Host: " << _config.get_token("", "server_name") << "\r\n";
+	response << "Date: " << get_http_date() << "\r\n";
+	response << "Content-Type: " << content_type << "\r\n";
+	response << "Content-Length: " << _body.length() << "\r\n";
+	_headers_string = response.str();
+	response << "\r\n";
+	response << _body;
+	_response = response.str();
+}
+
+void Response::get_dir()
+{
+	std::string index, index_path, dir_path, error_msg, error_page;
+
+	_config = _req.get_config();
+	dir_path = join_paths(root_directory(), _req.get_uri());
+
+	// check if index or location-specific index
+	index = _config.get_token(_req.get_uri(), "index");
+	if (!index.empty())
+	{
+
+		index_path = join_paths(dir_path, index);
+		if (get_file_type(index_path) == "nonexistent")
+		{
+			std::cerr << "Index file does not exist: " << index_path << std::endl;//DEBUG
+			
+			// check for autoindex option
+			std::string option = _config.get_token(_req.get_uri(), "autoindex");
+			std::cerr << "Autoindex ? : " << option << std::endl;//DEBUG
+			
+			if (_config.get_token(_req.get_uri(), "autoindex") == "on")
+			{
+				//std::cerr << "Autoindex is on, generating directory listing" << std::endl;//DEBUG
+				get_directory(dir_path);
+				return ;
+			}
+			else
+			{
+				error_msg = "Index file does not exist: " + index_path + "\n";
+				error_page = "error_403.html";
+				_status_line = "403 Forbidden";
+				std::cerr << error_msg;
+				std::string err_path;
+				err_path = join_paths(root_directory(), "/data/error_pages/");
+				err_path = join_paths(err_path, error_page);
+				std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
+				build_response(file_err);
+				return ;
+			}
+		}
+		else
+		{
+			std::cerr << "Index file exists: " << index_path << std::endl;//DEBUG
+			std::fstream file(index_path.c_str(), std::ios::in | std::ios::binary);
+			if (file.fail())
+			{
+				std::cerr << "Failed to open index file: " << index_path << std::endl;//DEBUG
+				error_msg = "Failed to open index file: " + index_path + "\n";
+				error_page = "error_403.html";
+				_status_line = "403 Forbidden";
+				std::cerr << error_msg;
+				std::string err_path;
+				err_path = join_paths(root_directory(), "/data/error_pages/"); // to do : aussi gerer pages d erreur custom de la config
+				err_path = join_paths(err_path, error_page);
+				std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
+				build_response(file_err);
+				return ;
+			}
+			else
+			{
+				_status_line = "200 OK";
+				build_response(file);
+				return ;
+			}
+		}
+		//std::cerr << "Oops" << std::endl;//DEBUG
+		//std::cerr << "Index path : " << index_path << std::endl;//DEBUG
+	}
+	else
+	{
+		// check if autoindex on
+		if (_config.get_token(_req.get_uri(), "autoindex") == "on")
+		{
+			// generate directory listing
+			get_directory(dir_path);
+			_status_line = "200 OK";
+		}
+		else
+		{
+			// autoindex off, error 403
+			error_msg = "Autoindex is off for this directory: " + _req.get_uri() + "\n";
+			error_page = "error_403.html";
+			_status_line = "403 Forbidden";
+			std::cerr << error_msg;
+			std::string err_path;
+			err_path = join_paths(root_directory(), "/data/error_pages/"); // to do : aussi gerer pages d erreur custom de la config
+			err_path = join_paths(err_path, error_page);
+			std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
+			build_response(file_err);
+			return ;
+		}
+	}
+	std::cout << "Requested resource is a directory: " << _req.get_uri() << std::endl;
+	return;//DEBUG
+	//return ;
+}
+
+void Response::get_file()
+{
+	std::string index, path, error_msg, error_page;
+	
+	//DEBUG
+	std::cout << "Requested resource is a regular file: " << _req.get_uri() << std::endl;//DEBUG
+	
+	
+	// std::string status_line;
+	
 	//                    server root       , config root + path
 	path = join_paths(root_directory(), _req.get_uri());
 	std::fstream file(path.c_str(), std::ios::in | std::ios::binary);
+	_file_error = false;
 	if (file.fail())
 	{
+		_file_error = true;
 		if (errno == 2) // No such file or directory (404)
 		{
 			error_msg = "File Not Found: " + path + "\n";
@@ -83,6 +215,9 @@ void Response::process_get_request()
 		else if (errno == 21) // Is a directory (ou tenter 20, si c'est pas 21)
 		{
 			// Opening a directory failed ; aussi erreur 403 ?
+			std::cout << "Failed opening a directory" << std::endl;//DEBUG
+			error_msg =  "Failed opening a directory";//DEBUG
+			//_status_line = "403 Forbidden";//403???
 		}
 		else
 		{
@@ -103,6 +238,41 @@ void Response::process_get_request()
 		_status_line = "200 OK";
 		build_response(file);
 	}
+
+}
+
+void Response::process_get_request()
+{
+	std::string allowed_methods = _config.get_token(_req.get_raw_uri(), "method"); // just to test
+	
+	std::cerr << "Req_get_raw_uri() : " << _req.get_raw_uri() << std::endl;//DEBUG
+	std::cerr << "Allowed methods : " << allowed_methods << std::endl;//DEBUG
+	
+	if (!allowed_methods.empty() && allowed_methods.find("GET") == std::string::npos)
+	{
+		std::cerr << "Blah bloum not allowed method " << std::endl;//DEBUG
+		_status_line = "405 Method Not Allowed";
+		_response = "HTTP/1.1 " + _status_line + "\r\n\r\n";
+		return ;
+	}
+	std::cerr << "Entered process_get_request()" << std::endl;//DEBUG
+	
+
+	bool is_dir = _req.get_uri_is_directory();
+	bool is_file = _req.get_uri_is_regular_file();
+	
+	if (is_dir)
+	{
+		get_dir();
+	}
+	else if (is_file)
+	{
+		get_file();
+	}
+	else
+		std::cout << "Requested resource is neither a directory nor a regular file: " << _req.get_uri() << std::endl;
+
+	std::cerr << "Exited process_get_request()" << std::endl;//DEBUG
 }
 
 void Response::process_post_request()
@@ -176,17 +346,22 @@ void Response::process_delete_request()
 
 void Response::build_response(std::fstream &path)
 {
+	std::string content_type;
+
+	if (_file_error)
+		content_type = "text/html";
+	else
+		content_type = _req.get_resource_info().find("mime_type")->second;
+	
+	std::cerr << "Entered build_response()" << std::endl;//DEBUG
 	if (path.is_open())
 	{
-		// std::string body;
-		
 		_body = std::string((std::istreambuf_iterator<char>(path)), std::istreambuf_iterator<char>());
 		std::stringstream response;
-
 		response << "HTTP/1.1 " << _status_line << "\r\n";
 		response << "Host: " << _config.get_token("", "server_name") << "\r\n";
 		response << "Date: " << get_http_date() << "\r\n";
-		response << "Content-Type:" << _req.get_resource_info().find("mime_type")->second << "\r\n";
+		response << "Content-Type:" << content_type << "\r\n";
 		response << "Content-Length: " << _body.length() << "\r\n";
 		//response << "Connection: keep-alive\r\n";
 		//response << "Cache-Control: no-store\r\n";
@@ -194,13 +369,14 @@ void Response::build_response(std::fstream &path)
 		response << "\r\n";
 		response << _body;
 		_response = response.str();
+		path.close();
 	}
 	else
 	{
 		std::cerr << "Failed to open file for reading." << std::endl;
 		_response = "HTTP/1.1 500 Internal Server Error\r\n\r\n";
 	}
-	path.close();
+	std::cerr << "Exited build_response()" << std::endl;//DEBUG
 }
 
 void Response::handle_single_part_post()
@@ -211,6 +387,23 @@ void Response::handle_single_part_post()
 	else
 		for (size_t i = 0; i < body.length(); ++i)
 			std::cout << body[i];
+}
+
+// TO BE TESTED
+int Response::getdir (std::string dir, std::vector<std::string> &files)
+{
+    DIR *dp;
+    struct dirent *dirp;
+    if((dp  = opendir(dir.c_str())) == NULL) {
+        std::cout << "Error(" << errno << ") opening " << dir << std::endl;
+        return errno;
+    }
+
+    while ((dirp = readdir(dp)) != NULL) {
+        files.push_back(std::string(dirp->d_name));
+    }
+    closedir(dp);
+    return 0;
 }
 
 // fonctionne avec requete unique

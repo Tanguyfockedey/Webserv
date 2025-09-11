@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
+/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:47:50 by tafocked          #+#    #+#             */
-/*   Updated: 2025/08/19 13:13:13 by mcygan           ###   ########.fr       */
+/*   Updated: 2025/09/11 10:05:38 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,9 +28,12 @@ private:
 	std::string _raw_request;
 	std::string _request_line;
 	std::string _method;
+	std::string _raw_uri;
 	std::string _uri;
 	std::string _uri_query;    // ex: ?lang=php
 	std::string _uri_fragment; // ex: #anchor
+	bool _uri_is_directory;
+	bool _uri_is_regular_file;
 	std::string _version;
 	std::string _headers_string;
 	std::map<std::string, std::string> _headers;
@@ -52,9 +55,12 @@ public:
 	const std::string& get_raw_request() const { return _raw_request; }
 	// const std::string& get_request_line() const { return _request_line; }
 	const std::string& get_method() const { return _method; }
+	const std::string& get_raw_uri() const { return _raw_uri; }
 	const std::string& get_uri() const { return _uri; }
 	const std::string& get_uri_query() const { return _uri_query; }
 	const std::string& get_uri_fragment() const { return _uri_fragment; }
+	const bool& get_uri_is_directory() const { return _uri_is_directory; }
+	const bool& get_uri_is_regular_file() const { return _uri_is_regular_file; }
 	// const std::string& get_version() const { return _version; }
 	const std::string& get_headers_string() const { return _headers_string; }
 	const std::map<std::string, std::string>& get_headers() const { return _headers; }
@@ -68,6 +74,8 @@ public:
 
 	// Setters
 	void set_raw_request(const std::string &raw_request) { _raw_request = raw_request; }
+	void set_uri_is_directory(bool is_dir) { _uri_is_directory = is_dir; }
+	void set_uri_is_regular_file(bool is_file) { _uri_is_regular_file = is_file; }
 	// void set_request_line(const std::string &request_line) { _request_line = request_line; }
 	// void set_method(const std::string &method) { _method = method; }
 	// void set_uri(const std::string &uri) { _uri = uri; }
@@ -78,9 +86,11 @@ public:
 	// void set_body(const std::string &body) { _body = body; }
 	// void set_error_code(int error_code) { _error_code = error_code; }
 	
-	// Methods
+	// Public methods
 	bool is_complete();
+	
 private:
+	std::string get_uri_type(std::string path);
 	void set_boundary(void);
 	void set_actual_body_length(void);
 	void parse_request_line();
