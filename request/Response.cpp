@@ -6,16 +6,62 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/09/11 14:22:31 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/09/18 12:29:07 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Response.hpp"
 #include "../cgi/CgiHandler.hpp"
 
+void Response::handle_405() //Request &req
+{
+	std::string allowed;
+	bool	sep = false;
+
+	if (_config.get_token(_req.get_uri(), "GET") == "true")
+	{
+		allowed.append("GET");
+		sep = true;
+	}
+	if (_config.get_token(_req.get_uri(), "POST") == "true")
+	{
+		if (sep)
+			allowed.append(", ");
+		allowed.append("POST");
+		sep = true;
+	}
+	if (_config.get_token(_req.get_uri(), "DELETE") == "true")
+	{
+		if (sep)
+			allowed.append(", ");
+		allowed.append("DELETE");
+	}
+
+	set_error_page("405", "Method Not Allowed", "Allow : " + allowed);//TEST
+}
+
 Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 {
 	_config = req.get_config();
+
+	std::string path = join_paths(root_directory(), _req.get_uri());
+	std::string test = _config.get_token(req.get_uri(), "GET");
+	bool 		test2 = _config.is_allowed("GET");
+	//std::cout << "Bla bla boum - BOOL : " << test2 << std::endl;//DEBUG
+	 
+
+	// std::string methods = _config._tokens;
+	// std::cout << "Bla bla boum - TOKEN : " << test << std::endl;//DEBUG
+
+	//std::string allowed = _config.get_token(req.get_uri(), "method"); // DOES NOT WORK !
+	//std::cout << "Bla bla boum - TOKEN : " << allowed << std::endl;//DEBUG
+	
+	if (!test2)
+	{
+		handle_405();
+		return ;
+	}
+
 	try
 	{
 		if (_req.get_error_code() != 0)
@@ -446,4 +492,44 @@ const std::string Response::get_http_date() {
     oss << gmt->tm_sec << " GMT";
 
     return oss.str();
+}
+
+void Response::set_error_page(std::string nb, std::string name, std::string header)
+{
+	_status_line = nb + " " + name;
+	
+	_body = "<!DOCTYPE html>" \
+		"<html lang=\"en\">" \
+			"<head>" \
+				"<link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"favicon.ico\">" \
+				"<title>" + nb + " - WS Homepage</title>" \
+			"</head>" \
+			"<body style=\"background-color: grey;\">" \
+				"<h1 style=\"text-align: center;\">" \
+					"<span style=\"text-decoration: underline;\">" \
+						"<strong>ERROR " + nb +"</strong>" \
+					"</span>" \
+				"</h1>" \
+				"<p style=\"text-align: center;\">" \
+					+ name + \
+				"</p>" \
+				"<p style=\"text-align: center;\">" \
+					"<a href=\"/\">Go back to index page</a>" \
+				"</p>" \
+			"</body>" \
+		"</html>" \
+		;
+
+	std::stringstream response;
+	response << "HTTP/1.1 " << _status_line << "\r\n";
+	response << "Host: " << _config.get_token("", "server_name") << "\r\n";
+	response << "Date: " << get_http_date() << "\r\n";
+	response << "Content-Type: text/html\r\n";
+	response << "Content-Length: " << _body.length() << "\r\n";
+	if (!header.empty())
+		response << header << "\r\n";
+	_headers_string = response.str();
+	response << "\r\n";
+	response << _body;
+	_response = response.str();
 }

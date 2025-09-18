@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:21 by tafocked          #+#    #+#             */
-/*   Updated: 2025/09/11 14:01:10 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/09/17 23:41:57 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,4 +54,6 @@ class Response
 		void get_dir();
 		void get_file();
 		const std::string get_http_date();
+		void handle_405();
+		void set_error_page(std::string nb, std::string name, std::string header);
 };
