@@ -6,14 +6,14 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/09/18 12:29:07 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/09/19 16:16:16 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Response.hpp"
 #include "../cgi/CgiHandler.hpp"
 
-void Response::handle_405() //Request &req
+void Response::handle_405()
 {
 	std::string allowed;
 	bool	sep = false;
@@ -37,17 +37,17 @@ void Response::handle_405() //Request &req
 		allowed.append("DELETE");
 	}
 
-	set_error_page("405", "Method Not Allowed", "Allow : " + allowed);//TEST
+	set_error_page("405", "Method Not Allowed", "Allow : " + allowed);
 }
 
 Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 {
 	_config = req.get_config();
 
-	std::string path = join_paths(root_directory(), _req.get_uri());
+	std::string path = join_paths(server_path(), _req.get_uri());
 	std::string test = _config.get_token(req.get_uri(), "GET");
-	bool 		test2 = _config.is_allowed("GET");
-	//std::cout << "Bla bla boum - BOOL : " << test2 << std::endl;//DEBUG
+
+	//bool 		test2 = _config.is_allowed("GET");
 	 
 
 	// std::string methods = _config._tokens;
@@ -56,7 +56,7 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 	//std::string allowed = _config.get_token(req.get_uri(), "method"); // DOES NOT WORK !
 	//std::cout << "Bla bla boum - TOKEN : " << allowed << std::endl;//DEBUG
 	
-	if (!test2)
+	if (test == "false")
 	{
 		handle_405();
 		return ;
@@ -90,12 +90,12 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 Response::~Response()
 {}
 
-void Response::get_directory(std::string &dir_path)
+void Response::print_dir_listing(std::string &dir_path)
 {
 	std::vector<std::string> files;
 	
 	std::string body = "<html><head><title>Index of " + _req.get_raw_uri() + "</title></head><body>";
-	if (getdir(dir_path, files) != -1)
+	if (get_dir_content(dir_path, files) != -1)
 	{
 		_status_line = "200 OK";
 		body += "<h1>Index of " + _req.get_raw_uri() + "</h1>\n";
@@ -103,6 +103,8 @@ void Response::get_directory(std::string &dir_path)
 		{
 			if (files[i] == ".")
 				continue ;
+			else if (files[i] == "..")
+				files[i] = "⬑ Parent Directory";
 			body += "<p><a href=\"" + files[i] + "\">" + files[i] + "</a></p>\n";
 		}
 	}
@@ -132,7 +134,7 @@ void Response::get_dir()
 	std::string index, index_path, dir_path, error_msg, error_page;
 
 	_config = _req.get_config();
-	dir_path = join_paths(root_directory(), _req.get_uri());
+	dir_path = join_paths(server_path(), _req.get_uri());
 
 	// check if index or location-specific index
 	index = _config.get_token(_req.get_uri(), "index");
@@ -147,7 +149,7 @@ void Response::get_dir()
 			
 			if (_config.get_token(_req.get_uri(), "autoindex") == "on")
 			{
-				get_directory(dir_path);
+				print_dir_listing(dir_path);
 				return ;
 			}
 			else
@@ -158,7 +160,7 @@ void Response::get_dir()
 				_file_error = true;
 				std::cerr << error_msg;
 				std::string err_path;
-				err_path = join_paths(root_directory(), "/data/error_pages/");
+				err_path = join_paths(server_path(), "/data/error_pages/");
 				err_path = join_paths(err_path, error_page);
 				std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
 				build_response(file_err);
@@ -175,7 +177,7 @@ void Response::get_dir()
 				_status_line = "403 Forbidden";
 				std::cerr << error_msg;
 				std::string err_path;
-				err_path = join_paths(root_directory(), "/data/error_pages/");
+				err_path = join_paths(server_path(), "/data/error_pages/");
 				err_path = join_paths(err_path, error_page);
 				std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
 				build_response(file_err);
@@ -196,7 +198,7 @@ void Response::get_dir()
 		if (_config.get_token(_req.get_uri(), "autoindex") == "on")
 		{
 			// generate directory listing
-			get_directory(dir_path);
+			print_dir_listing(dir_path);
 			_status_line = "200 OK";
 		}
 		else
@@ -207,7 +209,7 @@ void Response::get_dir()
 			_status_line = "403 Forbidden";
 			std::cerr << error_msg;
 			std::string err_path;
-			err_path = join_paths(root_directory(), "/data/error_pages/");
+			err_path = join_paths(server_path(), "/data/error_pages/");
 			err_path = join_paths(err_path, error_page);
 			std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
 			build_response(file_err);
@@ -220,7 +222,7 @@ void Response::get_file()
 	std::string index, path, error_msg, error_page;
 	
 	//                  server root   , config root + path
-	path = join_paths(root_directory(), _req.get_uri());
+	path = join_paths(server_path(), _req.get_uri());
 	std::fstream file(path.c_str(), std::ios::in | std::ios::binary);
 	_file_error = false;
 	if (file.fail())
@@ -253,7 +255,7 @@ void Response::get_file()
 		std::cerr << error_msg;
 		
 		std::string err_path;
-		err_path = join_paths(root_directory(), "/data/error_pages/");
+		err_path = join_paths(server_path(), "/data/error_pages/");
 		err_path = join_paths(err_path, error_page);
 		std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
 		build_response(file_err);
@@ -294,7 +296,7 @@ void Response::process_get_request()
 		_status_line = "404 Not Found";
 		_file_error = true;
 		std::string err_path;
-		err_path = join_paths(root_directory(), "/data/error_pages/");
+		err_path = join_paths(server_path(), "/data/error_pages/");
 		err_path = join_paths(err_path, error_page);
 		std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
 		build_response(file_err);
@@ -311,7 +313,7 @@ void Response::process_post_request()
 		_status_line = "405 Method not allowed";
 		std::cerr << "405 Method not allowed" << std::endl;
 		std::string err_path = 
-			root_directory() + "/data/error_pages/error_" + _status_line.std::string::substr(0, 3) + ".html"; 
+			server_path() + "/data/error_pages/error_" + _status_line.std::string::substr(0, 3) + ".html"; 
 		std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
 		build_response(file_err);
 		return ;
@@ -351,7 +353,7 @@ void Response::process_delete_request()
 		_status_line = "405 Method not allowed";
 		std::cerr << "405 Method not allowed" << std::endl;
 		std::string err_path = 
-			root_directory() + "/data/error_pages/error_" + _status_line.std::string::substr(0, 3) + ".html"; 
+			server_path() + "/data/error_pages/error_" + _status_line.std::string::substr(0, 3) + ".html"; 
 		std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
 		build_response(file_err);
 		return ;
@@ -411,7 +413,7 @@ void Response::handle_single_part_post()
 			std::cout << body[i];
 }
 
-int Response::getdir (std::string dir, std::vector<std::string> &files)
+int Response::get_dir_content(std::string dir, std::vector<std::string> &files)
 {
     DIR *dp;
     struct dirent *dirp;
@@ -444,7 +446,7 @@ void Response::handle_multipart_post()
 		return ;
 	}
 
-	path = join_paths(root_directory(), _config.get_token(_req.get_uri(), "root"));
+	path = join_paths(server_path(), _config.get_token(_req.get_uri(), "root"));
 
 	path = join_paths(path, UPLOAD_PATH);
 
@@ -497,39 +499,64 @@ const std::string Response::get_http_date() {
 void Response::set_error_page(std::string nb, std::string name, std::string header)
 {
 	_status_line = nb + " " + name;
-	
-	_body = "<!DOCTYPE html>" \
-		"<html lang=\"en\">" \
-			"<head>" \
-				"<link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"favicon.ico\">" \
-				"<title>" + nb + " - WS Homepage</title>" \
-			"</head>" \
-			"<body style=\"background-color: grey;\">" \
-				"<h1 style=\"text-align: center;\">" \
-					"<span style=\"text-decoration: underline;\">" \
-						"<strong>ERROR " + nb +"</strong>" \
-					"</span>" \
-				"</h1>" \
-				"<p style=\"text-align: center;\">" \
-					+ name + \
-				"</p>" \
-				"<p style=\"text-align: center;\">" \
-					"<a href=\"/\">Go back to index page</a>" \
-				"</p>" \
-			"</body>" \
-		"</html>" \
-		;
+	std::string err_page = "err_page_";
+	err_page += nb;
+	std::string err_path = _config.get_token(_req.get_uri(), err_page.c_str());
+	std::string webroot_path = _config.get_token(_req.get_uri(), "root");
+	std::string path = join_paths(server_path(), webroot_path);
+	path = join_paths(path, err_path);
 
-	std::stringstream response;
-	response << "HTTP/1.1 " << _status_line << "\r\n";
-	response << "Host: " << _config.get_token("", "server_name") << "\r\n";
-	response << "Date: " << get_http_date() << "\r\n";
-	response << "Content-Type: text/html\r\n";
-	response << "Content-Length: " << _body.length() << "\r\n";
-	if (!header.empty())
-		response << header << "\r\n";
-	_headers_string = response.str();
-	response << "\r\n";
-	response << _body;
-	_response = response.str();
+	std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
+	if (file_err.is_open())
+	{
+		_body = std::string((std::istreambuf_iterator<char>(file_err)), std::istreambuf_iterator<char>());
+		std::stringstream response;
+		response << "HTTP/1.1 " << _status_line << "\r\n";
+		response << "Host: " << _config.get_token("", "server_name") << "\r\n";
+		response << "Date: " << get_http_date() << "\r\n";
+		response << "Content-Type: text/html\r\n";
+		response << "Content-Length: " << _body.length() << "\r\n";
+		_headers_string = response.str();
+		response << "\r\n";
+		response << _body;
+		_response = response.str();
+		file_err.close();
+	}
+	else
+	{
+		_body = "<!DOCTYPE html>" \
+			"<html lang=\"en\">" \
+				"<head>" \
+					"<link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"favicon.ico\">" \
+					"<title>" + nb + " - WS Homepage</title>" \
+				"</head>" \
+				"<body style=\"background-color: grey;\">" \
+					"<h1 style=\"text-align: center;\">" \
+						"<span style=\"text-decoration: underline;\">" \
+							"<strong>ERROR " + nb +"</strong>" \
+						"</span>" \
+					"</h1>" \
+					"<p style=\"text-align: center;\">" \
+						+ name + \
+					"</p>" \
+					"<p style=\"text-align: center;\">" \
+						"<a href=\"/\">Go back to index page</a>" \
+					"</p>" \
+				"</body>" \
+			"</html>" \
+			;
+
+		std::stringstream response;
+		response << "HTTP/1.1 " << _status_line << "\r\n";
+		response << "Host: " << _config.get_token("", "server_name") << "\r\n";
+		response << "Date: " << get_http_date() << "\r\n";
+		response << "Content-Type: text/html\r\n";
+		response << "Content-Length: " << _body.length() << "\r\n";
+		if (!header.empty())
+			response << header << "\r\n";
+		_headers_string = response.str();
+		response << "\r\n";
+		response << _body;
+		_response = response.str();
+	}
 }

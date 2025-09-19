@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/23 16:38:05 by jrichir           #+#    #+#             */
-/*   Updated: 2025/08/27 13:04:46 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/09/19 14:43:18 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,7 @@ std::string join_paths(const std::string &path_left, const std::string &path_rig
 		return path_left + path_right;
 }
 
-std::string root_directory()
+std::string server_path()
 {
 	char* malloc_str;
 	std::string str;

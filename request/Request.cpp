@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:48:10 by tafocked          #+#    #+#             */
-/*   Updated: 2025/09/11 10:16:06 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/09/19 14:43:07 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -511,12 +511,12 @@ bool Request::is_complete()
 			parse_request_line();
 			parse_uri();
 			normalize_uri();
-			if (get_uri_type(join_paths(root_directory(), _uri)) == "directory")
+			if (get_uri_type(join_paths(server_path(), _uri)) == "directory")
 				set_uri_is_directory(true);
 			else
 			{
 				set_uri_is_directory(false);
-				if (get_uri_type(join_paths(root_directory(), _uri)) == "regular_file")
+				if (get_uri_type(join_paths(server_path(), _uri)) == "regular_file")
 				{
 					set_uri_is_regular_file(true);
 					extract_resource_info();
