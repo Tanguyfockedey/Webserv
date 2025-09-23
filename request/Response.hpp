@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
+/*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:21 by tafocked          #+#    #+#             */
-/*   Updated: 2025/09/11 14:01:10 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/09/22 14:59:51 by mcygan           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,6 +47,7 @@ class Response
 		void process_post_request();
 		void process_delete_request();
 		void build_response(std::fstream &path);
+		void build_response_delete(std::string path);
 		void handle_single_part_post();
 		void handle_multipart_post();
 		int getdir (std::string dir, std::vector<std::string> &files);

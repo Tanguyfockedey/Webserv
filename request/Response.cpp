@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
+/*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/09/11 14:22:31 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/09/24 01:06:59 by mcygan           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -295,9 +295,11 @@ void Response::process_post_request()
 	}
 }
 
+
+
 void Response::process_delete_request()
 {
-	std::string path, error_msg, error_page;
+	std::string path = join_paths(root_directory(), _req.get_uri());
 	
 	if (!_config.is_allowed("DELETE"))
 	{
@@ -311,17 +313,25 @@ void Response::process_delete_request()
 		return ;
 	}
 
-	// Basic implementation for now
-    int status = remove(_req.get_uri().c_str());
-
-    if (status != 0) {
-        perror("Error deleting file");
-    }
-    else {
-        std::cout << "File successfully deleted : " << _req.get_uri() << std::endl;
-    }
-	
-	_response = "...";
+	if (_req.get_uri_is_directory())
+	{
+		// temp
+		_status_line = "204 No content";
+		_response = "HTTP/1.1" +_status_line + "\r\n\r\n";
+	}
+	else
+	{
+		if (remove(path.c_str()))
+		{
+			_status_line = "204 No content";
+			_response = "HTTP/1.1" +_status_line + "\r\n\r\n";
+		}
+		else
+		{
+			_status_line = "200 OK";
+			build_response_delete(_req.get_uri());
+		}
+	}
 }
 
 void Response::build_response(std::fstream &path)
@@ -353,6 +363,27 @@ void Response::build_response(std::fstream &path)
 		std::cerr << "Failed to open file for reading." << std::endl;
 		_response = "HTTP/1.1 500 Internal Server Error\r\n\r\n";
 	}
+}
+
+void Response::build_response_delete(std::string path)
+{	
+	std::stringstream response;
+	
+	std::string	body;
+	if (_status_line == "200 OK")
+		body = "<html lang=\"en-US\">\n\t<body>\n\t\t<h1>File " + path + " deleted.</h1>\n\t</body>\n</html>";
+	else
+		body = "<html lang=\"en-US\">\n\t<body>\n\t\t<h1>File " + path + " not deleted.</h1>\n\t</body>\n</html>";
+
+	response << "HTTP/1.1 " << _status_line << "\r\n";
+	response << "Host: " << _config.get_token("", "server_name") << "\r\n";
+	response << "Date: " << get_http_date() << "\r\n";
+	response << "Content-Type:" << _req.get_resource_info().find("mime_type")->second << "\r\n";
+	response << "Content-Length: " << _body.length() << "\r\n";
+	_headers_string = response.str();
+	response << "\r\n";
+	response << _body;
+	_response = response.str();
 }
 
 void Response::handle_single_part_post()
