@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/09/19 16:16:16 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/09/24 16:25:23 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -297,6 +297,7 @@ void Response::process_get_request()
 		_file_error = true;
 		std::string err_path;
 		err_path = join_paths(server_path(), "/data/error_pages/");
+		// ---> server_path, local root, error page path
 		err_path = join_paths(err_path, error_page);
 		std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
 		build_response(file_err);
