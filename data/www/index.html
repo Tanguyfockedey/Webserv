@@ -2,9 +2,10 @@
 <html lang="en">
     <head>
 		<link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+		<link rel="stylesheet" href="/styles.css">
         <title>WS Homepage</title>
 	</head>
-	<body style="background-color: #ffc0cb;">
+	<body>
 		<h1>
 				<strong>Welcome to our wonderful website !</strong>
 		</h1>
@@ -14,8 +15,13 @@
 		<p>
 			You can also try to <a href="secret.html">go to a secret page</a> (first, lower file permissions locally (e.g., <strong>chmod 000 secret.html</strong>), then trying to access this page should return a 403 error)
 		</p>
+		<h4>
+			Directories :
+		</h4>
 		<p>
-			Let's try accessing a directory URL : <a href="subdir1/subdir2/">some subdirectory</a>
+			<a href="subdir1/">subdirectory 1</a><br>
+			<a href="subdir1/subdir2/">subdirectory 2</a><br>
+			<a href="subdir1/subdir2/subdir3/">subdirectory 3</a>
 		</p>
 		<p>
 			Last but not least, you can try to access <a href="non_existing_page.html">a page that does not exist</a> (should result in a 404 error)

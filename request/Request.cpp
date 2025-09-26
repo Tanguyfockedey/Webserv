@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:48:10 by tafocked          #+#    #+#             */
-/*   Updated: 2025/09/19 14:43:07 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/09/26 11:43:58 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,13 +67,6 @@ void Request::parse_request_line()
 		std::cerr << "Unsupported HTTP method: " << _method << std::endl;
 		_error_code = 501;
 		throw std::runtime_error("501 Not Implemented");
-		return ;
-	}
-	else if (!is_allowed_method()) // verifier si la methode est autorisee dans la configuration (location)
-	{
-		std::cerr << "Method not allowed: " << _method << std::endl;
-		throw std::runtime_error("405 Method Not Allowed");
-		_error_code = 405;
 		return ;
 	}
 }
@@ -490,14 +483,6 @@ void Request::set_actual_body_length(void)
 	_actual_body_length  = content_length - (begin_boundary.length() + end_boundary.length());
 	_actual_body_length -= multipart_headers.length();
 	_actual_body_length -= 2; // for the \r\n before the closing boundary
-}
-
-int Request::is_allowed_method() const
-{
-	// based on uri path, check if the location settings in the config file allow for that method in that path / location
-	
-	// temporarily, return 1
-	return 1;
 }
 
 bool Request::is_complete()

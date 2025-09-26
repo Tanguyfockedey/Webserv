@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:47:50 by tafocked          #+#    #+#             */
-/*   Updated: 2025/09/11 10:05:38 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/09/26 11:44:03 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -99,5 +99,4 @@ private:
 	void extract_resource_info();
 	void parse_headers();
 	void parse_body();
-	int is_allowed_method() const;
 };

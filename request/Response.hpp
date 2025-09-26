@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:21 by tafocked          #+#    #+#             */
-/*   Updated: 2025/09/19 13:27:47 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/09/26 10:45:57 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,4 +56,5 @@ class Response
 		const std::string get_http_date();
 		void handle_405();
 		void set_error_page(std::string nb, std::string name, std::string header);
+		bool is_allowed_method(const std::string& method);
 };

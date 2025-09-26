@@ -6,61 +6,16 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/09/24 16:25:23 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/09/26 12:21:31 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Response.hpp"
 #include "../cgi/CgiHandler.hpp"
 
-void Response::handle_405()
-{
-	std::string allowed;
-	bool	sep = false;
-
-	if (_config.get_token(_req.get_uri(), "GET") == "true")
-	{
-		allowed.append("GET");
-		sep = true;
-	}
-	if (_config.get_token(_req.get_uri(), "POST") == "true")
-	{
-		if (sep)
-			allowed.append(", ");
-		allowed.append("POST");
-		sep = true;
-	}
-	if (_config.get_token(_req.get_uri(), "DELETE") == "true")
-	{
-		if (sep)
-			allowed.append(", ");
-		allowed.append("DELETE");
-	}
-
-	set_error_page("405", "Method Not Allowed", "Allow : " + allowed);
-}
-
 Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 {
 	_config = req.get_config();
-
-	std::string path = join_paths(server_path(), _req.get_uri());
-	std::string test = _config.get_token(req.get_uri(), "GET");
-
-	//bool 		test2 = _config.is_allowed("GET");
-	 
-
-	// std::string methods = _config._tokens;
-	// std::cout << "Bla bla boum - TOKEN : " << test << std::endl;//DEBUG
-
-	//std::string allowed = _config.get_token(req.get_uri(), "method"); // DOES NOT WORK !
-	//std::cout << "Bla bla boum - TOKEN : " << allowed << std::endl;//DEBUG
-	
-	if (test == "false")
-	{
-		handle_405();
-		return ;
-	}
 
 	try
 	{
@@ -110,9 +65,9 @@ void Response::print_dir_listing(std::string &dir_path)
 	}
 	else
 	{
-		_status_line = "500 Internal Server Error";
 		std::cerr << "Failed to open directory: " << dir_path << std::endl;
-		body += "Failed to open directory: " + dir_path + "\n";
+		set_error_page("500", "Internal Server Error", "");
+		return;
 	}
 	body += "</body></html>\r\n\r\n";
 	_body = body;
@@ -155,15 +110,8 @@ void Response::get_dir()
 			else
 			{
 				error_msg = "Index file does not exist: " + index_path + "\n";
-				error_page = "error_403.html";
-				_status_line = "403 Forbidden";
-				_file_error = true;
 				std::cerr << error_msg;
-				std::string err_path;
-				err_path = join_paths(server_path(), "/data/error_pages/");
-				err_path = join_paths(err_path, error_page);
-				std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
-				build_response(file_err);
+				set_error_page("403", "Forbidden", "");
 				return ;
 			}
 		}
@@ -173,14 +121,8 @@ void Response::get_dir()
 			if (file.fail())
 			{
 				error_msg = "Failed to open index file: " + index_path + "\n";
-				error_page = "error_403.html";
-				_status_line = "403 Forbidden";
 				std::cerr << error_msg;
-				std::string err_path;
-				err_path = join_paths(server_path(), "/data/error_pages/");
-				err_path = join_paths(err_path, error_page);
-				std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
-				build_response(file_err);
+				set_error_page("403", "Forbidden", "");
 				return ;
 			}
 			else
@@ -205,14 +147,8 @@ void Response::get_dir()
 		{
 			// autoindex off, error 403
 			error_msg = "Autoindex is off for this directory: " + _req.get_uri() + "\n";
-			error_page = "error_403.html";
-			_status_line = "403 Forbidden";
 			std::cerr << error_msg;
-			std::string err_path;
-			err_path = join_paths(server_path(), "/data/error_pages/");
-			err_path = join_paths(err_path, error_page);
-			std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
-			build_response(file_err);
+			set_error_page("403", "Forbidden", "");
 		}
 	}
 }
@@ -230,15 +166,13 @@ void Response::get_file()
 		_file_error = true;
 		if (errno == 2) // No such file or directory (404)
 		{
-			error_msg = "File Not Found: " + path + "\n";
-			error_page = "error_404.html";
-			_status_line = "404 Not Found";
+			set_error_page("404", "Not Found", "");
+			return;
 		}
 		else if (errno == 13) // Permission denied (403)
 		{
-			error_msg = "Permission Denied: " + path + "\n";
-			error_page = "error_403.html";
-			_status_line = "403 Forbidden";
+			set_error_page("403", "Forbidden", "");
+			return;
 		}
 		else if (errno == 21) // Is a directory (ou tenter 20, si c'est pas 21)
 		{
@@ -272,16 +206,13 @@ void Response::process_get_request()
 {
 	std::string allowed_methods = _config.get_token(_req.get_raw_uri(), "method");
 	
-	if (!allowed_methods.empty() && allowed_methods.find("GET") == std::string::npos)
+	if (!is_allowed_method("GET"))
 	{
-		_status_line = "405 Method Not Allowed";
-		_response = "HTTP/1.1 " + _status_line + "\r\n\r\n";
+		handle_405();
 		return ;
 	}
-	
 	bool is_dir = _req.get_uri_is_directory();
 	bool is_file = _req.get_uri_is_regular_file();
-	
 	if (is_dir)
 	{
 		get_dir();
@@ -292,15 +223,8 @@ void Response::process_get_request()
 	}
 	else
 	{
-		std::string error_page = "error_404.html";
-		_status_line = "404 Not Found";
-		_file_error = true;
-		std::string err_path;
-		err_path = join_paths(server_path(), "/data/error_pages/");
-		// ---> server_path, local root, error page path
-		err_path = join_paths(err_path, error_page);
-		std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
-		build_response(file_err);
+		set_error_page("404", "Not Found", "");
+		return;
 	}
 }
 
@@ -308,15 +232,9 @@ void Response::process_post_request()
 {
 	std::string path, error_msg, error_page;
 	
-	if (!_config.is_allowed("POST"))
+	if (!is_allowed_method("POST"))
 	{
-		errno = 405;
-		_status_line = "405 Method not allowed";
-		std::cerr << "405 Method not allowed" << std::endl;
-		std::string err_path = 
-			server_path() + "/data/error_pages/error_" + _status_line.std::string::substr(0, 3) + ".html"; 
-		std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
-		build_response(file_err);
+		handle_405();
 		return ;
 	}
 	
@@ -348,15 +266,9 @@ void Response::process_delete_request()
 {
 	std::string path, error_msg, error_page;
 	
-	if (!_config.is_allowed("DELETE"))
+	if (!is_allowed_method("DELETE"))
 	{
-		errno = 405;
-		_status_line = "405 Method not allowed";
-		std::cerr << "405 Method not allowed" << std::endl;
-		std::string err_path = 
-			server_path() + "/data/error_pages/error_" + _status_line.std::string::substr(0, 3) + ".html"; 
-		std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
-		build_response(file_err);
+		handle_405();
 		return ;
 	}
 
@@ -400,7 +312,7 @@ void Response::build_response(std::fstream &path)
 	else
 	{
 		std::cerr << "Failed to open file for reading." << std::endl;
-		_response = "HTTP/1.1 500 Internal Server Error\r\n\r\n";
+		set_error_page("500", "Internal Server Error", "");
 	}
 }
 
@@ -420,7 +332,8 @@ int Response::get_dir_content(std::string dir, std::vector<std::string> &files)
     struct dirent *dirp;
     if((dp  = opendir(dir.c_str())) == NULL) {
         std::cout << "Error(" << errno << ") opening " << dir << std::endl;
-        return errno;
+		// Error 403 ? 500 ?
+		return errno;
     }
 
     while ((dirp = readdir(dp)) != NULL) {
@@ -442,8 +355,7 @@ void Response::handle_multipart_post()
 	if (filename.empty())
 	{
 		std::cerr << "No filename provided in POST request" << std::endl;
-		_status_line = "400 Bad Request";
-		_response = "HTTP/1.1 " + _status_line + "\r\n\r\n";
+		set_error_page("400", "Bad Request", "");
 		return ;
 	}
 
@@ -467,8 +379,7 @@ void Response::handle_multipart_post()
 	}
 	else
 	{
-		std::cerr << "Failed to open file for writing: " << path << std::endl;
-		_status_line = "500 Internal Server Error";
+		set_error_page("500", "Internal Server Error", "");
 	}
 	_response = "HTTP/1.1 " + _status_line + "\r\n\r\n";
 }
@@ -507,8 +418,8 @@ void Response::set_error_page(std::string nb, std::string name, std::string head
 	std::string path = join_paths(server_path(), webroot_path);
 	path = join_paths(path, err_path);
 
-	std::fstream file_err(err_path.c_str(), std::ios::in | std::ios::binary);
-	if (file_err.is_open())
+	std::fstream file_err(path.c_str(), std::ios::in | std::ios::binary);
+	if (!err_path.empty() && !file_err.fail() && file_err.is_open())
 	{
 		_body = std::string((std::istreambuf_iterator<char>(file_err)), std::istreambuf_iterator<char>());
 		std::stringstream response;
@@ -534,7 +445,7 @@ void Response::set_error_page(std::string nb, std::string name, std::string head
 				"<body style=\"background-color: grey;\">" \
 					"<h1 style=\"text-align: center;\">" \
 						"<span style=\"text-decoration: underline;\">" \
-							"<strong>ERROR " + nb +"</strong>" \
+							"<strong>GENERIC ERROR " + nb +"</strong>" \
 						"</span>" \
 					"</h1>" \
 					"<p style=\"text-align: center;\">" \
@@ -560,4 +471,39 @@ void Response::set_error_page(std::string nb, std::string name, std::string head
 		response << _body;
 		_response = response.str();
 	}
+}
+
+void Response::handle_405()
+{
+	std::string allowed;
+	bool	sep = false;
+
+	if (_config.get_token(_req.get_uri(), "GET") == "true")
+	{
+		allowed.append("GET");
+		sep = true;
+	}
+	if (_config.get_token(_req.get_uri(), "POST") == "true")
+	{
+		if (sep)
+			allowed.append(", ");
+		allowed.append("POST");
+		sep = true;
+	}
+	if (_config.get_token(_req.get_uri(), "DELETE") == "true")
+	{
+		if (sep)
+			allowed.append(", ");
+		allowed.append("DELETE");
+	}
+
+	set_error_page("405", "Method Not Allowed", "Allow : " + allowed);
+}
+
+bool Response::is_allowed_method(const std::string& method) {
+	std::string allowed_method = _config.get_token(_req.get_uri(), method.c_str());
+
+	if (allowed_method == "false")
+		return false;
+	return true;
 }
