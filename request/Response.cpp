@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/09/26 12:21:31 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/10/15 16:47:05 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,8 +89,24 @@ void Response::get_dir()
 	std::string index, index_path, dir_path, error_msg, error_page;
 
 	_config = _req.get_config();
-	dir_path = join_paths(server_path(), _req.get_uri());
+	//dir_path = join_paths(server_path(), _req.get_uri());
 
+	
+	dir_path = join_paths(server_path(), _config.get_token(_req.get_uri(), "root"));
+	//dir_path = join_paths(dir_path, _req.get_raw_uri());
+
+	// subtract "root" part from uri to avoid duplication
+	dir_path = join_paths(dir_path, _req.get_uri().substr(_config.get_token(_req.get_uri(), "root").length()));
+
+
+	//std::string location = _config.get_token(_req.get_uri(), "location");
+	std::string location = _config.get_locations().end()->first;
+	std::cout << "Location: " << location << std::endl;
+
+	std::cout << "Directory path (part 1/3): " << server_path() << std::endl;
+	std::cout << "Directory path (part 2/3): " << _config.get_token(_req.get_uri(), "root") << std::endl;
+	std::cout << "Directory path (part 3/3): " << _req.get_raw_uri() << std::endl;
+	std::cout << "Full directory path: " << dir_path << std::endl;
 	// check if index or location-specific index
 	index = _config.get_token(_req.get_uri(), "index");
 	if (!index.empty())
