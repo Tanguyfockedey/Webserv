@@ -16,5 +16,7 @@
 	* Si pas de slash a la fin de l'URL
 	    * Erreur 301
 		* Redirection header si pas de slash a la fin de l'url ('Location: URL_ENDING_WITH_SLASH')
+* Locations
+	* Obtenir la bonne url (ex: domain.com/blog/tech/ with location /blog/ --> root: /wordpress/ )
 * POST
     * Renvoyer une page (dans le cas d'une image uploadee, afficher l'image sur cette page)
