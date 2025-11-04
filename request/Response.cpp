@@ -6,7 +6,7 @@
 /*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/09/24 01:06:59 by mcygan           ###   ########.fr       */
+/*   Updated: 2025/11/04 15:51:58 by mcygan           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -217,13 +217,31 @@ void Response::get_file()
 		_status_line = "200 OK";
 		build_response(file);
 	}
+}
 
+bool Response::is_cgi()
+{
+	if ((_req.get_uri()).rfind("./cgi-bin/", 0) == 0)
+		return true;
+	else if ((_req.get_uri()).rfind("/cgi-bin/", 0) == 0)
+		return true;
+	else if ((_req.get_uri()).rfind("cgi-bin/", 0) == 0)
+		return true;
+	return false;
+}
+
+void Response::run_script()
+{
+	CgiHandler	cgi(_req);
+
+	_response = cgi.executeCgi(_req.get_uri());
 }
 
 void Response::process_get_request()
 {
 	std::string allowed_methods = _config.get_token(_req.get_raw_uri(), "method");
 	
+	//std::cout << "HERE: " + _req.get_uri() << std::endl;
 	if (!allowed_methods.empty() && allowed_methods.find("GET") == std::string::npos)
 	{
 		_status_line = "405 Method Not Allowed";
@@ -240,7 +258,10 @@ void Response::process_get_request()
 	}
 	else if (is_file)
 	{
-		get_file();
+		if (this->is_cgi())
+			this->run_script();
+		else
+			get_file();
 	}
 	else
 	{
@@ -294,8 +315,6 @@ void Response::process_post_request()
 		handle_multipart_post();
 	}
 }
-
-
 
 void Response::process_delete_request()
 {

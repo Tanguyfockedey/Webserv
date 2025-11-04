@@ -6,18 +6,17 @@
 #include <sys/wait.h>
 #include <string>
 
+#define BUFSIZE	256
+
 class CgiHandler {
 	private:
 		std::string							_body;
 		std::map<std::string, std::string>	_env;
+		char**								_env_cstr;
+		void	init_env(Request &request);
+		char**	get_env_cstr();
 	public:
-		// constructors & destructors
 		CgiHandler(Request &request);
-		CgiHandler(CgiHandler &src);
-		virtual ~CgiHandler(void);
-		// operators
-		CgiHandler		&operator=(CgiHandler &src);
-		// methods
-		void			init_env(Request &request);
-		std::string		executeCgi(const std::string scriptName);
+		~CgiHandler();
+		std::string	executeCgi(const std::string scriptName);
 };
