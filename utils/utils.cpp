@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/23 16:38:05 by jrichir           #+#    #+#             */
-/*   Updated: 2025/11/04 14:34:09 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/04 15:13:08 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,8 +50,6 @@ bool	is_directory(std::string path)
 {
 	struct stat s;
 
-	//if (path.length() > 0 && path[path.length() - 1] == '/')
-	//	return true;
 	if (lstat(path.c_str(), &s) == 0 && S_ISDIR(s.st_mode))
 		return true;
 	return false;
