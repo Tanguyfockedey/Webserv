@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/04 15:23:09 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/04 16:08:47 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,6 +101,12 @@ void Response::get_dir()
 	// subtract "root" part from uri to avoid duplication
 	dir_path = join_paths(dir_path, _req.get_uri().substr(_config.get_token(_req.get_uri(), "root").length()));
 
+	// Check final slash
+	if (dir_path[dir_path.length() - 1] != '/')
+	{
+		redirect(_req.get_raw_uri() + "/");
+		return;
+	}
 	
 	std::string file_type;
 
@@ -457,6 +463,18 @@ const std::string Response::get_http_date() {
     oss << gmt->tm_sec << " GMT";
 
     return oss.str();
+}
+
+void Response::redirect(std::string path)
+{
+	std::stringstream response;
+	response << "HTTP/1.1 301 Moved Permanently\r\n";
+	response << "Host: " << _config.get_token("", "server_name") << "\r\n";
+	response << "Date: " << get_http_date() << "\r\n";
+	response << "Location: " << path << "\r\n";
+	response << "Content-Type: text/html\r\n";
+	response << "Content-Length: 0\r\n";
+	_response = response.str();
 }
 
 void Response::set_error_page(std::string nb, std::string name, std::string header)
