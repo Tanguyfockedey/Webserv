@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/04 14:43:55 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/04 15:23:09 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,8 +60,7 @@ void Response::print_dir_listing(std::string &dir_path)
 				continue ;
 			else if (files[i] == "..")
 			{
-				files[i] = "⬑ Parent Directory";
-				body += "<p><a href=\"..\">" + files[i] + "</a></p>\n";
+				body += "<p><a href=\"..\">⬑ Parent Directory</a></p>\n";
 				continue ;
 			}
 			body += "<p><a href=\"" + files[i] + "\">" + files[i] + "</a></p>\n";
