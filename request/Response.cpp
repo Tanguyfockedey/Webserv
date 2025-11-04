@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/10/16 17:13:57 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/04 14:43:55 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,7 +49,7 @@ void Response::print_dir_listing(std::string &dir_path)
 {
 	std::vector<std::string> files;
 	
-	std::string body = "<html><head><title>Index of " + _req.get_raw_uri() + "</title></head><body>";
+	std::string body = "<html><head><meta charset=\"UTF-8\"><title>Index of " + _req.get_raw_uri() + "</title></head><body>";
 	if (get_dir_content(dir_path, files) != -1)
 	{
 		_status_line = "200 OK";
@@ -59,7 +59,11 @@ void Response::print_dir_listing(std::string &dir_path)
 			if (files[i] == ".")
 				continue ;
 			else if (files[i] == "..")
+			{
 				files[i] = "⬑ Parent Directory";
+				body += "<p><a href=\"..\">" + files[i] + "</a></p>\n";
+				continue ;
+			}
 			body += "<p><a href=\"" + files[i] + "\">" + files[i] + "</a></p>\n";
 		}
 	}
@@ -88,17 +92,35 @@ void Response::get_dir()
 {
 	std::string index, index_path, dir_path, error_msg, error_page;
 
+	// build full directory path
 	_config = _req.get_config();
 	//dir_path = join_paths(server_path(), _req.get_uri());
 
-	
 	dir_path = join_paths(server_path(), _config.get_token(_req.get_uri(), "root"));
 	//dir_path = join_paths(dir_path, _req.get_raw_uri());
 
 	// subtract "root" part from uri to avoid duplication
 	dir_path = join_paths(dir_path, _req.get_uri().substr(_config.get_token(_req.get_uri(), "root").length()));
 
+	
+	std::string file_type;
 
+	file_type = get_file_type(dir_path);
+	
+	std::cout << "File type: " << file_type << std::endl;
+	std::cout << "Full directory path: " << dir_path << std::endl;
+	if (file_type == "nonexistent")
+	{
+		error_msg = "Directory does not exist: " + dir_path + "\n";
+		std::cerr << error_msg;
+		set_error_page("404", "Not Found", "");
+		return ;
+	}
+	else
+	{
+		error_msg = "File type: " + file_type + "\n";
+		std::cerr << error_msg;
+	}
 	//std::string location = _config.get_token(_req.get_uri(), "location");
 	
 	//std::string location = _config.get_locations().end()->first;
@@ -116,12 +138,12 @@ void Response::get_dir()
 		raw_uri_part = raw_uri_part.substr(config_root_part.length());
 	std::string pathtest = join_paths(server_path_part, config_root_part);
 	pathtest = join_paths(pathtest, raw_uri_part);
-	std::cout << "Test Directory path : " << pathtest << std::endl;
-	std::cout << "-    -    -    -" << std::endl;
-	std::cout << "Directory path (part 1/3): " << server_path() << std::endl;
-	std::cout << "Directory path (part 2/3): " << _config.get_token(_req.get_uri(), "root") << std::endl;
-	std::cout << "Directory path (part 3/3): " << _req.get_raw_uri() << std::endl;
-	std::cout << "Full directory path: " << dir_path << std::endl;
+	//std::cout << "Test Directory path : " << pathtest << std::endl;
+	//std::cout << "-    -    -    -" << std::endl;
+	//std::cout << "Directory path (part 1/3): " << server_path() << std::endl;
+	//std::cout << "Directory path (part 2/3): " << _config.get_token(_req.get_uri(), "root") << std::endl;
+	//std::cout << "Directory path (part 3/3): " << _req.get_raw_uri() << std::endl;
+	//std::cout << "Full directory path: " << dir_path << std::endl;
 	// check if index or location-specific index
 	index = _config.get_token(_req.get_uri(), "index");
 	if (!index.empty())
@@ -230,7 +252,6 @@ void Response::get_file()
 		_status_line = "200 OK";
 		build_response(file);
 	}
-
 }
 
 void Response::process_get_request()
