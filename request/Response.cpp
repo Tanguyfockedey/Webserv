@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/04 16:08:47 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/04 17:25:44 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -420,7 +420,30 @@ void Response::handle_multipart_post()
 
 	path = join_paths(path, UPLOAD_PATH);
 
+	//DEBUG
+	std::cout << "Upload path: " << path << std::endl;//DEBUG
+	//DEBUG
+	
 	mkdir(path.c_str(), 0755);
+
+	// Verifier si les droits d'ecriture du dossier n'ont pas ete retires
+	// depuis qu'il a ete cree
+
+    // DIR *dp;
+    // struct dirent *dirp;
+    // if((dp  = opendir(dir.c_str())) == NULL) {
+    //     std::cout << "Error(" << errno << ") opening " << dir << std::endl;
+	// 	// Error 403 ? 500 ?
+	// 	return errno;
+    // }
+
+    // while ((dirp = readdir(dp)) != NULL) {
+    //     files.push_back(std::string(dirp->d_name));
+    // }
+    // closedir(dp);
+    // return 0;
+
+	//
 
 	path = join_paths(path, filename);
 
@@ -437,8 +460,43 @@ void Response::handle_multipart_post()
 	else
 	{
 		set_error_page("500", "Internal Server Error", "");
+		return ;
 	}
-	_response = "HTTP/1.1 " + _status_line + "\r\n\r\n";
+	//_response = "HTTP/1.1 " + _status_line + "\r\n\r\n";
+
+	std::string html_file_link = UPLOAD_PATH + filename;
+
+	_body = "<!DOCTYPE html>" \
+		"<html lang=\"en\">" \
+			"<head>" \
+				"<link rel=\"stylesheet\" href=\"/styles.css\">" \
+				"<link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"favicon.ico\">" \
+				"<title>"+ filename + " uploaded - WS Homepage</title>" \
+			"</head>" \
+			"<body>" \
+				"<h1 style=\"text-align: center;\">" \
+					"FILE UPLOADED" \
+				"</h1>" \
+				"<p style=\"text-align: center; margin: 42px;\">" \
+					"<a style=\"color: #7F7; font-weight: bold; font-size: 3em; margin: 42px;\" href=\"" + html_file_link + "\">Link to the file you've just uploaded</a>" \
+				"</p>" \
+				"<p style=\"text-align: center;\">" \
+					"<a href=\"/\">Go back to index page</a>" \
+				"</p>" \
+			"</body>" \
+		"</html>" \
+		;
+
+	std::stringstream response;
+	response << "HTTP/1.1 " << _status_line << "\r\n";
+	response << "Host: " << _config.get_token("", "server_name") << "\r\n";
+	response << "Date: " << get_http_date() << "\r\n";
+	response << "Content-Type: text/html\r\n";
+	response << "Content-Length: " << _body.length() << "\r\n";
+	_headers_string = response.str();
+	response << "\r\n";
+	response << _body;
+	_response = response.str();
 }
 
 const std::string Response::get_http_date() {
