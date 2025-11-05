@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/04 17:25:44 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/05 15:54:45 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,7 +49,10 @@ void Response::print_dir_listing(std::string &dir_path)
 {
 	std::vector<std::string> files;
 	
-	std::string body = "<html><head><meta charset=\"UTF-8\"><title>Index of " + _req.get_raw_uri() + "</title></head><body>";
+	std::string body = "<html><head>"\
+	"<link rel=\"stylesheet\" type=\"text/css\" href=\"/styles.css\">" \
+	"<link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"/favicon.ico\">" \
+	"<meta charset=\"UTF-8\"><title>Index of " + _req.get_raw_uri() + "</title></head><body>";
 	if (get_dir_content(dir_path, files) != -1)
 	{
 		_status_line = "200 OK";
@@ -104,6 +107,8 @@ void Response::get_dir()
 	// Check final slash
 	if (dir_path[dir_path.length() - 1] != '/')
 	{
+		//DEBUG
+		std::cout << "HAHAHAHAHAHAHAHAHAHA" << std::endl;//DEBUG
 		redirect(_req.get_raw_uri() + "/");
 		return;
 	}
@@ -426,24 +431,17 @@ void Response::handle_multipart_post()
 	
 	mkdir(path.c_str(), 0755);
 
-	// Verifier si les droits d'ecriture du dossier n'ont pas ete retires
-	// depuis qu'il a ete cree
-
-    // DIR *dp;
-    // struct dirent *dirp;
-    // if((dp  = opendir(dir.c_str())) == NULL) {
-    //     std::cout << "Error(" << errno << ") opening " << dir << std::endl;
-	// 	// Error 403 ? 500 ?
-	// 	return errno;
-    // }
-
-    // while ((dirp = readdir(dp)) != NULL) {
-    //     files.push_back(std::string(dirp->d_name));
-    // }
-    // closedir(dp);
-    // return 0;
-
-	//
+	// Ensure Write permission in the upload folder has not been 
+	// altered since it was created.
+    DIR *dp;
+    if((dp  = opendir(path.c_str())) == NULL) {
+		set_error_page("403", "Forbidden", "");
+		return ;
+	}
+	else
+	{
+		closedir(dp);
+	}
 
 	path = join_paths(path, filename);
 
@@ -469,8 +467,8 @@ void Response::handle_multipart_post()
 	_body = "<!DOCTYPE html>" \
 		"<html lang=\"en\">" \
 			"<head>" \
-				"<link rel=\"stylesheet\" href=\"/styles.css\">" \
-				"<link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"favicon.ico\">" \
+				"<link rel=\"stylesheet\" type=\"text/css\" href=\"/styles.css\">" \
+				"<link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"/favicon.ico\">" \
 				"<title>"+ filename + " uploaded - WS Homepage</title>" \
 			"</head>" \
 			"<body>" \
@@ -481,6 +479,7 @@ void Response::handle_multipart_post()
 					"<a style=\"color: #7F7; font-weight: bold; font-size: 3em; margin: 42px;\" href=\"" + html_file_link + "\">Link to the file you've just uploaded</a>" \
 				"</p>" \
 				"<p style=\"text-align: center;\">" \
+					"<a href=\"/page2.html\">Upload another file</a><br><br>" \
 					"<a href=\"/\">Go back to index page</a>" \
 				"</p>" \
 			"</body>" \
@@ -531,7 +530,7 @@ void Response::redirect(std::string path)
 	response << "Date: " << get_http_date() << "\r\n";
 	response << "Location: " << path << "\r\n";
 	response << "Content-Type: text/html\r\n";
-	response << "Content-Length: 0\r\n";
+	response << "Content-Length: 0\r\n\r\n";
 	_response = response.str();
 }
 
@@ -566,7 +565,8 @@ void Response::set_error_page(std::string nb, std::string name, std::string head
 		_body = "<!DOCTYPE html>" \
 			"<html lang=\"en\">" \
 				"<head>" \
-					"<link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"favicon.ico\">" \
+					"<link rel=\"stylesheet\" type=\"text/css\" href=\"/styles.css\">" \
+					"<link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"/favicon.ico\">" \
 					"<title>" + nb + " - WS Homepage</title>" \
 				"</head>" \
 				"<body style=\"background-color: grey;\">" \

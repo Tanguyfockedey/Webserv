@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-		<link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
-		<link rel="stylesheet" href="/styles.css">
+		<link rel="shortcut icon" type="image/x-icon" href="/favicon.ico">
+		<link rel="stylesheet" type="text/css" href="/styles.css">
         <title>Some page</title>
 	</head>
-	<body style="background-color: #70e070">
+	<body style="background-color: #D0FFA0">
 		<h1>
 				<strong>Zen page</strong>
 		</h1>
@@ -18,13 +18,17 @@
 			<br>
 			<quote style="font-style: italic; font-size: large; color: #223;">"The clearest way into the Universe is through a forest wilderness."</quote>
 		</p>
-		<audio controls>
+		<audio id="audio_naturesounds" controls>
 			<source src="nature_ambiance.mp3" type="audio/mpeg">
 			Your browser does not support the audio element.
 		</audio>
-		<p>
-			<a href="page2.html">Go to page 2</a>
-		</p>
+		<script>
+			document.addEventListener("DOMContentLoaded", () => {
+				var audio = document.getElementById("audio_naturesounds");
+				audio.volume = 0.5;
+				audio.play();
+			});
+		</script>
 		<p style="margin-top: 50px;">
 			<a href="/">Go back to the index page</a>
 		</p>
