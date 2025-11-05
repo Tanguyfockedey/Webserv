@@ -6,12 +6,18 @@
     * ...
 * DELETE ---> Mats
     * Handling scenarios leading to 204, 403, 409, 500 status codes (see schema)
+* File permissions ---> JP
+	* Try uploading a file with no read permission
+* Uploads ---> JP
+	* Check if single-part upload is still used/relevant
 * Locations ---> JP (+someone?)
 	* Obtenir la bonne url (ex: domain.com/blog/tech/ with location /blog/ --> root: /wordpress/ )
 * Add try-catch where needed
 * Clean code
     * Isolate function for building response page based on generated html-body --> JP
 * Tests
+* Clean repo
+   * Delete unnecessary files (HTTP diagrams, ...)
 
 ## Done
 
