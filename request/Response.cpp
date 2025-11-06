@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/05 15:54:45 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/06 13:15:07 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -302,13 +302,16 @@ void Response::process_post_request()
 	
 	if (_req.get_boundary().empty())
 	{
+		std::cerr << "Case: Single-part upload" << std::endl;
 		handle_single_part_post();
 		return ;
 	}
 	std::string boundary;
 	// status_line, response;
 	
+	std::cerr << "Case: Going for Multi-part upload" << std::endl;
 	boundary = _req.get_boundary();
+	std::cerr << "boundary: " << boundary << std::endl;
 
 	if (boundary.length() > 70)
 	{
@@ -363,7 +366,7 @@ void Response::build_response(std::fstream &path)
 		response << "HTTP/1.1 " << _status_line << "\r\n";
 		response << "Host: " << _config.get_token("", "server_name") << "\r\n";
 		response << "Date: " << get_http_date() << "\r\n";
-		response << "Content-Type:" << content_type << "\r\n";
+		response << "Content-Type: " << content_type << "\r\n";
 		response << "Content-Length: " << _body.length() << "\r\n";
 		_headers_string = response.str();
 		response << "\r\n";
