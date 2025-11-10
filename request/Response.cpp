@@ -6,7 +6,7 @@
 /*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/04 15:51:58 by mcygan           ###   ########.fr       */
+/*   Updated: 2025/11/10 14:54:07 by mcygan           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -232,9 +232,23 @@ bool Response::is_cgi()
 
 void Response::run_script()
 {
-	CgiHandler	cgi(_req);
-
-	_response = cgi.executeCgi(_req.get_uri());
+	CgiHandler			cgi(_req);
+	std::string			body;
+	std::stringstream	response;
+	
+	body = cgi.executeCgi(_req.get_uri());
+	if (body == "500 Internal server error\r\n\r\n")
+	{
+		_response = body;
+		return;
+	}
+	response << "HTTP/1.1 200 OK\r\n";
+	/* response << "Host: " << _config.get_token("", "server_name") << "\r\n";
+	response << "Date: " << get_http_date() << "\r\n";
+	response << "Content-Length: " << _body.length() << "\r\n"; */
+	response << "Content-Type:" << "text/html" << "\r\n\r\n";
+	response << body;
+	_response = response.str();
 }
 
 void Response::process_get_request()
