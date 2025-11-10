@@ -6,7 +6,7 @@
 /*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/10 15:18:04 by mcygan           ###   ########.fr       */
+/*   Updated: 2025/11/10 16:58:20 by mcygan           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -245,7 +245,7 @@ void Response::run_script()
 	response << "HTTP/1.1 200 OK\r\n";
 	/* response << "Host: " << _config.get_token("", "server_name") << "\r\n";
 	response << "Date: " << get_http_date() << "\r\n"; */
-	response << "Content-Type:" << "text/html" << "\r\n";
+	response << "Content-Type: " << "text/html" << "\r\n";
 	response << "Content-Length: " << body.length() << "\r\n\r\n";
 	response << body;
 	_response = response.str();

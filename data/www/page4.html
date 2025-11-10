@@ -1,28 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
-<body>
-		<div class="pass__block">
-		<h1> CGI: </h1> <br />
-    <form action = "/cgi-bin/hello_john.py" method = "get">
-        First Name: <input type = "text" name = "first_name">  <br />
-        <br>
-        Last Name: <input type = "text" name = "last_name" />
-        <input type = "submit" value = "Submit" /> <br />
-    </form>
+<center>
 
-    <!-- <br />
-    <br />
-    <br />
-    <br />
-    <h2> Calculator: </h2> <br />
-    <form action = "../cgi-bin/calc.py" method = "get">
-        Number1: <input type = "text" name = "f_num">  <br />
-        <br>
-        Oparator : <input type = "text" name = "oper">  <br />
-        <br>
-        Number2: <input type = "text" name = "s_num" />
-        <input type = "submit" value = "Submit" /> <br />
-    </form> -->
-</div>
+<body>
+	<div class="pass__block">
+		<h2> Hello, I'm CGI <br> What's your name? </h2> <br>
+    <form action = "/cgi-bin/hello_john.py" method = "get">
+        <input type = "text" name = "name">  <br>
+        <input type = "submit" value = "submit"> <br>
+    </form>
+	</div>
 </body>
+</center>
 </html>
