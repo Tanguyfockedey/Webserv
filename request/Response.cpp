@@ -6,7 +6,7 @@
 /*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/10 16:58:20 by mcygan           ###   ########.fr       */
+/*   Updated: 2025/11/12 13:44:12 by mcygan           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -219,18 +219,7 @@ void Response::get_file()
 	}
 }
 
-bool Response::is_cgi()
-{
-	if ((_req.get_uri()).rfind("./cgi-bin/", 0) == 0)
-		return true;
-	else if ((_req.get_uri()).rfind("/cgi-bin/", 0) == 0)
-		return true;
-	else if ((_req.get_uri()).rfind("cgi-bin/", 0) == 0)
-		return true;
-	return false;
-}
-
-void Response::run_script()
+void Response::run_cgi()
 {
 	CgiHandler			cgi(_req);
 	std::string			body;
@@ -243,8 +232,8 @@ void Response::run_script()
 		return;
 	}
 	response << "HTTP/1.1 200 OK\r\n";
-	/* response << "Host: " << _config.get_token("", "server_name") << "\r\n";
-	response << "Date: " << get_http_date() << "\r\n"; */
+	response << "Host: " << _config.get_token("", "server_name") << "\r\n";
+	response << "Date: " << get_http_date() << "\r\n";
 	response << "Content-Type: " << "text/html" << "\r\n";
 	response << "Content-Length: " << body.length() << "\r\n\r\n";
 	response << body;
@@ -272,8 +261,8 @@ void Response::process_get_request()
 	}
 	else if (is_file)
 	{
-		if (this->is_cgi())
-			this->run_script();
+		if (!(_req.get_uri()).rfind("./cgi-bin/", 0))
+			this->run_cgi();
 		else
 			get_file();
 	}

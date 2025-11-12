@@ -6,7 +6,7 @@
 /*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:21 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/03 12:41:20 by mcygan           ###   ########.fr       */
+/*   Updated: 2025/11/12 13:43:04 by mcygan           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,7 +54,6 @@ class Response
 		void get_directory(std::string &dir_path);
 		void get_dir();
 		void get_file();
-		bool is_cgi();
-		void run_script();
+		void run_cgi();
 		const std::string get_http_date();
 };
