@@ -6,7 +6,7 @@
 /*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/12 13:44:12 by mcygan           ###   ########.fr       */
+/*   Updated: 2025/11/12 15:14:51 by mcygan           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -169,7 +169,7 @@ void Response::get_dir()
 	}
 }
 
-void Response::get_file()
+void Response::get_file(int error = 0)
 {
 	std::string index, path, error_msg, error_page;
 	
@@ -177,22 +177,24 @@ void Response::get_file()
 	path = join_paths(root_directory(), _req.get_uri());
 	std::fstream file(path.c_str(), std::ios::in | std::ios::binary);
 	_file_error = false;
-	if (file.fail())
+	if (file.fail() || error)
 	{
 		_file_error = true;
-		if (errno == 2) // No such file or directory (404)
+		if (error)
+			errno = error;
+		if (errno == ENOENT) // No such file or directory (404)
 		{
 			error_msg = "File Not Found: " + path + "\n";
 			error_page = "error_404.html";
 			_status_line = "404 Not Found";
 		}
-		else if (errno == 13) // Permission denied (403)
+		else if (errno == EACCES) // Permission denied (403)
 		{
 			error_msg = "Permission Denied: " + path + "\n";
 			error_page = "error_403.html";
 			_status_line = "403 Forbidden";
 		}
-		else if (errno == 21) // Is a directory (ou tenter 20, si c'est pas 21)
+		else if (errno == EISDIR) // Is a directory (ou tenter ENOTDIR, si c'est pas EISDIR)
 		{
 			// Opening a directory failed ; aussi erreur 403 ?
 			error_msg =  "Failed opening a directory";//DEBUG
@@ -219,32 +221,35 @@ void Response::get_file()
 	}
 }
 
-void Response::run_cgi()
+void Response::handle_cgi()
 {
 	CgiHandler			cgi(_req);
+	std::string			path;
 	std::string			body;
 	std::stringstream	response;
 	
-	body = cgi.executeCgi(_req.get_uri());
+	path = _req.get_uri();
+	if (access (path.c_str(), X_OK)) // check for execute permission
+		return get_file(EACCES);
+	body = cgi.executeCgi(path);
 	if (body == "500 Internal server error\r\n\r\n")
-	{
 		_response = body;
-		return;
+	else
+	{
+		response << "HTTP/1.1 200 OK\r\n";
+		response << "Host: " << _config.get_token("", "server_name") << "\r\n";
+		response << "Date: " << get_http_date() << "\r\n";
+		response << "Content-Type: " << "text/html" << "\r\n";
+		response << "Content-Length: " << body.length() << "\r\n\r\n";
+		response << body;
+		_response = response.str();
 	}
-	response << "HTTP/1.1 200 OK\r\n";
-	response << "Host: " << _config.get_token("", "server_name") << "\r\n";
-	response << "Date: " << get_http_date() << "\r\n";
-	response << "Content-Type: " << "text/html" << "\r\n";
-	response << "Content-Length: " << body.length() << "\r\n\r\n";
-	response << body;
-	_response = response.str();
 }
 
 void Response::process_get_request()
 {
 	std::string allowed_methods = _config.get_token(_req.get_raw_uri(), "method");
 	
-	//std::cout << "HERE: " + _req.get_uri() << std::endl;
 	if (!allowed_methods.empty() && allowed_methods.find("GET") == std::string::npos)
 	{
 		_status_line = "405 Method Not Allowed";
@@ -262,7 +267,7 @@ void Response::process_get_request()
 	else if (is_file)
 	{
 		if (!(_req.get_uri()).rfind("./cgi-bin/", 0))
-			this->run_cgi();
+			this->handle_cgi();
 		else
 			get_file();
 	}

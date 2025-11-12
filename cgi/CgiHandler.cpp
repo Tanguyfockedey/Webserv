@@ -74,7 +74,6 @@ std::string	CgiHandler::executeCgi(const std::string scriptName)
 	char**			env = get_env_cstr();
 
 	std::string		body;
-	
 
 	write(fd_in, _body.c_str(), _body.size());
 	lseek(fd_in, 0, SEEK_SET);
@@ -87,6 +86,7 @@ std::string	CgiHandler::executeCgi(const std::string scriptName)
 		dup2(fd_in, STDIN_FILENO);
 		dup2(fd_out, STDOUT_FILENO);
 		execve(scriptName.c_str(), nll, env);
+		std::cout << "HERE" + errno <<std::endl;
 		write(STDOUT_FILENO, "500 Internal server error\r\n\r\n", 15);
 	}
 	else // parent process
@@ -116,6 +116,5 @@ std::string	CgiHandler::executeCgi(const std::string scriptName)
 		delete[] env[i];
 	delete[] env;
 
-	body += "\r\n\r\n";
 	return body;
 }
