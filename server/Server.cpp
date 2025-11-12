@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
+/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:00:55 by tafocked          #+#    #+#             */
-/*   Updated: 2025/08/21 12:53:03 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/12 19:28:42 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,7 +65,7 @@ void Server::init_socket()
 			_poll_fds.pop_back();
 			continue;
 		}
-		if (listen(_poll_fds[j].fd, 10) < 0)
+		if (listen(_poll_fds[j].fd, 128) < 0)
 		{
 			close(_poll_fds[j].fd);
 			std::cerr << "{Listening on socket failed: " << strerror(errno) <<  "} ";
