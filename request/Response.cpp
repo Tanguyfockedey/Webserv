@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/13 16:21:51 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/13 21:15:30 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,13 +15,36 @@
 
 Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 {
+	int	request_error_code = _req.get_error_code();
 	_config = req.get_config();
+	std::string error_name;
 
-	if (_req.get_error_code() != 0)
+	if (request_error_code != 0)
 	{
+		switch(request_error_code)
+		{
+			case 400:
+				error_name = "Bad Request";
+				break;
+			case 413:
+				error_name = "Payload Too Large";
+				break;
+			case 414:
+				error_name = "URI Too Long";
+				break;
+			case 501:
+				error_name = "Not Implemented";
+				break;
+			case 505:
+				error_name = "HTTP Version Not Supported";
+				break;
+			default:
+				error_name = "Error";
+				break;
+		}
 		std::string error_msg;
 		std::stringstream ss(error_msg);
-		ss << "HTTP/1.1 " << _req.get_error_code() << " Error\r\n\r\n";
+		ss << "HTTP/1.1 " << _req.get_error_code() << " " << error_name << "\r\n";
 		ss << "Host: " << _config.get_token("", "server_name") << "\r\n";
 		ss << "Date: " << get_http_date() << "\r\n";
 		_headers_string = ss.str();
