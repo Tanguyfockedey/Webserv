@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:48:10 by tafocked          #+#    #+#             */
-/*   Updated: 2025/09/26 11:43:58 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/13 15:23:44 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,19 +56,19 @@ void Request::parse_request_line()
 			_error_code = 505;
 			throw std::runtime_error("505 HTTP Version Not Supported");
 		}
+		if (_method != "GET" && _method != "POST" && _method != "DELETE")
+		{
+			std::cerr << "Unsupported HTTP method: " << _method << std::endl;
+			_error_code = 501;
+			throw std::runtime_error("501 Not Implemented");
+		}
 	}
 	catch(const std::exception& e)
 	{
 		std::cerr << e.what() << '\n';
 	}
 
-	if (_method != "GET" && _method != "POST" && _method != "DELETE")
-	{
-		std::cerr << "Unsupported HTTP method: " << _method << std::endl;
-		_error_code = 501;
-		throw std::runtime_error("501 Not Implemented");
-		return ;
-	}
+
 }
 
 void Request::parse_uri()

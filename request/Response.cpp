@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
+/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/13 13:30:51 by mcygan           ###   ########.fr       */
+/*   Updated: 2025/11/13 16:21:51 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,20 +17,16 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 {
 	_config = req.get_config();
 
-	try
+	if (_req.get_error_code() != 0)
 	{
-		if (_req.get_error_code() != 0)
-		{
-			std::string error_msg;
-			std::stringstream ss(error_msg);
-			ss << "HTTP/1.1 " << _req.get_error_code() << " Error\r\n\r\n";
-			_response = ss.str();
-			return ;
-		}
-	}
-	catch(const std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
+		std::string error_msg;
+		std::stringstream ss(error_msg);
+		ss << "HTTP/1.1 " << _req.get_error_code() << " Error\r\n\r\n";
+		ss << "Host: " << _config.get_token("", "server_name") << "\r\n";
+		ss << "Date: " << get_http_date() << "\r\n";
+		_headers_string = ss.str();
+		ss << "\r\n";
+		_response = ss.str();
 		return ;
 	}
 	_file_error = false;
@@ -285,7 +281,6 @@ void Response::process_post_request()
 		return ;
 	}
 	std::string boundary;
-	// status_line, response;
 	
 	std::cerr << "Case: Going for Multi-part upload" << std::endl;
 	boundary = _req.get_boundary();
@@ -316,7 +311,10 @@ void Response::process_delete_request()
 	}
 
 	// Basic implementation for now
-    int status = remove(_req.get_uri().c_str());
+
+	std::string file_path = join_paths(server_path(), _req.get_uri());
+	std::cerr << "Attempting to delete file: " << file_path << std::endl;
+    int status = remove(file_path.c_str()); // remove(_req.get_uri().c_str());
 
     if (status != 0) {
         perror("Error deleting file");
@@ -361,12 +359,81 @@ void Response::build_response(std::fstream &path)
 
 void Response::handle_single_part_post()
 {
-	std::string body = _req.get_body();
-	if (body.empty())
-		return ;
+	
+	std::cout << _req.get_raw_request() << std::endl;//DEBUG
+	
+	std::string file = _req.get_raw_request().substr(_req.get_raw_request().find("POST ") + 5);
+	file = file.substr(0, file.find_first_of(' '));
+	std::string filename;
+	
+	// Extract last part of path (file) as filename
+	if (file.find_last_of('/') != std::string::npos)
+		filename = file.substr(file.find_last_of('/') + 1);
 	else
-		for (size_t i = 0; i < body.length(); ++i)
-			std::cout << body[i];
+		filename = file;
+	
+	std::string length_string = _req.get_raw_request().substr(_req.get_raw_request().find("ength: ") + 7);
+	length_string = length_string.substr(0, length_string.find_first_of("\r\n"));
+	std::stringstream length_stream;
+	length_stream << length_string;
+	size_t content_length;
+	length_stream >> content_length;
+	std::string new_file_path = join_paths(server_path(), "/data/www/");
+	new_file_path = join_paths(new_file_path, UPLOAD_PATH);
+	new_file_path = join_paths(new_file_path, filename);
+
+	//DEBUG
+	std::cout << "\nFile path : " << file << std::endl;//DEBUG
+	std::cout << "Filename : " << filename << std::endl;//DEBUG
+	std::cout << "Content-Length : " << content_length << std::endl;//DEBUG
+	std::cout << "File path to write to: " << new_file_path << "\n" << std::endl;//DEBUG
+	
+	if (content_length < 1)
+	{
+		std::cerr << "Content-Length header missing - Binary file may get truncated !" << std::endl;
+		content_length = _req.get_body().length();
+		if (content_length < 1)
+		{
+			std::cerr << "No body in POST request" << std::endl;
+			_status_line = "400 Bad Request";
+			_response = "HTTP/1.1 " + _status_line + "\r\n\r\n";
+			return ;
+		}
+	}
+	
+	std::fstream filestream(new_file_path.c_str(), std::ios::out | std::ios::binary);
+	if (filestream.is_open())
+	{
+		for (size_t i = 0; i < content_length; ++i)
+		{
+			filestream << _req.get_body()[i];
+		}
+		filestream.close();
+		_status_line = "201 Created";
+		std::stringstream response;
+		response << "HTTP/1.1 " << _status_line << "\r\n";
+		response << "Host: " << _config.get_token("", "server_name") << "\r\n";
+		response << "Date: " << get_http_date() << "\r\n";
+		response << "Content-Length: 0\r\n";
+		_headers_string = response.str();
+		response << "\r\n";
+		_response = response.str();
+	}
+	else
+	{
+		std::cerr << "Failed to open file for writing: " << new_file_path << std::endl;
+		_status_line = "500 Internal Server Error";
+		_response = "HTTP/1.1 " + _status_line + "\r\n\r\n";
+		return ;
+	}
+
+	if (file.empty() && _body.empty())
+	{
+		std::cerr << "File seems to be empty and the request has no body data" << std::endl;
+		_status_line = "400 Bad Request";
+		_response = "HTTP/1.1 " + _status_line + "\r\n\r\n";
+		return ;
+	}
 }
 
 int Response::get_dir_content(std::string dir, std::vector<std::string> &files)
