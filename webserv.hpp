@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   webserv.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
+/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/05 19:39:13 by tafocked          #+#    #+#             */
-/*   Updated: 2025/09/11 12:10:21 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/13 20:38:11 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,7 +48,7 @@
 // Constants
 #define CONNECTION_TIMEOUT 10
 #define REQUEST_TIMEOUT 10
-#define BUFFER_SIZE 1000 //65536 // 64 KB
+#define BUFFER_SIZE 1048576 // 1 MB
 #define MAX_URI_LENGTH 2048 // 2 KB
 #define MAX_HEADER_LENGTH 8192 // 8 KB
 #define MAX_BODY_LENGTH 4294967296 // 4GB 
