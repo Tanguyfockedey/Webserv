@@ -3,7 +3,7 @@
 ## To do ---> who takes care of it
 
 * CGI ---> Mats
-    * ...
+    * fix bug when file has no read permission
 * DELETE ---> Mats
     * Handling scenarios leading to 204, 403, 409, 500 status codes (see schema)
 * File permissions ---> JP
