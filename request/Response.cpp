@@ -675,7 +675,7 @@ void Response::handle_405()
 		allowed.append("DELETE");
 	}
 
-	set_error_page("405", "Method Not Allowed", "Allow : " + allowed);
+	set_error_page("405", "Method Not Allowed", "Allow: " + allowed);
 }
 
 bool Response::is_allowed_method(const std::string& method) {
