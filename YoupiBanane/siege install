@@ -1,5 +1,0 @@
-echo 'export PATH=$HOME/.local/bin:$PATH' >> ~/.bashrc
-source ~/.bashrc
-
-
-siege -c 50 -t 2m http://localhost:8080
