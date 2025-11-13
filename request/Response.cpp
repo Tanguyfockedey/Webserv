@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
+/*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/11 16:02:03 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/13 13:30:51 by mcygan           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -256,7 +256,10 @@ void Response::process_get_request()
 	}
 	else if (is_file)
 	{
-		get_file();
+		if (!(_req.get_uri()).rfind("./cgi-bin/", 0))
+			this->handle_cgi();
+		else
+			get_file();
 	}
 	else
 	{
@@ -614,4 +617,29 @@ bool Response::is_allowed_method(const std::string& method) {
 	if (allowed_method == "false")
 		return false;
 	return true;
+}
+
+void Response::handle_cgi()
+{
+	CgiHandler			cgi(_req);
+	std::string			path;
+	std::string			body;
+	std::stringstream	response;
+	
+	path = _req.get_uri();
+	if (access (path.c_str(), X_OK)) // check for execute permission
+		return set_error_page("403", "Forbidden", "");
+	body = cgi.executeCgi(path);
+	if (body == "500 Internal server error\r\n\r\n")
+		_response = body;
+	else
+	{
+		response << "HTTP/1.1 200 OK\r\n";
+		response << "Host: " << _config.get_token("", "server_name") << "\r\n";
+		response << "Date: " << get_http_date() << "\r\n";
+		response << "Content-Type: " << "text/html" << "\r\n";
+		response << "Content-Length: " << body.length() << "\r\n\r\n";
+		response << body;
+		_response = response.str();
+	}
 }

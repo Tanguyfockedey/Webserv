@@ -1,20 +1,21 @@
 #!/usr/bin/python3
 
+import warnings
 import cgi
-import sys
-import os
 
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 form = cgi.FieldStorage()
-first_name = form.getvalue('first_name')
-last_name = form.getvalue('last_name')
-print(os.environ["QUERY_STRING"], file=sys.stderr)
-# print("HTTP/1.1 200 OK")
-print("Content-type: text/html\r\n\r\n")
+name = form.getvalue('name')
+
 print("<html>")
 print("<head>")
-print("<title>Hello - Second CGI Program</title>")
-print("<html>")
-print("<head>")
-print("<h2>Hello %s %s</h2>" % (first_name, last_name))
+print("<title>webserv - CGI</title>")
+print("</head>")
+print("<body>")
+print("<center><h2>Hello %s !</h2></center>" % (name))
 print("</body>")
+print("<body><center>")
+# print("<p><a href=\"page_cgi.html\">Go back to the CGI page</a></p>") # broken?
+print("<p><a href=\"/\">Go back to the index page</a></p>")
+print("</body></center>")
 print("</html>")

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
+/*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:21 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/04 15:59:42 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/13 13:27:25 by mcygan           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,8 @@ class Response
 		std::string _body;
 		Config _config;
 
+		// CGI
+		void handle_cgi();
 
 	public :
 		// Constructor and Destructor
@@ -58,6 +60,6 @@ class Response
 		void set_error_page(std::string nb, std::string name, std::string header);
 		bool is_allowed_method(const std::string& method);
 
-	private :
+	private : // privateception???
 		void redirect(std::string path);
 };
