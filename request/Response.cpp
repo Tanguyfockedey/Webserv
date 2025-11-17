@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/13 21:15:30 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/17 16:09:58 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,10 @@
 
 Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 {
+	// DEBUG
+	std::cout << "Request line: " << _req.get_request_line() << std::endl;//DEBUG
+	// DEBUG
+
 	int	request_error_code = _req.get_error_code();
 	_config = req.get_config();
 	std::string error_name;
@@ -26,6 +30,11 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 			case 400:
 				error_name = "Bad Request";
 				break;
+			case 405:
+			{
+				handle_405();
+				return ;
+			}
 			case 413:
 				error_name = "Payload Too Large";
 				break;
@@ -50,6 +59,7 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		_headers_string = ss.str();
 		ss << "\r\n";
 		_response = ss.str();
+		//_req.~Request();
 		return ;
 	}
 	_file_error = false;
@@ -58,7 +68,8 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 	else if (_req.get_method() == "POST")
 		process_post_request();
 	else if (_req.get_method() == "DELETE")
-		process_delete_request();	
+		process_delete_request();
+	//_req.~Request();
 }
 
 Response::~Response()
@@ -113,10 +124,21 @@ void Response::get_dir()
 {
 	std::string index, index_path, dir_path, error_msg, error_page;
 
+
+	// DEBUG
+	std::cout << "WE ARE DEALING WITH A DIRECTORY" << std::endl;//DEBUG
+	// DEBUG
+
 	// build full directory path
 	_config = _req.get_config();
 	dir_path = join_paths(server_path(), _config.get_token(_req.get_uri(), "root"));
 	dir_path = join_paths(dir_path, _req.get_uri().substr(_config.get_token(_req.get_uri(), "root").length()));
+
+
+	// DEBUG
+	std::cout << "dir_path: " << dir_path << std::endl;//DEBUG
+	// DEBUG
+
 
 	// Check final slash
 	if (dir_path[dir_path.length() - 1] != '/')
@@ -299,13 +321,17 @@ void Response::process_post_request()
 	
 	if (_req.get_boundary().empty())
 	{
-		std::cerr << "Case: Single-part upload" << std::endl;
+		//DEBUG
+		//std::cerr << "Case: Single-part upload" << std::endl;
+		//DEBUG
 		handle_single_part_post();
 		return ;
 	}
 	std::string boundary;
 	
-	std::cerr << "Case: Going for Multi-part upload" << std::endl;
+	//DEBUG
+	//std::cerr << "Case: Going for Multi-part upload" << std::endl;
+	//DEBUG
 	boundary = _req.get_boundary();
 	std::cerr << "boundary: " << boundary << std::endl;
 
@@ -383,7 +409,9 @@ void Response::build_response(std::fstream &path)
 void Response::handle_single_part_post()
 {
 	
-	std::cout << _req.get_raw_request() << std::endl;//DEBUG
+	//DEBUG
+	//std::cout << _req.get_raw_request() << std::endl;//DEBUG
+	//DEBUG
 	
 	std::string file = _req.get_raw_request().substr(_req.get_raw_request().find("POST ") + 5);
 	file = file.substr(0, file.find_first_of(' '));
@@ -406,14 +434,20 @@ void Response::handle_single_part_post()
 	new_file_path = join_paths(new_file_path, filename);
 
 	//DEBUG
-	std::cout << "\nFile path : " << file << std::endl;//DEBUG
-	std::cout << "Filename : " << filename << std::endl;//DEBUG
-	std::cout << "Content-Length : " << content_length << std::endl;//DEBUG
-	std::cout << "File path to write to: " << new_file_path << "\n" << std::endl;//DEBUG
+	// std::cout << "\nFile path : " << file << std::endl;//DEBUG
+	// std::cout << "Filename : " << filename << std::endl;//DEBUG
+	// std::cout << "Content-Length : " << content_length << std::endl;//DEBUG
+	// std::cout << "File path to write to: " << new_file_path << "\n" << std::endl;//DEBUG
 	
+	if (filename.empty()) // si l'URL est un directory
+	{
+		handle_405();
+		return ;
+	}
+
 	if (content_length < 1)
 	{
-		std::cerr << "Content-Length header missing - Binary file may get truncated !" << std::endl;
+		//std::cerr << "Content-Length header missing - Binary file may get truncated !" << std::endl;
 		content_length = _req.get_body().length();
 		if (content_length < 1)
 		{
@@ -728,8 +762,10 @@ void Response::handle_cgi()
 		response << "Host: " << _config.get_token("", "server_name") << "\r\n";
 		response << "Date: " << get_http_date() << "\r\n";
 		response << "Content-Type: " << "text/html" << "\r\n";
-		response << "Content-Length: " << body.length() << "\r\n\r\n";
-		response << body;
+		response << "Content-Length: " << body.length() << "\r\n";
+		_headers_string = response.str();
+		response << "\r\n";
+		response << _body;
 		_response = response.str();
 	}
 }

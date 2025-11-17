@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:48:10 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/13 20:35:27 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/17 15:47:27 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,52 +23,69 @@ void Request::parse_request_line()
 {
 	// std::string method, uri, version;
 
+	// Trim leading whitespaces/newlines
+	_raw_request = _raw_request.substr(_raw_request.find_first_not_of("\r\n\t "));
+
 	if (_raw_request.empty())
 	{
 		std::cerr << "Empty request received." << std::endl;
-		_error_code = 400;
+		set_error_code(400);
 		throw std::runtime_error("400 Bad Request");
 	}
 	
+	//std::cout << "[Parsing request line]  Raw request: " << _raw_request << std::endl;//DEBUG
 	try
 	{
 		if (_raw_request.find("\r\n") == std::string::npos)
 		{
 			_request_line = _raw_request;
 			_one_line_request = 1;
+			//std::cout << "One line request detected." << std::endl;//DEBUG
 		}
 		else
 		{
+			// Trim leading whitespaces/newlines
+			//_request_line = _raw_request.substr(_raw_request.find_first_not_of("\r\n\t "));
+			//_request_line = _request_line.substr(0, _raw_request.find("\r\n"));
+			
 			_request_line = _raw_request.substr(0, _raw_request.find("\r\n"));
+			
 			_one_line_request = 0;
+			//std::cout << "Multi-line request detected." << std::endl;//DEBUG
 		}
-		std::istringstream iss(_request_line);
-		iss >> _method >> _uri >> _version;
+		// std::istringstream iss(_request_line);
+		// iss >> _method >> _uri >> _version;
+		std::stringstream ss(_request_line);
+		ss >> _method >> _uri >> _version;
+		
+		//DEBUG
+		//std::cout << "method: " << _method << ", uri: " << _uri << ", version: " << _version << std::endl;//DEBUG
+		//DEBUG
+		
 		if (_method.empty() || _uri.empty() || _version.empty())
 		{
 			std::cerr << "Malformed request line: " << _request_line << std::endl;
-			_error_code = 400;
+			set_error_code(400);
 			throw std::runtime_error("400 Bad Request");
 		}
 		if (_version != "HTTP/1.1" && _version != "HTTP/1.0" && _version != "undefined")
 		{
 			std::cerr << "Unsupported HTTP version: " << _version << std::endl;
-			_error_code = 505;
+			set_error_code(505);
 			throw std::runtime_error("505 HTTP Version Not Supported");
 		}
 		if (_method != "GET" && _method != "POST" && _method != "DELETE")
 		{
-			std::cerr << "Unsupported HTTP method: " << _method << std::endl;
-			_error_code = 501;
-			throw std::runtime_error("501 Not Implemented");
+			set_error_code(405); // TEST - DEBUG
+			// std::cerr << "Unsupported HTTP method: " << _method << std::endl;
+			// set_error_code(501);
+			// throw std::runtime_error("501 Not Implemented");
 		}
 	}
 	catch(const std::exception& e)
 	{
 		std::cerr << e.what() << '\n';
 	}
-
-
 }
 
 void Request::parse_uri()
@@ -83,7 +100,7 @@ void Request::parse_uri()
 		if (_uri.find("../") != std::string::npos || _uri.find("..\\") != std::string::npos)
 		{
 			std::cerr << "The requested URL was rejected: " << _uri << std::endl;
-			_error_code = 400;// verifier si c'est 403 ou 400, ... ?
+			set_error_code(400);;// verifier si c'est 403 ou 400, ... ?
 			throw std::runtime_error("400 Bad Request");
 		}
 		else if (_uri.length() > MAX_URI_LENGTH)
@@ -95,7 +112,7 @@ void Request::parse_uri()
 		else if (_uri.find(" ") != std::string::npos) // verifier si les espaces sont vmt invalides
 		{
 			std::cerr << "The requested URL contains spaces: " << _uri << std::endl;
-			_error_code = 400;
+			set_error_code(400);
 			throw std::runtime_error("400 Bad Request");
 		}
 	}
@@ -154,7 +171,7 @@ void Request::normalize_uri()
 	}
 
 	_raw_uri = get_uri();
-	if (_uri == "/" || _uri.empty())
+	if (_method == "GET" && (_uri == "/" || _uri.empty()))
 	{
 		if (_config.get_token(_uri, "index").empty())
 			_uri = "/index.html";
@@ -357,7 +374,7 @@ void Request::parse_headers()
 	if (_method == "POST" && REQUIRE_HEADERS && (std::string::npos || end_pos == std::string::npos || end_pos <= pos))
 	{
 		std::cerr << "Malformed request: missing headers" << std::endl;
-		_error_code = 400;
+		set_error_code(400);
 		return ;
 	}
 	//pos = raw_request.find("\r\n");
@@ -365,20 +382,20 @@ void Request::parse_headers()
 	if (pos == std::string::npos || end_pos == std::string::npos || end_pos <= pos)
 	{
 		std::cerr << "Malformed request: missing headers" << std::endl;
-		_error_code = 400;
+		set_error_code(400);
 		return ;
 	}
 	_headers_string = _raw_request.substr(pos + 2, end_pos - (pos + 2));
 	if (_headers_string.length() > MAX_HEADER_LENGTH)
 	{
 		std::cerr << "Headers too long: " << _headers_string.length() << " bytes" << std::endl;
-		_error_code = 431;
+		set_error_code(431);
 		return ;
 	}
 	if (_headers_string.empty() && _method == "POST" && REQUIRE_HEADERS)
 	{
 		std::cerr << "Malformed request: empty headers" << std::endl;
-		_error_code = 400;
+		set_error_code(400);
 		return ;
 	}
 	// set_headers_string(headers_string);
@@ -409,7 +426,7 @@ void Request::parse_body()
 	if (pos == std::string::npos)
 	{
 		std::cerr << "Malformed request: missing body" << std::endl;
-		_error_code = 400;
+		set_error_code(400);
 		return ;
 	}
 	_body = _raw_request.substr(pos + 4);
@@ -422,7 +439,7 @@ void Request::parse_body()
 	if (_body.length() > MAX_BODY_LENGTH)
 	{
 		std::cerr << "Body too long: " << _body.length() << " bytes" << std::endl;
-		_error_code = 413;
+		set_error_code(413);
 	}
 	// set_body(body);
 }
@@ -485,6 +502,29 @@ void Request::set_actual_body_length(void)
 	_actual_body_length -= 2; // for the \r\n before the closing boundary
 }
 
+void Request::reset_request()
+{
+	_error_code = 0;
+	_headers_parsed = false;
+	_raw_request.clear();
+	_request_line.clear();
+	_method.clear();
+	_raw_uri.clear();
+	_uri.clear();
+	_uri_query.clear();
+	_uri_fragment.clear();
+	_uri_is_directory = false;
+	_uri_is_regular_file = false;
+	_version.clear();
+	_headers_string.clear();
+	_headers.clear();
+	_boundary.clear();
+	_multipart_data.clear();
+	_body.clear();
+	_actual_body_length = 0;
+	_resource_info.clear();
+}
+
 bool Request::is_complete()
 {
 	if (!_headers_parsed)
@@ -494,14 +534,14 @@ bool Request::is_complete()
 		else
 		{
 			parse_request_line();
-			if (_error_code != 0)//DEBUG
-				return true;// DEBUG
+			// if (_error_code != 0)//DEBUG
+			// 	return true;// DEBUG
 			parse_uri();
-			if (_error_code != 0)//DEBUG
-				return true;// DEBUG
+			// if (_error_code != 0)//DEBUG
+			// 	return true;// DEBUG
 			normalize_uri();
-			if (_error_code != 0)//DEBUG
-				return true;// DEBUG
+			// if (_error_code != 0)//DEBUG
+			// 	return true;// DEBUG
 			if (get_uri_type(join_paths(server_path(), _uri)) == "directory")
 				set_uri_is_directory(true);
 			else
@@ -515,6 +555,8 @@ bool Request::is_complete()
 				else
 					set_uri_is_regular_file(false);
 			}
+			// if (_error_code != 0)//DEBUG
+			// 	return true;// DEBUG
 			if (!_one_line_request)
 				parse_headers();
 			else
@@ -539,7 +581,7 @@ bool Request::is_complete()
 			else if (body_length > content_length)
 			{
 				std::cerr << "Request body too long: " << body_length << " bytes" << std::endl;
-				_error_code = 413;
+				set_error_code(413);
 				return false;
 			}
 			else
@@ -557,4 +599,11 @@ bool Request::is_complete()
 		}
 	}
 	return true;
+}
+
+void Request::set_error_code(int error_code)
+{
+	// set error code only if no other error was previously encountered
+	if (_error_code == 0)
+		_error_code = error_code;
 }

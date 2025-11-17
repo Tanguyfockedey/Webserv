@@ -6,7 +6,7 @@
     * fix bug when file has no read permission
 * DELETE ---> Mats
     * Handling scenarios leading to 204, 403, 409, 500 status codes (see schema)
-
+* Protect POST of size 0 --> JP
 * Uploads ---> JP
 	* Check if single-part upload is still used/relevant --> used if using NetCat utility (nc) instead of firefox for making the POST request, AND it needs to be fixed !
 * Locations ---> JP (+someone?)
@@ -31,3 +31,11 @@
     * [DONE] [Upload] Retourner erreur 403 si le dossier dans lequel on essaye d'uploader un fichier est protege en ecriture
 	* File permissions ---> JP
 		* Try uploading a file with no read permission
+
+
+* request.cpp --> converts "/" into "/index.html"  ONLY IF REQUEST METHOD == GET
+* send 405 if POST URL is a directory (in other words, filename.empty())
+* send 405 Method Not Allowed instead of 501 Not Implemented for HEAD method (to please tester)
+* remove trailing whitespaces from requests
+
+* created a directory called "directory" to pass a test ? 
