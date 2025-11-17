@@ -6,7 +6,7 @@
 /*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/17 16:17:06 by mcygan           ###   ########.fr       */
+/*   Updated: 2025/11/17 17:17:25 by mcygan           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -350,13 +350,13 @@ void Response::process_delete_request()
 		/* if (errno == EACCES)
 			return set_error_page("403", "Forbidden", "");
 		else if (errno == ENOENT)
-			return set_error_page("404", "Resource not found", ""); */
+			return set_error_page("404", "Not found", ""); */
 
 		// or just send a response
 		if (errno == EACCES)
 			_response = generic_response("403 Forbidden");
 		else if (errno == ENOENT)
-			_response = generic_response("404 Resource not found");
+			_response = generic_response("404 Not found");
 		return;
 	}
 	if (_req.get_uri_is_directory())
