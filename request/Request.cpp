@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
+/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:48:10 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/13 20:35:27 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/18 15:15:35 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -532,7 +532,23 @@ bool Request::is_complete()
 			size_t content_length = 0;
 			std::istringstream iss(_headers.find("Content-Length")->second);
 			iss >> content_length;
-			
+
+			size_t client_body_size;
+			std::string client_body_size_str = _config.get_token(_uri, "client_body_size");
+			if (client_body_size_str.empty())
+				client_body_size = MAX_BODY_LENGTH;
+			else
+			{
+				std::istringstream cbss(_config.get_token(_uri, "client_body_size"));
+				cbss >> client_body_size;
+			}
+			if (content_length > client_body_size)
+			{
+				std::cerr << "Client body size limit: " << client_body_size << " bytes" << std::endl;
+				std::cerr << "Content-Length exceeds client_body_size limit: " << content_length << " bytes" << std::endl;
+				_error_code = 413;
+				return true;
+			}
 			size_t body_length = body.size();
 			if (body_length < content_length)
 				return false;
@@ -540,7 +556,7 @@ bool Request::is_complete()
 			{
 				std::cerr << "Request body too long: " << body_length << " bytes" << std::endl;
 				_error_code = 413;
-				return false;
+				return true;
 			}
 			else
 			{
