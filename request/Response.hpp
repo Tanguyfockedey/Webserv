@@ -6,7 +6,7 @@
 /*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:21 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/13 13:27:25 by mcygan           ###   ########.fr       */
+/*   Updated: 2025/11/18 03:09:21 by mcygan           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,8 @@ class Response
 		Config _config;
 
 		// CGI
-		void handle_cgi();
+		std::string	generic_response(std::string status_line, std::string body);
+		void 		handle_cgi();
 
 	public :
 		// Constructor and Destructor

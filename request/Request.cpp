@@ -6,7 +6,7 @@
 /*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:48:10 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/13 21:38:22 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/11/18 15:15:35 by tafocked         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -494,8 +494,14 @@ bool Request::is_complete()
 		else
 		{
 			parse_request_line();
+			if (_error_code != 0)//DEBUG
+				return true;// DEBUG
 			parse_uri();
+			if (_error_code != 0)//DEBUG
+				return true;// DEBUG
 			normalize_uri();
+			if (_error_code != 0)//DEBUG
+				return true;// DEBUG
 			if (get_uri_type(join_paths(server_path(), _uri)) == "directory")
 				set_uri_is_directory(true);
 			else
