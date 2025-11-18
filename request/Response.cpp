@@ -6,7 +6,7 @@
 /*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/17 17:17:25 by mcygan           ###   ########.fr       */
+/*   Updated: 2025/11/18 03:07:12 by mcygan           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,21 +63,6 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 
 Response::~Response()
 {}
-
-std::string	Response::generic_response(std::string status_line, std::string body = "")
-{
-	std::stringstream	response;
-
-	response << "HTTP/1.1 " << status_line << "\r\n";
-	response << "Host: " << _config.get_token("", "server_name") << "\r\n";
-	response << "Date: " << get_http_date() << "\r\n";
-	response << "Content-Type: " << "text/html" << "\r\n";
-	response << "Content-Length: " << body.length() << "\r\n\r\n";
-	if (body != "")
-		response << body;
-
-	return response.str();
-}
 
 void Response::print_dir_listing(std::string &dir_path)
 {
@@ -338,6 +323,21 @@ void Response::process_post_request()
 	}
 }
 
+std::string	Response::generic_response(std::string status_line, std::string body = "")
+{
+	std::stringstream	response;
+
+	response << "HTTP/1.1 " << status_line << "\r\n";
+	response << "Host: " << _config.get_token("", "server_name") << "\r\n";
+	response << "Date: " << get_http_date() << "\r\n";
+	response << "Content-Type: " << "text/html" << "\r\n";
+	response << "Content-Length: " << body.length() << "\r\n\r\n";
+	if (body != "")
+		response << body;
+
+	return response.str();
+}
+
 void Response::process_delete_request()
 {	
 	if (!is_allowed_method("DELETE"))
@@ -362,14 +362,14 @@ void Response::process_delete_request()
 	if (_req.get_uri_is_directory())
 	{
 		if (rmdir(path.c_str()))
-			_response = generic_response("500 Internal server error dir");
+			_response = generic_response("500 Internal server error");
 		else 
 			_response = generic_response("200 OK");
 	}
 	else
 	{
 		if (remove(path.c_str()))
-			_response = generic_response("500 Internal server error file");
+			_response = generic_response("500 Internal server error");
 		else
 			_response = generic_response("200 OK");
 	}
