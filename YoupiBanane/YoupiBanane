@@ -1,0 +1,2 @@
+./webserv YoupiBanane/YoupiBanane.conf
+./ubuntu_tester http://127.0.0.1:8800

@@ -3,7 +3,4 @@ source ~/.bashrc
 
 siege -c 50 -t 2m http://localhost:8080
 
-./webserv YoupiBanane/YoupiBanane.conf
-./ubuntu_tester http://127.0.0.1:8800
-
-curl -i http://localhost:8085 -X POST --data "123456789 longer than it should"
+curl -i http://localhost:8085/test -X POST --data "123456789 longer than it should"
