@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
+/*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/13 21:15:30 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/18 03:08:54 by mcygan           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -323,30 +323,56 @@ void Response::process_post_request()
 	}
 }
 
-void Response::process_delete_request()
+std::string	Response::generic_response(std::string status_line, std::string body = "")
 {
-	std::string path, error_msg, error_page;
-	
+	std::stringstream	response;
+
+	response << "HTTP/1.1 " << status_line << "\r\n";
+	response << "Host: " << _config.get_token("", "server_name") << "\r\n";
+	response << "Date: " << get_http_date() << "\r\n";
+	response << "Content-Type: " << "text/html" << "\r\n";
+	response << "Content-Length: " << body.length() << "\r\n\r\n";
+	if (body != "")
+		response << body;
+
+	return response.str();
+}
+
+void Response::process_delete_request()
+{	
 	if (!is_allowed_method("DELETE"))
+		return handle_405();
+		
+	std::string path = join_paths(server_path(), _req.get_uri());
+	if (access(path.c_str(), W_OK)) // check for write permission
 	{
-		handle_405();
-		return ;
+		// display error page
+		/* if (errno == EACCES)
+			return set_error_page("403", "Forbidden", "");
+		else if (errno == ENOENT)
+			return set_error_page("404", "Not found", ""); */
+
+		// or just send a response
+		if (errno == EACCES)
+			_response = generic_response("403 Forbidden");
+		else if (errno == ENOENT)
+			_response = generic_response("404 Not found");
+		return;
 	}
-
-	// Basic implementation for now
-
-	std::string file_path = join_paths(server_path(), _req.get_uri());
-	std::cerr << "Attempting to delete file: " << file_path << std::endl;
-    int status = remove(file_path.c_str()); // remove(_req.get_uri().c_str());
-
-    if (status != 0) {
-        perror("Error deleting file");
-    }
-    else {
-        std::cout << "File successfully deleted : " << _req.get_uri() << std::endl;
-    }
-	
-	_response = "...";
+	if (_req.get_uri_is_directory())
+	{
+		if (rmdir(path.c_str()))
+			_response = generic_response("500 Internal server error");
+		else 
+			_response = generic_response("200 OK");
+	}
+	else
+	{
+		if (remove(path.c_str()))
+			_response = generic_response("500 Internal server error");
+		else
+			_response = generic_response("200 OK");
+	}
 }
 
 void Response::build_response(std::fstream &path)
