@@ -23,28 +23,6 @@ void	CgiHandler::init_env(Request &request)
 		this->_env["QUERY_STRING"] = request.get_uri_query();
 	else if (_env["REQUEST_METHOD"] == "post")
 		this->_env["QUERY STRING"] = request.get_body();
-
-	/* std::ostringstream	str1;
-	str1 << this->_body.length(); */
-	
-	/* this->_env["REDIRECT_STATUS"] = "200";
-	if (headers.find("Auth-Scheme") != headers.end() && headers["Auth-Scheme"] != "")
-		this->_env["AUTH_TYPE"] = headers["Authorization"];
-	this->_env["AUTH_TYPE"] = headers["Authorization"];
-	this->_env["CONTENT_LENGTH"] = str1.str();
-	this->_env["CONTENT_TYPE"] = headers["Content-type"];
-	this->_env["GATEWAY_INTERFACE"] = "CGI/1.1";
-	this->_env["PATH_INFO"] = request.get_uri_fragment();
-	this->_env["REMOTE_ADDR"] = "8081";
-	this->_env["REMOTE_HOST"] = "";
-	this->_env["REMOTE_IDENT"] = headers["Authorization"];
-	this->_env["REMOTE_USER"] = headers["Authorization"];
-	this->_env["REQUEST_URI"] = request.get_uri();
-	this->_env["SCRIPT_NAME"] = request.get_uri_fragment();
-	this->_env["SERVER_NAME"] = headers["Hostname"];
-	this->_env["SERVER_PORT"] = "8081";
-	this->_env["SERVER_PROTOCOL"] = "HTTP/1.1";
-	this->_env["SERVER_SOFTWARE"] = "Webserv/0.1"; */
 }
 
 char**	CgiHandler::get_env_cstr()
