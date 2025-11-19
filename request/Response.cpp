@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/19 17:26:10 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/19 17:34:13 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -684,6 +684,7 @@ std::string Response::work_out_path()
 	std::string common2 = common_path(server_root_path, location_root_path);
 	size_t common2_length = common2.length();
 	std::string unique_part_of_location_path = location_root_path.substr(common2_length);
+	std::cout << "Unique part of location path: " << unique_part_of_location_path << std::endl; //DEBUG
 	
 	std::string unique_part_of_uri = _req.get_raw_uri().substr(common_length);
 	std::cout << "Unique part of URI: " << unique_part_of_uri << std::endl; //DEBUG
