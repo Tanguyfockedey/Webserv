@@ -6,7 +6,7 @@
 /*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/19 17:13:17 by mcygan           ###   ########.fr       */
+/*   Updated: 2025/11/19 17:39:44 by mcygan           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -357,14 +357,14 @@ void Response::process_delete_request()
 	if (_req.get_uri_is_directory())
 	{
 		if (rmdir(path.c_str()))
-			_response = generic_response("500 Internal server error");
+			return set_error_page("500", "Internal server error", "");
 		else 
 			_response = generic_response("200 OK");
 	}
 	else
 	{
 		if (remove(path.c_str()))
-			_response = generic_response("500 Internal server error");
+			return set_error_page("500", "Internal server error", "");
 		else
 			_response = generic_response("200 OK");
 	}
