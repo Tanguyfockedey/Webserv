@@ -88,7 +88,7 @@ std::string	CgiHandler::executeCgi(const std::string scriptName)
 		dup2(fd_out, STDOUT_FILENO);
 		execve(scriptName.c_str(), nll, env);
 		std::cout << "HERE" + errno <<std::endl;
-		write(STDOUT_FILENO, "500 Internal server error\r\n\r\n", 15);
+		write(STDOUT_FILENO, "500 Internal server error\r\n\r\n", 30);
 	}
 	else // parent process
 	{

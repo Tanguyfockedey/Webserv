@@ -6,7 +6,7 @@
 /*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/18 03:08:54 by mcygan           ###   ########.fr       */
+/*   Updated: 2025/11/19 16:14:55 by mcygan           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -344,20 +344,12 @@ void Response::process_delete_request()
 		return handle_405();
 		
 	std::string path = join_paths(server_path(), _req.get_uri());
-	if (access(path.c_str(), W_OK)) // check for write permission
+	if (access(path.c_str(), W_OK))
 	{
-		// display error page
-		/* if (errno == EACCES)
+		if (errno == EACCES)
 			return set_error_page("403", "Forbidden", "");
 		else if (errno == ENOENT)
-			return set_error_page("404", "Not found", ""); */
-
-		// or just send a response
-		if (errno == EACCES)
-			_response = generic_response("403 Forbidden");
-		else if (errno == ENOENT)
-			_response = generic_response("404 Not found");
-		return;
+			return set_error_page("404", "Not found", "");
 	}
 	if (_req.get_uri_is_directory())
 	{
@@ -743,7 +735,7 @@ void Response::handle_cgi()
 	std::stringstream	response;
 	
 	path = _req.get_uri();
-	if (access (path.c_str(), X_OK)) // check for execute permission
+	if (access(path.c_str(), R_OK) || access(path.c_str(), X_OK))
 		return set_error_page("403", "Forbidden", "");
 	body = cgi.executeCgi(path);
 	if (body == "500 Internal server error\r\n\r\n")
