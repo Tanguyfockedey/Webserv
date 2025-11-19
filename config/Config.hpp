@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Config.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
+/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/03 16:06:16 by tafocked          #+#    #+#             */
-/*   Updated: 2025/09/11 02:35:17 by mcygan           ###   ########.fr       */
+/*   Updated: 2025/11/19 15:26:02 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,8 @@ class Config
 		const std::vector<std::string>& get_addr() const {return _addr;}
 		const std::vector<uint16_t>& get_port() const {return _port;}
 		const std::string get_token(const std::string &path, const char* token);
-
+		const std::string get_location_path(const std::string &path);
+		
 		// Method to parse configuration
 		static std::vector<Config> parse_file(std::string file);
 		static std::string extract_token(std::string& str, const char* token);

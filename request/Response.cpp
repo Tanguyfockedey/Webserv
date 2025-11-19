@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/17 16:09:58 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/19 17:26:10 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,12 +15,9 @@
 
 Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 {
-	// DEBUG
-	std::cout << "Request line: " << _req.get_request_line() << std::endl;//DEBUG
-	// DEBUG
-
 	int	request_error_code = _req.get_error_code();
 	_config = req.get_config();
+
 	std::string error_name;
 
 	if (request_error_code != 0)
@@ -62,6 +59,11 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		//_req.~Request();
 		return ;
 	}
+
+	// TEST DEBUG
+	//std::cout << "Full path : " << work_out_path() << std::endl;	// TEST DEBUG
+	// TEST DEBUG
+
 	_file_error = false;
 	if (_req.get_method() == "GET")
 		process_get_request();
@@ -237,7 +239,12 @@ void Response::get_file()
 	std::string index, path, error_msg, error_page;
 	
 	//                  server root   , config root + path
-	path = join_paths(server_path(), _req.get_uri());
+	path = work_out_path();// = join_paths(server_path(), _req.get_uri());
+
+	//
+	//std::cout << "Final file path to get: " << path << std::endl; //DEBUG
+	//
+	
 	std::fstream file(path.c_str(), std::ios::in | std::ios::binary);
 	_file_error = false;
 	if (file.fail())
@@ -278,6 +285,21 @@ void Response::get_file()
 		_status_line = "200 OK";
 		build_response(file);
 	}
+}
+
+std::string Response::common_path(const std::string &path1, const std::string &path2)
+{
+	size_t min_length = std::min(path1.length(), path2.length());
+	size_t last_slash_pos = 0;
+
+	for (size_t i = 0; i < min_length; ++i)
+	{
+		if (path1[i] != path2[i])
+			break;
+		if (path1[i] == '/')
+			last_slash_pos = i;
+	}
+	return path1.substr(0, last_slash_pos + 1);
 }
 
 void Response::process_get_request()
@@ -429,7 +451,7 @@ void Response::handle_single_part_post()
 	length_stream << length_string;
 	size_t content_length;
 	length_stream >> content_length;
-	std::string new_file_path = join_paths(server_path(), "/data/www/");
+	std::string new_file_path = join_paths(server_path(), _config.get_token("/", "root"));
 	new_file_path = join_paths(new_file_path, UPLOAD_PATH);
 	new_file_path = join_paths(new_file_path, filename);
 
@@ -640,6 +662,38 @@ void Response::redirect(std::string path)
 	response << "\r\n";
 	response << _body;
 	_response = response.str();
+}
+
+std::string Response::work_out_path()
+{
+	std::string res_path;
+
+	std::string common = common_path(_req.get_raw_uri(), _config.get_location_path(_req.get_raw_uri()));
+	size_t common_length = common.length();
+
+	
+	std::string program_path = server_path();
+	std::cout << "Program path: " << program_path << std::endl; //DEBUG
+	
+	std::string server_root_path = _config.get_token("/", "root");
+	std::cout << "Server root path: " << server_root_path << std::endl; //DEBUG
+
+	std::string location_root_path = _config.get_token(_req.get_raw_uri(), "root");
+	std::cout << "Location root path: " << location_root_path << std::endl; //DEBUG
+
+	std::string common2 = common_path(server_root_path, location_root_path);
+	size_t common2_length = common2.length();
+	std::string unique_part_of_location_path = location_root_path.substr(common2_length);
+	
+	std::string unique_part_of_uri = _req.get_raw_uri().substr(common_length);
+	std::cout << "Unique part of URI: " << unique_part_of_uri << std::endl; //DEBUG
+
+	res_path = join_paths(program_path, server_root_path);
+	res_path = join_paths(res_path, unique_part_of_location_path);
+	res_path = join_paths(res_path, unique_part_of_uri);
+	std::cout << "Resulting path: " << res_path << std::endl; //DEBUG
+	
+	return res_path;
 }
 
 void Response::set_error_page(std::string nb, std::string name, std::string header)

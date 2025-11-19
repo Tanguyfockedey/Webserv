@@ -1,3 +1,7 @@
+_config.get_location_path(_req.get_uri())
+
+std::string common = common_path(path1, path2);
+
 # Webserv
 
 ## To do ---> who takes care of it
@@ -39,3 +43,6 @@
 * remove trailing whitespaces from requests
 
 * created a directory called "directory" to pass a test ? 
+
+
+
