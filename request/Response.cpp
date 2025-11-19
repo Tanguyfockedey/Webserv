@@ -6,7 +6,7 @@
 /*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/19 17:39:44 by mcygan           ###   ########.fr       */
+/*   Updated: 2025/11/19 21:00:22 by mcygan           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -326,7 +326,7 @@ void Response::process_post_request()
 	}
 }
 
-std::string	Response::generic_response(std::string status_line, std::string body = "")
+std::string	Response::delete_success_response(std::string status_line, std::string body = "")
 {
 	std::stringstream	response;
 
@@ -336,7 +336,7 @@ std::string	Response::generic_response(std::string status_line, std::string body
 	response << "Content-Type: " << "text/html" << "\r\n";
 	response << "Content-Length: " << body.length() << "\r\n\r\n";
 	if (body != "")
-		response << body;
+		response << "<html><body><center>" << body << " has been deleted</center></body></html>\r\n";
 
 	return response.str();
 }
@@ -359,14 +359,14 @@ void Response::process_delete_request()
 		if (rmdir(path.c_str()))
 			return set_error_page("500", "Internal server error", "");
 		else 
-			_response = generic_response("200 OK");
+			_response = delete_success_response("200 OK", path);
 	}
 	else
 	{
 		if (remove(path.c_str()))
 			return set_error_page("500", "Internal server error", "");
 		else
-			_response = generic_response("200 OK");
+			_response = delete_success_response("200 OK", path);
 	}
 }
 
