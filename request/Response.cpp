@@ -6,7 +6,7 @@
 /*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/19 16:14:55 by mcygan           ###   ########.fr       */
+/*   Updated: 2025/11/19 17:13:17 by mcygan           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -275,7 +275,8 @@ void Response::process_get_request()
 	}
 	else if (is_file)
 	{
-		if (!(_req.get_uri()).rfind("./cgi-bin/", 0))
+		std::string	uri = _req.get_uri();
+		if (!uri.rfind("./cgi-bin/", 0) && uri.substr(uri.length() - 3) == ".py")
 			this->handle_cgi();
 		else
 			get_file();
@@ -296,15 +297,17 @@ void Response::process_post_request()
 		handle_405();
 		return ;
 	}
-	
+	std::string	uri = _req.get_uri();
+	if (!uri.rfind("./cgi-bin/", 0) && uri.substr(uri.length() - 3) == ".py")
+		return this->handle_cgi();
 	if (_req.get_boundary().empty())
 	{
 		std::cerr << "Case: Single-part upload" << std::endl;
 		handle_single_part_post();
 		return ;
 	}
+
 	std::string boundary;
-	
 	std::cerr << "Case: Going for Multi-part upload" << std::endl;
 	boundary = _req.get_boundary();
 	std::cerr << "boundary: " << boundary << std::endl;

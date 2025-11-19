@@ -18,7 +18,11 @@ void	CgiHandler::init_env(Request &request)
 {
 	std::map<std::string, std::string>	headers = request.get_headers();
 
-	this->_env["QUERY_STRING"] = request.get_uri_query();
+	this->_env["REQUEST_METHOD"] = request.get_method();
+	if (_env["REQUEST_METHOD"] == "get")
+		this->_env["QUERY_STRING"] = request.get_uri_query();
+	else if (_env["REQUEST_METHOD"] == "post")
+		this->_env["QUERY STRING"] = request.get_body();
 
 	/* std::ostringstream	str1;
 	str1 << this->_body.length(); */
@@ -35,7 +39,6 @@ void	CgiHandler::init_env(Request &request)
 	this->_env["REMOTE_HOST"] = "";
 	this->_env["REMOTE_IDENT"] = headers["Authorization"];
 	this->_env["REMOTE_USER"] = headers["Authorization"];
-	this->_env["REQUEST_METHOD"] = request.get_method();
 	this->_env["REQUEST_URI"] = request.get_uri();
 	this->_env["SCRIPT_NAME"] = request.get_uri_fragment();
 	this->_env["SERVER_NAME"] = headers["Hostname"];
@@ -87,7 +90,6 @@ std::string	CgiHandler::executeCgi(const std::string scriptName)
 		dup2(fd_in, STDIN_FILENO);
 		dup2(fd_out, STDOUT_FILENO);
 		execve(scriptName.c_str(), nll, env);
-		std::cout << "HERE" + errno <<std::endl;
 		write(STDOUT_FILENO, "500 Internal server error\r\n\r\n", 30);
 	}
 	else // parent process
