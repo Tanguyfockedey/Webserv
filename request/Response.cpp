@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/20 04:11:06 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/20 04:51:11 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -779,7 +779,7 @@ void Response::handle_cgi()
 	std::string			body;
 	std::stringstream	response;
 	
-	path = _req.get_uri();
+	path = _req.get_computed_path();
 	if (access (path.c_str(), X_OK)) // check for execute permission
 		return set_error_page("403", "Forbidden", "");
 	body = cgi.executeCgi(path);

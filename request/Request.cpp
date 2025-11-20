@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:48:10 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/20 03:56:21 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/20 05:09:18 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,15 +32,30 @@ std::string Request::work_out_path()
 	std::string program_path = server_path();
 	std::cout << "Program path: " << program_path << std::endl; //DEBUG
 	
-	std::string server_root_path = _config.get_token("/", "root");
-	server_root_path = join_paths("/", server_root_path); // to ensure it starts with '/'
-	server_root_path = join_paths(server_root_path, "/"); // to ensure it ends with '/'
+	std::string server_root_path, location_root_path;
 
-	std::cout << "Server root path: " << server_root_path << std::endl; //DEBUG
+	if (_raw_uri.find("/cgi-bin/") != std::string::npos)
+	{
+		server_root_path = "";
+		location_root_path = "";
+		res_path = join_paths(program_path, _raw_uri);
+		_uri = res_path;
+		_uri_is_directory = false;
+		_uri_is_regular_file = true;
+		return res_path;
+	}
+	else
+	{
+		server_root_path = _config.get_token("/", "root");
+		server_root_path = join_paths("/", server_root_path); // to ensure it starts with '/'
+		server_root_path = join_paths(server_root_path, "/"); // to ensure it ends with '/'
 
-	std::string location_root_path = _config.get_token(_raw_uri, "root");
-	location_root_path = join_paths("/", location_root_path); // to ensure it starts with '/'
-	location_root_path = join_paths(location_root_path, "/"); // to ensure it ends with '/
+		std::cout << "Server root path: " << server_root_path << std::endl; //DEBUG
+	
+		location_root_path = _config.get_token(_raw_uri, "root");
+		location_root_path = join_paths("/", location_root_path); // to ensure it starts with '/'
+		location_root_path = join_paths(location_root_path, "/"); // to ensure it ends with '/
+	}
 	
 	std::cout << "Location root path: " << location_root_path << std::endl; //DEBUG
 
