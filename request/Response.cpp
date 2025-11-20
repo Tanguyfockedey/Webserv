@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/20 06:43:44 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/20 10:33:15 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -277,10 +277,14 @@ void Response::process_get_request()
 	else if (is_file)
 	{
 		std::string	uri = _req.get_uri();
-		if (!uri.rfind("/cgi-bin/", 0) && uri.substr(uri.length() - 3) == ".py")
+		if (uri.length() > 3 && uri.find("/cgi-bin/", 0) && uri.substr(uri.length() - 3) == ".py")
+		{
 			this->handle_cgi();
+		}
 		else
+		{
 			get_file();
+		}
 	}
 	else
 	{
@@ -760,18 +764,20 @@ void Response::handle_cgi()
 	std::stringstream	response;
 	
 	path = _req.get_computed_path();
+	std::cout << "CGI path: " << path << std::endl;
+	
 	if (access(path.c_str(), R_OK) || access(path.c_str(), X_OK))
 		return set_error_page("403", "Forbidden", "");
-	body = cgi.executeCgi(path);
-	if (body == "500 Internal server error\r\n\r\n")
-		_response = body;
+	_body = cgi.executeCgi(path);
+	if (_body == "500 Internal server error\r\n\r\n")
+		_response = _body;
 	else
 	{
 		response << "HTTP/1.1 200 OK\r\n";
 		response << "Host: " << _config.get_token("", "server_name") << "\r\n";
 		response << "Date: " << get_http_date() << "\r\n";
 		response << "Content-Type: " << "text/html" << "\r\n";
-		response << "Content-Length: " << body.length() << "\r\n";
+		response << "Content-Length: " << _body.length() << "\r\n";
 		_headers_string = response.str();
 		response << "\r\n";
 		response << _body;
