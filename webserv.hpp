@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   webserv.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
+/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/05 19:39:13 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/13 20:38:11 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/11/20 15:37:35 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,12 +46,12 @@
 #include "utils/utils.hpp"
 
 // Constants
-#define CONNECTION_TIMEOUT 10
-#define REQUEST_TIMEOUT 10
-#define BUFFER_SIZE 1048576 // 1 MB
-#define MAX_URI_LENGTH 2048 // 2 KB
-#define MAX_HEADER_LENGTH 8192 // 8 KB
-#define MAX_BODY_LENGTH 4294967296 // 4GB 
+#define CONNECTION_TIMEOUT 5 //10
+#define REQUEST_TIMEOUT 5 //10
+#define BUFFER_SIZE 50 //1048576 // 1 MB
+#define MAX_URI_LENGTH 50 //2048 // 2 KB
+#define MAX_HEADER_LENGTH 50 //8192 // 8 KB
+#define MAX_BODY_LENGTH 1000 //4294967296 // 4GB 
 #define UPLOAD_PATH "/uploads/"
 #define REQUIRE_HEADERS 0
 
