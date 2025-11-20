@@ -19,10 +19,10 @@ void	CgiHandler::init_env(Request &request)
 	std::map<std::string, std::string>	headers = request.get_headers();
 
 	this->_env["REQUEST_METHOD"] = request.get_method();
-	if (_env["REQUEST_METHOD"] == "get")
+	if (_env["REQUEST_METHOD"] == "GET")
 		this->_env["QUERY_STRING"] = request.get_uri_query();
-	else if (_env["REQUEST_METHOD"] == "post")
-		this->_env["QUERY STRING"] = request.get_body();
+	else if (_env["REQUEST_METHOD"] == "POST")
+		this->_env["QUERY_STRING"] = request.get_body();
 }
 
 char**	CgiHandler::get_env_cstr()
