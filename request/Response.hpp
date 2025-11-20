@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
+/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:21 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/19 20:50:44 by mcygan           ###   ########.fr       */
+/*   Updated: 2025/11/20 05:58:01 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,6 +61,6 @@ class Response
 		void set_error_page(std::string nb, std::string name, std::string header);
 		bool is_allowed_method(const std::string& method);
 
-	private : // privateception???
+	private :
 		void redirect(std::string path);
 };

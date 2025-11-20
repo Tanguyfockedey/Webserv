@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
+/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/19 21:00:22 by mcygan           ###   ########.fr       */
+/*   Updated: 2025/11/20 05:56:37 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 {
 	int	request_error_code = _req.get_error_code();
 	_config = req.get_config();
+
 	std::string error_name;
 
 	if (request_error_code != 0)
@@ -26,6 +27,11 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 			case 400:
 				error_name = "Bad Request";
 				break;
+			case 405:
+			{
+				handle_405();
+				return ;
+			}
 			case 413:
 				error_name = "Payload Too Large";
 				break;
@@ -52,13 +58,16 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		_response = ss.str();
 		return ;
 	}
+
 	_file_error = false;
 	if (_req.get_method() == "GET")
+	{
 		process_get_request();
+	}
 	else if (_req.get_method() == "POST")
 		process_post_request();
 	else if (_req.get_method() == "DELETE")
-		process_delete_request();	
+		process_delete_request();
 }
 
 Response::~Response()
@@ -112,13 +121,9 @@ void Response::print_dir_listing(std::string &dir_path)
 void Response::get_dir()
 {
 	std::string index, index_path, dir_path, error_msg, error_page;
+	
+	dir_path = _req.get_computed_path();
 
-	// build full directory path
-	_config = _req.get_config();
-	dir_path = join_paths(server_path(), _config.get_token(_req.get_uri(), "root"));
-	dir_path = join_paths(dir_path, _req.get_uri().substr(_config.get_token(_req.get_uri(), "root").length()));
-
-	// Check final slash
 	if (dir_path[dir_path.length() - 1] != '/')
 	{
 		redirect(_req.get_raw_uri() + "/");
@@ -138,21 +143,13 @@ void Response::get_dir()
 	std::string server_path_part = server_path();
 	std::string config_root_part = _config.get_token(_req.get_uri(), "root");
 	std::string raw_uri_part = _req.get_raw_uri();
-	
-	// join config_root_part and raw_uri_part by removing duplicate directories if any
-	// e.g. if config_root_part = /var/www/html and raw_uri_part = /html/images
-	// then we remove /html from raw_uri_part to avoid /var/www/html/html/images
-	// but if raw_uri_part = /images, we keep it as is
-	if (raw_uri_part.find(config_root_part) == 0)
-		raw_uri_part = raw_uri_part.substr(config_root_part.length());
-	std::string pathtest = join_paths(server_path_part, config_root_part);
-	pathtest = join_paths(pathtest, raw_uri_part);
 
 	// check if index or location-specific index
 	index = _config.get_token(_req.get_uri(), "index");
 	if (!index.empty())
 	{
-		index_path = join_paths(dir_path, index);
+		index_path = dir_path;
+		//index_path = join_paths(dir_path, index);
 		if (get_file_type(index_path) == "nonexistent")
 		{
 			
@@ -214,12 +211,12 @@ void Response::get_file()
 {
 	std::string index, path, error_msg, error_page;
 	
-	//                  server root   , config root + path
-	path = join_paths(server_path(), _req.get_uri());
+	path = _req.get_computed_path();
+	
 	std::fstream file(path.c_str(), std::ios::in | std::ios::binary);
 	_file_error = false;
 	if (file.fail())
-	{
+	{		
 		_file_error = true;
 		if (errno == 2) // No such file or directory (404)
 		{
@@ -231,11 +228,10 @@ void Response::get_file()
 			set_error_page("403", "Forbidden", "");
 			return;
 		}
-		else if (errno == 21) // Is a directory (ou tenter 20, si c'est pas 21)
+		else if (errno == 21) // Is a directory
 		{
-			// Opening a directory failed ; aussi erreur 403 ?
-			error_msg =  "Failed opening a directory";//DEBUG
-			//_status_line = "403 Forbidden";//403???
+			error_msg =  "Failed opening a directory";
+			set_error_page("500", "Internal Server Error", "");
 		}
 		else
 		{
@@ -267,6 +263,9 @@ void Response::process_get_request()
 		handle_405();
 		return ;
 	}
+	
+	std::string computed_path = _req.get_computed_path();
+	
 	bool is_dir = _req.get_uri_is_directory();
 	bool is_file = _req.get_uri_is_regular_file();
 	if (is_dir)
@@ -276,7 +275,7 @@ void Response::process_get_request()
 	else if (is_file)
 	{
 		std::string	uri = _req.get_uri();
-		if (!uri.rfind("./cgi-bin/", 0) && uri.substr(uri.length() - 3) == ".py")
+		if (!uri.rfind("/cgi-bin/", 0) && uri.substr(uri.length() - 3) == ".py")
 			this->handle_cgi();
 		else
 			get_file();
@@ -302,13 +301,12 @@ void Response::process_post_request()
 		return this->handle_cgi();
 	if (_req.get_boundary().empty())
 	{
-		std::cerr << "Case: Single-part upload" << std::endl;
 		handle_single_part_post();
 		return ;
 	}
 
 	std::string boundary;
-	std::cerr << "Case: Going for Multi-part upload" << std::endl;
+	
 	boundary = _req.get_boundary();
 	std::cerr << "boundary: " << boundary << std::endl;
 
@@ -317,7 +315,6 @@ void Response::process_post_request()
 		std::cerr << "Boundary too long: " << boundary.length() << " characters" << std::endl;
 		_status_line = "400 Bad Request";
 		_response = "HTTP/1.1 " + _status_line + "\r\n\r\n";
-		// _response = response;
 		return ;
 	}
 	else if (boundary.length() > 0)
@@ -377,8 +374,9 @@ void Response::build_response(std::fstream &path)
 	if (_file_error)
 		content_type = "text/html";
 	else
+	{
 		content_type = _req.get_resource_info().find("mime_type")->second;
-	
+	}
 	if (path.is_open())
 	{
 		_body = std::string((std::istreambuf_iterator<char>(path)), std::istreambuf_iterator<char>());
@@ -403,9 +401,6 @@ void Response::build_response(std::fstream &path)
 
 void Response::handle_single_part_post()
 {
-	
-	std::cout << _req.get_raw_request() << std::endl;//DEBUG
-	
 	std::string file = _req.get_raw_request().substr(_req.get_raw_request().find("POST ") + 5);
 	file = file.substr(0, file.find_first_of(' '));
 	std::string filename;
@@ -422,19 +417,18 @@ void Response::handle_single_part_post()
 	length_stream << length_string;
 	size_t content_length;
 	length_stream >> content_length;
-	std::string new_file_path = join_paths(server_path(), "/data/www/");
+	std::string new_file_path = join_paths(server_path(), _config.get_token("/", "root"));
 	new_file_path = join_paths(new_file_path, UPLOAD_PATH);
 	new_file_path = join_paths(new_file_path, filename);
 
-	//DEBUG
-	std::cout << "\nFile path : " << file << std::endl;//DEBUG
-	std::cout << "Filename : " << filename << std::endl;//DEBUG
-	std::cout << "Content-Length : " << content_length << std::endl;//DEBUG
-	std::cout << "File path to write to: " << new_file_path << "\n" << std::endl;//DEBUG
-	
+	if (filename.empty()) // si l'URL est un directory
+	{
+		handle_405();
+		return ;
+	}
+
 	if (content_length < 1)
 	{
-		std::cerr << "Content-Length header missing - Binary file may get truncated !" << std::endl;
 		content_length = _req.get_body().length();
 		if (content_length < 1)
 		{
@@ -485,8 +479,6 @@ int Response::get_dir_content(std::string dir, std::vector<std::string> &files)
     DIR *dp;
     struct dirent *dirp;
     if((dp  = opendir(dir.c_str())) == NULL) {
-        std::cout << "Error(" << errno << ") opening " << dir << std::endl;
-		// Error 403 ? 500 ?
 		return errno;
     }
 
@@ -497,7 +489,6 @@ int Response::get_dir_content(std::string dir, std::vector<std::string> &files)
     return 0;
 }
 
-// fonctionne avec requete unique
 void Response::handle_multipart_post()
 {
 	std::string post_data, filename, path;
@@ -512,19 +503,10 @@ void Response::handle_multipart_post()
 		set_error_page("400", "Bad Request", "");
 		return ;
 	}
-
 	path = join_paths(server_path(), _config.get_token(_req.get_uri(), "root"));
-
 	path = join_paths(path, UPLOAD_PATH);
-
-	//DEBUG
-	std::cout << "Upload path: " << path << std::endl;//DEBUG
-	//DEBUG
 	
 	mkdir(path.c_str(), 0755);
-
-	// Ensure Write permission in the upload folder has not been 
-	// altered since it was created.
     DIR *dp;
     if((dp  = opendir(path.c_str())) == NULL) {
 		set_error_page("403", "Forbidden", "");
@@ -552,8 +534,6 @@ void Response::handle_multipart_post()
 		set_error_page("500", "Internal Server Error", "");
 		return ;
 	}
-	//_response = "HTTP/1.1 " + _status_line + "\r\n\r\n";
-
 	std::string html_file_link = UPLOAD_PATH + filename;
 
 	_body = "<!DOCTYPE html>" \
@@ -635,8 +615,7 @@ void Response::set_error_page(std::string nb, std::string name, std::string head
 	std::string err_page = "err_page_";
 	err_page += nb;
 	std::string err_path = _config.get_token(_req.get_uri(), err_page.c_str());
-	std::string webroot_path = _config.get_token(_req.get_uri(), "root");
-	std::string path = join_paths(server_path(), webroot_path);
+	std::string path = _req.get_computed_path().substr(0, _req.get_computed_path().find_last_of('/') + 1);
 	path = join_paths(path, err_path);
 
 	std::fstream file_err(path.c_str(), std::ios::in | std::ios::binary);
@@ -737,7 +716,7 @@ void Response::handle_cgi()
 	std::string			body;
 	std::stringstream	response;
 	
-	path = _req.get_uri();
+	path = _req.get_computed_path();
 	if (access(path.c_str(), R_OK) || access(path.c_str(), X_OK))
 		return set_error_page("403", "Forbidden", "");
 	body = cgi.executeCgi(path);
@@ -749,8 +728,10 @@ void Response::handle_cgi()
 		response << "Host: " << _config.get_token("", "server_name") << "\r\n";
 		response << "Date: " << get_http_date() << "\r\n";
 		response << "Content-Type: " << "text/html" << "\r\n";
-		response << "Content-Length: " << body.length() << "\r\n\r\n";
-		response << body;
+		response << "Content-Length: " << body.length() << "\r\n";
+		_headers_string = response.str();
+		response << "\r\n";
+		response << _body;
 		_response = response.str();
 	}
 }

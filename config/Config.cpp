@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Config.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
+/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/03 16:07:02 by tafocked          #+#    #+#             */
-/*   Updated: 2025/09/11 02:37:32 by mcygan           ###   ########.fr       */
+/*   Updated: 2025/11/19 15:25:34 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -118,7 +118,7 @@ void Config::extract_location(std::string& str)
 				str.find("location")) - str.find('{', str.find("location")) - 1);
 			path.erase(remove_if(path.begin(), path.end(), isspace), path.end());
 			str.erase(str.find("location"), str.find('}', str.find("location")) - str.find("location") + 1);
-			_locations.insert((std::make_pair(path, Location(data))));
+			_locations.insert((std::make_pair(path, Location(data, path))));
 		}
 		catch(const std::exception& e)
 		{
@@ -189,6 +189,20 @@ const std::string Config::get_token(const std::string &path, const char* token)
 		return it2->second;
 	else
 		return "";
+}
+
+const std::string Config::get_location_path(const std::string &path)
+{
+	std::map<std::string, Location>::reverse_iterator it = _locations.rbegin();
+	while (it != _locations.rend())
+	{
+		if (path.find(it->first) != std::string::npos)
+		{
+			return it->first;
+		}
+		++it;
+	}
+	return std::string();
 }
 
 bool Config::is_allowed(std::string method)

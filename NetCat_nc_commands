@@ -1,0 +1,7 @@
+head="POST favicon.ico HTTP/1.1\r\nHost: localhost\r\nContent-type: text/plain\r\nContent-length: 100\r\nConnection: Close\r\n\r\n"; echo $head  | nc localhost 8080
+head="POST /data/test/postfile.txt HTTP/1.1\r\nHost: localhost\r\nContent-type: text/plain\r\nContent-length: 100\r\nConnection: Close\r\n\r\n"; echo $head  | nc localhost 8080
+
+
+DELETE
+
+head="DELETE /uploads/postfile.txt HTTP/1.1\r\nHost: localhost\r\nContent-type: text/plain\r\nContent-length: 100\r\nConnection: Close\r\n\r\n"; echo $head  | nc localhost 8080

@@ -3,19 +3,19 @@
 /*                                                        :::      ::::::::   */
 /*   Location.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
+/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/19 18:35:09 by tafocked          #+#    #+#             */
-/*   Updated: 2025/07/23 21:54:06 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/11/19 13:27:07 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Location.hpp"
 
-Location::Location(std::string str)
+Location::Location(std::string data, std::string path) : _path(path)
 {
-	map_methods(str);
-	map_tokens(str);
+	map_methods(data);
+	map_tokens(data);
 }
 
 Location::~Location()

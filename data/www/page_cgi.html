@@ -1,18 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
-<center>
+    <head>
+		<link rel="shortcut icon" type="image/x-icon" href="/favicon.ico">
+		<link rel="stylesheet" type="text/css" href="/styles.css">
+        <title>Some page</title>
+	</head>
+	<body>
+		<center>
+			<div class="pass__block">
+				<h2> Hello, I'm CGI <br> What's your name? </h2> <br>
+			<form action = "/cgi-bin/hello_john.py" method = "get">
+				<input type = "text" name = "name">  <br><br>
+				<input type = "submit" value = "submit"> <br>
+			</form>
+			</div>
 
-<body>
-	<div class="pass__block">
-		<h2> Hello, I'm CGI <br> What's your name? </h2> <br>
-    <form action = "/cgi-bin/hello_john.py" method = "post">
-        <input type = "text" name = "name">  <br><br>
-        <input type = "submit" value = "submit"> <br>
-    </form>
-	</div>
-</body>
-	<p style="margin-top: 50px;">
-		<a href="/">Go back to the index page</a>
-	</p>
-</center>
+			<p style="margin-top: 60px;">
+				<a href="/">Go back to the index page</a>
+			</p>
+		</center>
+	</body>
 </html>
