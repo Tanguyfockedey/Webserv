@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:21 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/20 05:58:01 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/20 06:35:35 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,12 +50,14 @@ class Response
 		void process_post_request();
 		void process_delete_request();
 		void build_response(std::fstream &path);
+		void build_response_delete(std::string path);
 		void handle_single_part_post();
 		void handle_multipart_post();
 		int get_dir_content(std::string dir, std::vector<std::string> &files);
 		void print_dir_listing(std::string &dir_path);
 		void get_dir();
-		void get_file();
+		void get_file(int error);
+		
 		const std::string get_http_date();
 		void handle_405();
 		void set_error_page(std::string nb, std::string name, std::string header);

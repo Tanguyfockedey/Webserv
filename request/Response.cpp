@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/20 05:56:37 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/20 06:43:44 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -207,7 +207,7 @@ void Response::get_dir()
 	}
 }
 
-void Response::get_file()
+void Response::get_file(int error = 0)
 {
 	std::string index, path, error_msg, error_page;
 	
@@ -215,20 +215,22 @@ void Response::get_file()
 	
 	std::fstream file(path.c_str(), std::ios::in | std::ios::binary);
 	_file_error = false;
-	if (file.fail())
-	{		
+	if (file.fail() || error)
+	{
 		_file_error = true;
-		if (errno == 2) // No such file or directory (404)
+		if (error)
+			errno = error;
+		if (errno == ENOENT) // No such file or directory (404)
 		{
 			set_error_page("404", "Not Found", "");
 			return;
 		}
-		else if (errno == 13) // Permission denied (403)
+		else if (errno == EACCES) // Permission denied (403)
 		{
 			set_error_page("403", "Forbidden", "");
 			return;
 		}
-		else if (errno == 21) // Is a directory
+		else if (errno == EISDIR) // Is a directory (ou tenter ENOTDIR, si c'est pas EISDIR)
 		{
 			error_msg =  "Failed opening a directory";
 			set_error_page("500", "Internal Server Error", "");
@@ -365,6 +367,26 @@ void Response::process_delete_request()
 		else
 			_response = delete_success_response("200 OK", path);
 	}
+
+	if (_req.get_uri_is_directory())
+	{
+		// temp
+		_status_line = "204 No content";
+		_response = "HTTP/1.1" +_status_line + "\r\n\r\n";
+	}
+	else
+	{
+		if (remove(path.c_str()))
+		{
+			_status_line = "204 No content";
+			_response = "HTTP/1.1" +_status_line + "\r\n\r\n";
+		}
+		else
+		{
+			_status_line = "200 OK";
+			build_response_delete(_req.get_uri());
+		}
+	}
 }
 
 void Response::build_response(std::fstream &path)
@@ -397,6 +419,27 @@ void Response::build_response(std::fstream &path)
 		std::cerr << "Failed to open file for reading." << std::endl;
 		set_error_page("500", "Internal Server Error", "");
 	}
+}
+
+void Response::build_response_delete(std::string path)
+{	
+	std::stringstream response;
+	
+	std::string	body;
+	if (_status_line == "200 OK")
+		body = "<html lang=\"en-US\">\n\t<body>\n\t\t<h1>File " + path + " deleted.</h1>\n\t</body>\n</html>";
+	else
+		body = "<html lang=\"en-US\">\n\t<body>\n\t\t<h1>File " + path + " not deleted.</h1>\n\t</body>\n</html>";
+
+	response << "HTTP/1.1 " << _status_line << "\r\n";
+	response << "Host: " << _config.get_token("", "server_name") << "\r\n";
+	response << "Date: " << get_http_date() << "\r\n";
+	response << "Content-Type:" << _req.get_resource_info().find("mime_type")->second << "\r\n";
+	response << "Content-Length: " << _body.length() << "\r\n";
+	_headers_string = response.str();
+	response << "\r\n";
+	response << _body;
+	_response = response.str();
 }
 
 void Response::handle_single_part_post()

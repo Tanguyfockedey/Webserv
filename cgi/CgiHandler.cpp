@@ -68,6 +68,7 @@ std::string	CgiHandler::executeCgi(const std::string scriptName)
 		dup2(fd_in, STDIN_FILENO);
 		dup2(fd_out, STDOUT_FILENO);
 		execve(scriptName.c_str(), nll, env);
+		//std::cout << "HERE" + errno <<std::endl;
 		write(STDOUT_FILENO, "500 Internal server error\r\n\r\n", 29);
 	}
 	else // parent process
@@ -92,6 +93,10 @@ std::string	CgiHandler::executeCgi(const std::string scriptName)
 	fclose(file_in); fclose(file_out);
 	close(fd_in); close(fd_out);
 	close(stdin_save); close(stdout_save);
+
+	for (int i = 0; env[i]; i++)
+		delete[] env[i];
+	delete[] env;
 
 	return body;
 }
