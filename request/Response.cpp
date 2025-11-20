@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/20 14:56:07 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/20 16:05:29 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,6 +38,9 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 			case 414:
 				error_name = "URI Too Long";
 				break;
+			case 431:
+				error_name = "Request Header Fields Too Large";
+				break;
 			case 501:
 				error_name = "Not Implemented";
 				break;
@@ -48,14 +51,17 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 				error_name = "Error";
 				break;
 		}
-		std::string error_msg;
-		std::stringstream ss(error_msg);
-		ss << "HTTP/1.1 " << _req.get_error_code() << " " << error_name << "\r\n";
-		ss << "Host: " << _config.get_token("", "server_name") << "\r\n";
-		ss << "Date: " << get_http_date() << "\r\n";
-		_headers_string = ss.str();
-		ss << "\r\n";
-		_response = ss.str();
+		std::string error_code;
+		std::stringstream ss;
+		ss << request_error_code;
+		ss >> error_code;
+		set_error_page(error_code, error_name, "");
+		// ss << "HTTP/1.1 " << _req.get_error_code() << " " << error_name << "\r\n";
+		// ss << "Host: " << _config.get_token("", "server_name") << "\r\n";
+		// ss << "Date: " << get_http_date() << "\r\n";
+		// _headers_string = ss.str();
+		// ss << "\r\n";
+		// _response = ss.str();
 		return ;
 	}
 
@@ -688,7 +694,7 @@ void Response::set_error_page(std::string nb, std::string name, std::string head
 				"<head>" \
 					"<link rel=\"stylesheet\" type=\"text/css\" href=\"/styles.css\">" \
 					"<link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"/favicon.ico\">" \
-					"<title>" + nb + " - WS Homepage</title>" \
+					"<title>Error " + nb + " - WS Homepage</title>" \
 				"</head>" \
 				"<body>" \
 					"<h1 style=\"margin-top: 60px; text-align: center; font-size: 1.6em; color: grey\">" \
