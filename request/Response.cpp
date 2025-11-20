@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/20 16:05:29 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/20 21:14:53 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,21 +32,31 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 				handle_405();
 				return ;
 			}
-			case 413:
-				error_name = "Payload Too Large";
-				break;
 			case 414:
+			{
 				error_name = "URI Too Long";
 				break;
+			}
 			case 431:
+			{
 				error_name = "Request Header Fields Too Large";
 				break;
+			}
 			case 501:
+			{
 				error_name = "Not Implemented";
 				break;
+			}
 			case 505:
+			{
 				error_name = "HTTP Version Not Supported";
 				break;
+			}
+			case 413:
+			{
+				error_name = "Payload Too Large";
+				break;
+			}
 			default:
 				error_name = "Error";
 				break;
@@ -56,12 +66,6 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		ss << request_error_code;
 		ss >> error_code;
 		set_error_page(error_code, error_name, "");
-		// ss << "HTTP/1.1 " << _req.get_error_code() << " " << error_name << "\r\n";
-		// ss << "Host: " << _config.get_token("", "server_name") << "\r\n";
-		// ss << "Date: " << get_http_date() << "\r\n";
-		// _headers_string = ss.str();
-		// ss << "\r\n";
-		// _response = ss.str();
 		return ;
 	}
 

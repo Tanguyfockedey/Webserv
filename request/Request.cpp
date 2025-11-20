@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:48:10 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/20 05:44:38 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/20 21:12:47 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -127,6 +127,12 @@ void Request::parse_request_line()
 		}
 		std::stringstream ss(_request_line);
 		ss >> _method >> _uri >> _version;
+		if (_method != "GET" && _method != "POST" && _method != "DELETE")
+		{
+			std::cerr << "Unsupported HTTP method: " << _method << std::endl;
+			set_error_code(501);
+			throw std::runtime_error("501 Not Implemented");
+		}
 		if (_method.empty() || _uri.empty() || _version.empty())
 		{
 			std::cerr << "Malformed request line: " << _request_line << std::endl;
@@ -138,12 +144,6 @@ void Request::parse_request_line()
 			std::cerr << "Unsupported HTTP version: " << _version << std::endl;
 			set_error_code(505);
 			throw std::runtime_error("505 HTTP Version Not Supported");
-		}
-		if (_method != "GET" && _method != "POST" && _method != "DELETE")
-		{
-			std::cerr << "Unsupported HTTP method: " << _method << std::endl;
-			set_error_code(501);
-			throw std::runtime_error("501 Not Implemented");
 		}
 	}
 	catch(const std::exception& e)
@@ -159,17 +159,17 @@ void Request::parse_uri()
 
 	try 
 	{
-		if (_uri.find("../") != std::string::npos || _uri.find("..\\") != std::string::npos)
-		{
-			std::cerr << "The requested URL was rejected: " << _uri << std::endl;
-			set_error_code(400);;// verifier si c'est 403 ou 400, ... ?
-			throw std::runtime_error("400 Bad Request");
-		}
-		else if (_uri.length() > MAX_URI_LENGTH)
+		if (_uri.length() > MAX_URI_LENGTH)
 		{
 			std::cerr << "The requested URL is too long: " << _uri << std::endl;
 			_error_code = 414;
 			throw std::runtime_error("414 URI Too Long");
+		}
+		else if (_uri.find("../") != std::string::npos || _uri.find("..\\") != std::string::npos)
+		{
+			std::cerr << "The requested URL was rejected: " << _uri << std::endl;
+			set_error_code(400);;// verifier si c'est 403 ou 400, ... ?
+			throw std::runtime_error("400 Bad Request");
 		}
 		else if (_uri.find(" ") != std::string::npos) // verifier si les espaces sont vmt invalides
 		{
@@ -422,7 +422,6 @@ void Request::parse_headers()
 	_headers_string = _raw_request.substr(pos + 2, end_pos - (pos + 2));
 	if (_headers_string.length() > MAX_HEADER_LENGTH)
 	{
-		std::cerr << "Headers too long: " << _headers_string.length() << " bytes" << std::endl;
 		set_error_code(431);
 		return ;
 	}
@@ -463,7 +462,7 @@ void Request::parse_body()
 	_body = _raw_request.substr(pos + 4);
 	if (_body.length() > MAX_BODY_LENGTH)
 	{
-		std::cerr << "Body too long: " << _body.length() << " bytes" << std::endl;
+		std::cerr << "Payload Too Large: " << _body.length() << " bytes" << std::endl;
 		set_error_code(413);
 	}
 }
