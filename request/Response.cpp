@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/20 04:51:11 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/20 05:38:29 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,26 +56,18 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		_headers_string = ss.str();
 		ss << "\r\n";
 		_response = ss.str();
-		//_req.~Request();
 		return ;
 	}
-
-	// TEST DEBUG
-	//std::cout << "BARDAFF !" << std::endl;
-	//std::cout << "Full path : " << work_out_path() << std::endl;	// TEST DEBUG
-	// TEST DEBUG
 
 	_file_error = false;
 	if (_req.get_method() == "GET")
 	{
-		//std::cout << "C est l embardee !" << std::endl;
 		process_get_request();
 	}
 	else if (_req.get_method() == "POST")
 		process_post_request();
 	else if (_req.get_method() == "DELETE")
 		process_delete_request();
-	//_req.~Request();
 }
 
 Response::~Response()
@@ -129,28 +121,9 @@ void Response::print_dir_listing(std::string &dir_path)
 void Response::get_dir()
 {
 	std::string index, index_path, dir_path, error_msg, error_page;
-
-	/*
-	// DEBUG
-	std::cout << "WE ARE DEALING WITH A DIRECTORY" << std::endl;//DEBUG
-	// DEBUG
-
-	// build full directory path
-	_config = _req.get_config();
-	dir_path = join_paths(server_path(), _config.get_token(_req.get_uri(), "root"));
-	dir_path = join_paths(dir_path, _req.get_uri().substr(_config.get_token(_req.get_uri(), "root").length()));
-	
-
-	*/
 	
 	dir_path = _req.get_computed_path();
 
-	// DEBUG
-	//std::cout << "dir_path: " << dir_path << std::endl;//DEBUG
-	// DEBUG
-
-
-	// Check final slash
 	if (dir_path[dir_path.length() - 1] != '/')
 	{
 		redirect(_req.get_raw_uri() + "/");
@@ -247,22 +220,12 @@ void Response::get_file()
 {
 	std::string index, path, error_msg, error_page;
 	
-	//                  server root   , config root + path
-	path = _req.get_computed_path();// = join_paths(server_path(), _req.get_uri());
-
-	//
-	//std::cout << "Final file path to get: " << path << std::endl; //DEBUG
-	//
+	path = _req.get_computed_path();
 	
 	std::fstream file(path.c_str(), std::ios::in | std::ios::binary);
 	_file_error = false;
-	//
-	//std::cout << "PLOUF" << std::endl; //DEBUG
-	//
 	if (file.fail())
-	{
-		//std::cout << "== FILE FAIL ==" << std::endl; //DEBUG
-		
+	{		
 		_file_error = true;
 		if (errno == 2) // No such file or directory (404)
 		{
@@ -274,11 +237,10 @@ void Response::get_file()
 			set_error_page("403", "Forbidden", "");
 			return;
 		}
-		else if (errno == 21) // Is a directory (ou tenter 20, si c'est pas 21)
+		else if (errno == 21) // Is a directory
 		{
-			// Opening a directory failed ; aussi erreur 403 ?
-			error_msg =  "Failed opening a directory";//DEBUG
-			//_status_line = "403 Forbidden";//403???
+			error_msg =  "Failed opening a directory";
+			set_error_page("500", "Internal Server Error", "");
 		}
 		else
 		{
@@ -297,7 +259,6 @@ void Response::get_file()
 	else
 	{
 		_status_line = "200 OK";
-		//std::cout << "SCHLARF" << std::endl; //DEBUG
 		build_response(file);
 	}
 }
@@ -346,17 +307,11 @@ void Response::process_post_request()
 	
 	if (_req.get_boundary().empty())
 	{
-		//DEBUG
-		//std::cerr << "Case: Single-part upload" << std::endl;
-		//DEBUG
 		handle_single_part_post();
 		return ;
 	}
 	std::string boundary;
 	
-	//DEBUG
-	//std::cerr << "Case: Going for Multi-part upload" << std::endl;
-	//DEBUG
 	boundary = _req.get_boundary();
 	std::cerr << "boundary: " << boundary << std::endl;
 
@@ -365,7 +320,6 @@ void Response::process_post_request()
 		std::cerr << "Boundary too long: " << boundary.length() << " characters" << std::endl;
 		_status_line = "400 Bad Request";
 		_response = "HTTP/1.1 " + _status_line + "\r\n\r\n";
-		// _response = response;
 		return ;
 	}
 	else if (boundary.length() > 0)
@@ -408,9 +362,7 @@ void Response::build_response(std::fstream &path)
 		content_type = "text/html";
 	else
 	{
-		//std::cout << "GROPCH" << std::endl; //DEBUG
 		content_type = _req.get_resource_info().find("mime_type")->second;
-		//std::cout << "GROPCH2" << std::endl; //DEBUG
 	}
 	if (path.is_open())
 	{
@@ -436,11 +388,6 @@ void Response::build_response(std::fstream &path)
 
 void Response::handle_single_part_post()
 {
-	
-	//DEBUG
-	//std::cout << _req.get_raw_request() << std::endl;//DEBUG
-	//DEBUG
-	
 	std::string file = _req.get_raw_request().substr(_req.get_raw_request().find("POST ") + 5);
 	file = file.substr(0, file.find_first_of(' '));
 	std::string filename;
@@ -461,12 +408,6 @@ void Response::handle_single_part_post()
 	new_file_path = join_paths(new_file_path, UPLOAD_PATH);
 	new_file_path = join_paths(new_file_path, filename);
 
-	//DEBUG
-	// std::cout << "\nFile path : " << file << std::endl;//DEBUG
-	// std::cout << "Filename : " << filename << std::endl;//DEBUG
-	// std::cout << "Content-Length : " << content_length << std::endl;//DEBUG
-	// std::cout << "File path to write to: " << new_file_path << "\n" << std::endl;//DEBUG
-	
 	if (filename.empty()) // si l'URL est un directory
 	{
 		handle_405();
@@ -475,7 +416,6 @@ void Response::handle_single_part_post()
 
 	if (content_length < 1)
 	{
-		//std::cerr << "Content-Length header missing - Binary file may get truncated !" << std::endl;
 		content_length = _req.get_body().length();
 		if (content_length < 1)
 		{
@@ -526,8 +466,6 @@ int Response::get_dir_content(std::string dir, std::vector<std::string> &files)
     DIR *dp;
     struct dirent *dirp;
     if((dp  = opendir(dir.c_str())) == NULL) {
-        std::cout << "Error(" << errno << ") opening " << dir << std::endl;
-		// Error 403 ? 500 ?
 		return errno;
     }
 
@@ -538,7 +476,6 @@ int Response::get_dir_content(std::string dir, std::vector<std::string> &files)
     return 0;
 }
 
-// fonctionne avec requete unique
 void Response::handle_multipart_post()
 {
 	std::string post_data, filename, path;
@@ -553,19 +490,10 @@ void Response::handle_multipart_post()
 		set_error_page("400", "Bad Request", "");
 		return ;
 	}
-
 	path = join_paths(server_path(), _config.get_token(_req.get_uri(), "root"));
-
 	path = join_paths(path, UPLOAD_PATH);
-
-	//DEBUG
-	std::cout << "Upload path: " << path << std::endl;//DEBUG
-	//DEBUG
 	
 	mkdir(path.c_str(), 0755);
-
-	// Ensure Write permission in the upload folder has not been 
-	// altered since it was created.
     DIR *dp;
     if((dp  = opendir(path.c_str())) == NULL) {
 		set_error_page("403", "Forbidden", "");
@@ -593,8 +521,6 @@ void Response::handle_multipart_post()
 		set_error_page("500", "Internal Server Error", "");
 		return ;
 	}
-	//_response = "HTTP/1.1 " + _status_line + "\r\n\r\n";
-
 	std::string html_file_link = UPLOAD_PATH + filename;
 
 	_body = "<!DOCTYPE html>" \
@@ -676,8 +602,6 @@ void Response::set_error_page(std::string nb, std::string name, std::string head
 	std::string err_page = "err_page_";
 	err_page += nb;
 	std::string err_path = _config.get_token(_req.get_uri(), err_page.c_str());
-	//std::string webroot_path = _config.get_token(_req.get_uri(), "root");
-	//std::string path = join_paths(server_path(), webroot_path);
 	std::string path = _req.get_computed_path().substr(0, _req.get_computed_path().find_last_of('/') + 1);
 	path = join_paths(path, err_path);
 

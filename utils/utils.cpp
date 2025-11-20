@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/23 16:38:05 by jrichir           #+#    #+#             */
-/*   Updated: 2025/11/19 23:15:34 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/20 05:38:49 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,7 +57,6 @@ std::string server_path()
 	}
 	str = malloc_str;
 	free(malloc_str);
-	// str = str.substr(0, str.find("Webserv") + 7); //uncomment for debugging, remove for production
 	return str;
 }
 

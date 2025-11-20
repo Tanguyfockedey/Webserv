@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:47:50 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/20 01:02:49 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/20 05:15:04 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,7 +63,6 @@ public:
 	const std::string& get_computed_path() const { return _computed_path; }
 	const bool& get_uri_is_directory() const { return _uri_is_directory; }
 	const bool& get_uri_is_regular_file() const { return _uri_is_regular_file; }
-	// const std::string& get_version() const { return _version; }
 	const std::string& get_headers_string() const { return _headers_string; }
 	const std::map<std::string, std::string>& get_headers() const { return _headers; }
 	const std::map<std::string, std::string>& get_resource_info() const { return _resource_info; }
@@ -79,19 +78,9 @@ public:
 	void set_uri_is_directory(bool is_dir) { _uri_is_directory = is_dir; }
 	void set_uri_is_regular_file(bool is_file) { _uri_is_regular_file = is_file; }
 	void set_error_code(int error_code);
-	// void set_request_line(const std::string &request_line) { _request_line = request_line; }
-	// void set_method(const std::string &method) { _method = method; }
-	// void set_uri(const std::string &uri) { _uri = uri; }
-	// void set_version(const std::string &version) { _version = version; }
-	// void set_headers_string(const std::string &headers_string) { _headers_string = headers_string; }
-	// void set_headers(const std::map<std::string, std::string> &headers) { _headers = headers; }
-	// void set_resource_info(const std::map<std::string, std::string> &resource_info) { _resource_info = resource_info; }
-	// void set_body(const std::string &body) { _body = body; }
-
 	
 	// Public methods
 	bool is_complete();
-	void reset_request();
 	
 private:
 	std::string get_uri_type(std::string path);

@@ -2,6 +2,11 @@ _config.get_location_path(_req.get_uri())
 
 std::string common = common_path(path1, path2);
 
+// Set MIME type	--> utiliser une structure dans webserv.hpp serait plus propre que la longue enumeration
+
+else if (errno == 21) // Is a directory (ou tenter 20, si c'est pas 21)
+
+Error 403 si ouverture de dossier foire ?
 
 
 # Webserv

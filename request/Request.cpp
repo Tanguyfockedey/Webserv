@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:48:10 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/20 05:09:18 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/20 05:34:52 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,9 +14,7 @@
 
 Request::Request(const int fd, const std::string raw_request, const Config &server_config)
 	: _fd(fd), _error_code(0), _headers_parsed(false), _timestamp(time(NULL)), _raw_request(raw_request), _actual_body_length(0), _config(server_config)
-{
-	//std::cerr << "Raw request received:\n" << _raw_request << std::endl; //DEBUG
-}
+{}
 
 Request::~Request()
 {}
@@ -30,7 +28,6 @@ std::string Request::work_out_path()
 
 	
 	std::string program_path = server_path();
-	std::cout << "Program path: " << program_path << std::endl; //DEBUG
 	
 	std::string server_root_path, location_root_path;
 
@@ -47,27 +44,20 @@ std::string Request::work_out_path()
 	else
 	{
 		server_root_path = _config.get_token("/", "root");
-		server_root_path = join_paths("/", server_root_path); // to ensure it starts with '/'
-		server_root_path = join_paths(server_root_path, "/"); // to ensure it ends with '/'
-
-		std::cout << "Server root path: " << server_root_path << std::endl; //DEBUG
+		server_root_path = join_paths("/", server_root_path);
+		server_root_path = join_paths(server_root_path, "/");
 	
 		location_root_path = _config.get_token(_raw_uri, "root");
-		location_root_path = join_paths("/", location_root_path); // to ensure it starts with '/'
-		location_root_path = join_paths(location_root_path, "/"); // to ensure it ends with '/
+		location_root_path = join_paths("/", location_root_path);
+		location_root_path = join_paths(location_root_path, "/");
 	}
-	
-	std::cout << "Location root path: " << location_root_path << std::endl; //DEBUG
-
 	std::string common2 = common_path(server_root_path, location_root_path);
 	size_t common2_length = common2.length();
 	std::string unique_part_of_location_path = location_root_path.substr(common2_length);
-	std::cout << "Unique part of location path: " << unique_part_of_location_path << std::endl; //DEBUG
 	
 	std::string unique_part_of_uri = _raw_uri;
 	if (!unique_part_of_location_path.empty())
 		unique_part_of_uri = _raw_uri.substr(common_length);
-	std::cout << "Unique part of URI: " << unique_part_of_uri << std::endl; //DEBUG
 
 	res_path = join_paths(program_path, server_root_path);
 	res_path = join_paths(res_path, unique_part_of_location_path);
@@ -75,7 +65,6 @@ std::string Request::work_out_path()
 	
 	if (is_directory(res_path))
 	{
-		//std::cout << "Index : " << _config.get_token(_uri, "index") << std::endl; //DEBUG
 		std::string location_index = _config.get_token(_uri, "index");
 		if (!location_index.empty())
 		{
@@ -85,7 +74,6 @@ std::string Request::work_out_path()
 		}
 		else if (_raw_uri.substr(0, _raw_uri.find_first_of('?')) == "/" || _raw_uri.substr(0, _raw_uri.find_first_of('?')).empty())
 		{
-			std::cout << "heho raw_uri: " << _raw_uri << std::endl; //DEBUG
 			_uri_is_directory = false;
 			_uri_is_regular_file = true;
 			res_path = join_paths(res_path, "index.html");
@@ -110,19 +98,13 @@ std::string Request::work_out_path()
 			_uri_is_regular_file = false;
 		}
 	}
-
-	std::cout << "Resulting path: " << res_path << std::endl; //DEBUG
 	return res_path;
 }
 
 void Request::parse_request_line()
 {
-	// std::string method, uri, version;
-
-	//std::cout << "this is raw request" << _raw_request << std::endl;//DEBUG
-
 	// Trim leading whitespaces/newlines
-	//_raw_request = _raw_request.substr(_raw_request.find_first_not_of("\r\n\t "));
+	_raw_request = _raw_request.substr(_raw_request.find_first_not_of("\r\n\t "));
 
 	if (_raw_request.empty())
 	{
@@ -130,41 +112,21 @@ void Request::parse_request_line()
 		set_error_code(400);
 		throw std::runtime_error("400 Bad Request");
 	}
-	
-	//std::cout << "[Parsing request line]  Raw request: " << _raw_request << std::endl;//DEBUG
+
 	try
 	{
 		if (_raw_request.find("\r\n") == std::string::npos)
 		{
-			//std::cout << "tuuut" << std::endl;//DEBUG
 			_request_line = _raw_request;
 			_one_line_request = 1;
-			//std::cout << "One line request detected." << std::endl;//DEBUG
 		}
 		else
 		{
-			//std::cout << "tip" << std::endl;//DEBUG
-
-			// Trim leading whitespaces/newlines
-			//_request_line = _raw_request.substr(_raw_request.find_first_not_of("\r\n\t "));
-			//_request_line = _request_line.substr(0, _raw_request.find("\r\n"));
-			
 			_request_line = _raw_request.substr(0, _raw_request.find("\r\n"));
-			
 			_one_line_request = 0;
-
-			//std::cout << "request line" << _request_line << std::endl;//DEBUG
-			//std::cout << "Multi-line request detected." << std::endl;//DEBUG
 		}
-		// std::istringstream iss(_request_line);
-		// iss >> _method >> _uri >> _version;
 		std::stringstream ss(_request_line);
 		ss >> _method >> _uri >> _version;
-		
-		//DEBUG
-		//std::cout << "method: " << _method << ", uri: " << _uri << ", version: " << _version << std::endl;//DEBUG
-		//DEBUG
-		
 		if (_method.empty() || _uri.empty() || _version.empty())
 		{
 			std::cerr << "Malformed request line: " << _request_line << std::endl;
@@ -179,10 +141,9 @@ void Request::parse_request_line()
 		}
 		if (_method != "GET" && _method != "POST" && _method != "DELETE")
 		{
-			set_error_code(405); // TEST - DEBUG
-			// std::cerr << "Unsupported HTTP method: " << _method << std::endl;
-			// set_error_code(501);
-			// throw std::runtime_error("501 Not Implemented");
+			std::cerr << "Unsupported HTTP method: " << _method << std::endl;
+			set_error_code(501);
+			throw std::runtime_error("501 Not Implemented");
 		}
 	}
 	catch(const std::exception& e)
@@ -193,8 +154,6 @@ void Request::parse_request_line()
 
 void Request::parse_uri()
 {
-	
-	// std::string uri, stripped_uri, query, fragment;
 	std::string stripped_uri;
 	size_t separator;
 
@@ -264,33 +223,8 @@ void Request::parse_uri()
 
 void Request::normalize_uri()
 {
-	/*
-	std::string root;
-	// std::string uri, normalized_uri;
-	
-	root = _config.get_token(_uri, "root");
-	if (root.empty())
-	{
-		root = "/";
-	}
-	
-	_raw_uri = get_uri();
-	if (_method == "GET" && (_uri == "/" || _uri.empty()))
-	{
-		if (_config.get_token(_uri, "index").empty())
-		_uri = "/index.html";
-		else
-		_uri = _config.get_token(_uri, "index");
-	}
-	_uri = (join_paths(root, _uri));
-	*/
-	
-	//std::cout << "Base URI : " << _uri << std::endl; //DEBUG
-	
 	_raw_uri = get_uri();
 	_computed_path = work_out_path();
-
-
 }
 
 std::string Request::get_uri_type(std::string path)
@@ -305,11 +239,7 @@ std::string Request::get_uri_type(std::string path)
 
 void Request::extract_resource_info()
 {
-	// std::string uri;
 	std::string extension, mime_type;
-	// std::map<std::string, std::string> resource_info;
-	
-	// uri = get_uri();
 
 	// Get extension
 	size_t dot_pos = _uri.find_last_of('.');
@@ -319,7 +249,6 @@ void Request::extract_resource_info()
 		mime_type = "";
 		_resource_info.insert(std::make_pair("extension", extension));
 		_resource_info.insert(std::make_pair("mime_type", mime_type));
-		// set_resource_info(resource_info);
 		return ;
 	}
 	else
@@ -329,7 +258,6 @@ void Request::extract_resource_info()
 		for (size_t x = 0; x < extension.length(); x++)
 			extension[x] = tolower(extension[x]);
 	}
-	// Set MIME type		// utiliser une structure dans webserv.hpp
 	if (extension == "html" || extension == "htm")
 		mime_type = "text/html";
 	else if (extension == "css")
@@ -473,14 +401,10 @@ void Request::extract_resource_info()
 
 	_resource_info.insert(std::make_pair("extension", extension));
 	_resource_info.insert(std::make_pair("mime_type", mime_type));
-	// set_resource_info(resource_info);
 }
 
 void Request::parse_headers()
 {
-	// std::map<std::string, std::string> headers_map;
-	
-	// std::string raw_request = get_raw_request();
 	size_t pos = _raw_request.find("\r\n");
 	size_t end_pos = _raw_request.find("\r\n\r\n");
 	if (_method == "POST" && REQUIRE_HEADERS && (std::string::npos || end_pos == std::string::npos || end_pos <= pos))
@@ -489,8 +413,6 @@ void Request::parse_headers()
 		set_error_code(400);
 		return ;
 	}
-	//pos = raw_request.find("\r\n");
-	//end_pos = raw_request.find("\r\n\r\n");
 	if (pos == std::string::npos || end_pos == std::string::npos || end_pos <= pos)
 	{
 		std::cerr << "Malformed request: missing headers" << std::endl;
@@ -510,7 +432,6 @@ void Request::parse_headers()
 		set_error_code(400);
 		return ;
 	}
-	// set_headers_string(headers_string);
 	std::istringstream iss(_headers_string);
 	std::string line;
 
@@ -527,13 +448,11 @@ void Request::parse_headers()
 			_headers.insert(std::make_pair(key, value));
 		}
 	}
-	// set_headers(headers_map);
 	_headers_string = _raw_request.substr(0, end_pos);
 }
 
 void Request::parse_body()
 {
-	// std::string body;
 	size_t pos = _raw_request.find("\r\n\r\n");
 	if (pos == std::string::npos)
 	{
@@ -542,24 +461,15 @@ void Request::parse_body()
 		return ;
 	}
 	_body = _raw_request.substr(pos + 4);
-	// if (body.empty() && get_method() == "POST") // protocole autorise requete sans headers/body
-	// {
-	// 	std::cerr << "Empty body in request." << std::endl;
-	// 	set_error_code(400);
-	// }
-	//else 
 	if (_body.length() > MAX_BODY_LENGTH)
 	{
 		std::cerr << "Body too long: " << _body.length() << " bytes" << std::endl;
 		set_error_code(413);
 	}
-	// set_body(body);
 }
 
 void Request::set_boundary()
 {
-	// std::string boundary;
-	
 	if (_raw_request.find("boundary=") == std::string::npos)
 		_boundary = "";
 	else
@@ -584,7 +494,6 @@ void Request::set_actual_body_length(void)
 	}
 	
 	std::string begin_boundary, end_boundary, multipart_headers;
-	// multipart_data;
 	
 	begin_boundary = "--" + _boundary + "\r\n";
 	end_boundary   = "--" + _boundary + "--\r\n";
@@ -614,29 +523,6 @@ void Request::set_actual_body_length(void)
 	_actual_body_length -= 2; // for the \r\n before the closing boundary
 }
 
-void Request::reset_request()
-{
-	_error_code = 0;
-	_headers_parsed = false;
-	_raw_request.clear();
-	_request_line.clear();
-	_method.clear();
-	_raw_uri.clear();
-	_uri.clear();
-	_uri_query.clear();
-	_uri_fragment.clear();
-	_uri_is_directory = false;
-	_uri_is_regular_file = false;
-	_version.clear();
-	_headers_string.clear();
-	_headers.clear();
-	_boundary.clear();
-	_multipart_data.clear();
-	_body.clear();
-	_actual_body_length = 0;
-	_resource_info.clear();
-}
-
 bool Request::is_complete()
 {
 	if (!_headers_parsed)
@@ -645,24 +531,14 @@ bool Request::is_complete()
 			return false;
 		else
 		{
-			//std::cerr << "Raw request before parsing:\n" << _raw_request << std::endl; //DEBUG
-			
 			parse_request_line();
-			// if (_error_code != 0)//DEBUG
-			// 	return true;// DEBUG
 			parse_uri();
-			// if (_error_code != 0)//DEBUG
-			// 	return true;// DEBUG
 			normalize_uri();
-			// if (_error_code != 0)//DEBUG
-			// 	return true;// DEBUG
-			//if (get_uri_type(join_paths(server_path(), _uri)) == "directory")
 			if (get_uri_type(_computed_path) == "directory")
 				set_uri_is_directory(true);
 			else
 			{
 				set_uri_is_directory(false);
-				//if (get_uri_type(join_paths(server_path(), _uri)) == "regular_file")
 				if (get_uri_type(_computed_path) == "regular_file")
 				{
 					set_uri_is_regular_file(true);
@@ -671,8 +547,6 @@ bool Request::is_complete()
 				else
 					set_uri_is_regular_file(false);
 			}
-			// if (_error_code != 0)//DEBUG
-			// 	return true;// DEBUG
 			if (!_one_line_request)
 				parse_headers();
 			else
@@ -703,7 +577,7 @@ bool Request::is_complete()
 			else
 			{
 				parse_body();
-				if (_method == "POST" && _headers.find("Content-Length") != _headers.end()) // verifier directement ici si multipart ou non
+				if (_method == "POST" && _headers.find("Content-Length") != _headers.end())
 				{
 					set_boundary();
 					set_actual_body_length();

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tafocked <tafocked@student.s19.be>         +#+  +:+       +#+        */
+/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 14:00:55 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/12 19:28:42 by tafocked         ###   ########.fr       */
+/*   Updated: 2025/11/20 05:31:18 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -230,7 +230,6 @@ void Server::send_response(pollfd &poll)
 			}
 			else if (bytes_sent == 0)
 			{
-				// std::cout << YELLOW << "Client [" << poll.fd << "] closed connection on send." << RESET << std::endl;
 				_response.erase(_response.begin() + i);
 				remove_client(poll.fd);
 			}
