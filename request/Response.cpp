@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/20 10:33:15 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/20 14:56:07 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -690,16 +690,17 @@ void Response::set_error_page(std::string nb, std::string name, std::string head
 					"<link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"/favicon.ico\">" \
 					"<title>" + nb + " - WS Homepage</title>" \
 				"</head>" \
-				"<body style=\"background-color: grey;\">" \
-					"<h1 style=\"text-align: center;\">" \
-						"<span style=\"text-decoration: underline;\">" \
-							"<strong>GENERIC ERROR " + nb +"</strong>" \
-						"</span>" \
+				"<body>" \
+					"<h1 style=\"margin-top: 60px; text-align: center; font-size: 1.6em; color: grey\">" \
+						"<strong>ERROR" \
+						"<br><br>" \
+						"<span style=\"font-size: 4em;\">" + nb + "</span>" \
+						"</strong>" \
 					"</h1>" \
-					"<p style=\"text-align: center;\">" \
+					"<p style=\"text-align: center; font-size: 3em; \">" \
 						+ name + \
 					"</p>" \
-					"<p style=\"text-align: center;\">" \
+					"<p style=\"text-align: center; margin-top: 120px;\">" \
 						"<a href=\"/\">Go back to index page</a>" \
 					"</p>" \
 				"</body>" \
