@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/23 16:38:05 by jrichir           #+#    #+#             */
-/*   Updated: 2025/11/04 15:13:08 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/19 23:15:34 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,21 @@ std::string join_paths(const std::string &path_left, const std::string &path_rig
 		return path_left + "/" + path_right;
 	else
 		return path_left + path_right;
+}
+
+std::string common_path(const std::string &path1, const std::string &path2)
+{
+	size_t min_length = std::min(path1.length(), path2.length());
+	size_t last_slash_pos = 0;
+
+	for (size_t i = 0; i < min_length; ++i)
+	{
+		if (path1[i] != path2[i])
+			break;
+		if (path1[i] == '/')
+			last_slash_pos = i;
+	}
+	return path1.substr(0, last_slash_pos + 1);
 }
 
 std::string server_path()

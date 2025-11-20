@@ -10,7 +10,7 @@
 				<strong>Welcome to our wonderful website !</strong>
 		</h1>
 		<h4>
-			Pages :
+			URLs pointing to webpages :
 		</h4>
 		<ul>
 			<li><a href="page1.html">Sample page with media files</a> (GET requests)</li>
@@ -18,22 +18,24 @@
 			<li><a href="page3.html">Path to pages in subdirectories</a></li>
 			<li><a href="page_cgi.html">CGI</a></li>
 			<li><a href="no-get/page1.html">A page in a location where GET method is not allowed</a> (405)</li>
+			<li><a href="subdir1/subdir2/test/alpha.html">This page is not where it seems to be (Root location)</a><br></li>
 			<li><a href="non_existing_page.html">A page that does not exist</a> (404)</li>
+			<li><a href="custom_error/no_page.html">Another page that does not exist</a> (custom 404)</li>
 			<li><a href="secret.html">A secret page *</a> (403 *)</li>
 		</ul>
 		<p>
 			<span style="font-size: small; color: #777; padding-left: 42px;">* Requires changing file permissions locally to test (chmod 000 secret.html)</span>
 		</p>
 		<h4>
-			Directories :
+			URLs pointing to directories :
 		</h4>
-		<p>
-			<a href="subdir1/">Directory with a standard <em>index.html</em> file</a><br>
-			<a href="subdir1b/">Directory with NO <em>index.html</em> file</a> (but a <em>home.html</em> set as <em>Index</em> via Config)<br>
-			<a href="subdir1/subdir2/">Directory with NO <em>index.html</em> file (autoindex OFF -> 403)</a><br>
-			<a href="subdir1/subdir2b/">Directory with NO <em>index.html</em> file (autoindex ON -> listing)</a><br>
-			<a href="redirect">Directory URL without a final "/" character</a> (Generates 301 status + automatic redirection)<br>
-			<a href="not_a_subdir/">A link to a non-existing directory</a>
-		</p>
+		<ul>
+			<li><a href="subdir1/">Directory with a standard <em>index.html</em> file</a><br></li>
+			<li><a href="subdir1b/">Directory with NO <em>index.html</em> file</a> (but a <em>home.html</em> set as <em>Index</em> via Config)<br></li>
+			<li><a href="subdir1/noindex_nolisting/">Directory with NO <em>index.html</em> file (autoindex OFF -> 403)</a><br></li>
+			<li><a href="subdir1/subdir2b/">Directory with NO <em>index.html</em> file (autoindex ON -> listing)</a><br></li>
+			<li><a href="redirect">Directory URL without a final "/" character</a> (Generates 301 status + automatic redirection)<br></li>
+			<li><a href="not_a_subdir/">A link to a non-existing directory</a></li>
+		</ul>
 	</body>
 </html>

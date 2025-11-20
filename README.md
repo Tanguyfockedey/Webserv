@@ -2,6 +2,8 @@ _config.get_location_path(_req.get_uri())
 
 std::string common = common_path(path1, path2);
 
+
+
 # Webserv
 
 ## To do ---> who takes care of it
@@ -17,6 +19,8 @@ std::string common = common_path(path1, path2);
 	* Obtenir la bonne url (ex: /blog/tech/janvier/ location /blog/tech/ --> root: /wordpress/ )
 
 * Add try-catch where needed
+    * ERROR thrown that closes the server if trying to open a directory as a file, aka with open()
+
 * Clean code
     * Isolate function for building response page based on generated html-body --> JP
 * Tests

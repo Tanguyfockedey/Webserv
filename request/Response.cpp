@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/19 17:34:13 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/20 04:11:06 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,12 +61,16 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 	}
 
 	// TEST DEBUG
+	//std::cout << "BARDAFF !" << std::endl;
 	//std::cout << "Full path : " << work_out_path() << std::endl;	// TEST DEBUG
 	// TEST DEBUG
 
 	_file_error = false;
 	if (_req.get_method() == "GET")
+	{
+		//std::cout << "C est l embardee !" << std::endl;
 		process_get_request();
+	}
 	else if (_req.get_method() == "POST")
 		process_post_request();
 	else if (_req.get_method() == "DELETE")
@@ -126,7 +130,7 @@ void Response::get_dir()
 {
 	std::string index, index_path, dir_path, error_msg, error_page;
 
-
+	/*
 	// DEBUG
 	std::cout << "WE ARE DEALING WITH A DIRECTORY" << std::endl;//DEBUG
 	// DEBUG
@@ -135,10 +139,14 @@ void Response::get_dir()
 	_config = _req.get_config();
 	dir_path = join_paths(server_path(), _config.get_token(_req.get_uri(), "root"));
 	dir_path = join_paths(dir_path, _req.get_uri().substr(_config.get_token(_req.get_uri(), "root").length()));
+	
 
+	*/
+	
+	dir_path = _req.get_computed_path();
 
 	// DEBUG
-	std::cout << "dir_path: " << dir_path << std::endl;//DEBUG
+	//std::cout << "dir_path: " << dir_path << std::endl;//DEBUG
 	// DEBUG
 
 
@@ -176,7 +184,8 @@ void Response::get_dir()
 	index = _config.get_token(_req.get_uri(), "index");
 	if (!index.empty())
 	{
-		index_path = join_paths(dir_path, index);
+		index_path = dir_path;
+		//index_path = join_paths(dir_path, index);
 		if (get_file_type(index_path) == "nonexistent")
 		{
 			
@@ -239,7 +248,7 @@ void Response::get_file()
 	std::string index, path, error_msg, error_page;
 	
 	//                  server root   , config root + path
-	path = work_out_path();// = join_paths(server_path(), _req.get_uri());
+	path = _req.get_computed_path();// = join_paths(server_path(), _req.get_uri());
 
 	//
 	//std::cout << "Final file path to get: " << path << std::endl; //DEBUG
@@ -247,8 +256,13 @@ void Response::get_file()
 	
 	std::fstream file(path.c_str(), std::ios::in | std::ios::binary);
 	_file_error = false;
+	//
+	//std::cout << "PLOUF" << std::endl; //DEBUG
+	//
 	if (file.fail())
 	{
+		//std::cout << "== FILE FAIL ==" << std::endl; //DEBUG
+		
 		_file_error = true;
 		if (errno == 2) // No such file or directory (404)
 		{
@@ -283,23 +297,9 @@ void Response::get_file()
 	else
 	{
 		_status_line = "200 OK";
+		//std::cout << "SCHLARF" << std::endl; //DEBUG
 		build_response(file);
 	}
-}
-
-std::string Response::common_path(const std::string &path1, const std::string &path2)
-{
-	size_t min_length = std::min(path1.length(), path2.length());
-	size_t last_slash_pos = 0;
-
-	for (size_t i = 0; i < min_length; ++i)
-	{
-		if (path1[i] != path2[i])
-			break;
-		if (path1[i] == '/')
-			last_slash_pos = i;
-	}
-	return path1.substr(0, last_slash_pos + 1);
 }
 
 void Response::process_get_request()
@@ -311,6 +311,9 @@ void Response::process_get_request()
 		handle_405();
 		return ;
 	}
+	
+	std::string computed_path = _req.get_computed_path();
+	
 	bool is_dir = _req.get_uri_is_directory();
 	bool is_file = _req.get_uri_is_regular_file();
 	if (is_dir)
@@ -319,7 +322,7 @@ void Response::process_get_request()
 	}
 	else if (is_file)
 	{
-		if (!(_req.get_uri()).rfind("./cgi-bin/", 0))
+		if (!(_req.get_uri()).rfind("/cgi-bin/", 0))
 			this->handle_cgi();
 		else
 			get_file();
@@ -404,8 +407,11 @@ void Response::build_response(std::fstream &path)
 	if (_file_error)
 		content_type = "text/html";
 	else
+	{
+		//std::cout << "GROPCH" << std::endl; //DEBUG
 		content_type = _req.get_resource_info().find("mime_type")->second;
-	
+		//std::cout << "GROPCH2" << std::endl; //DEBUG
+	}
 	if (path.is_open())
 	{
 		_body = std::string((std::istreambuf_iterator<char>(path)), std::istreambuf_iterator<char>());
@@ -664,47 +670,15 @@ void Response::redirect(std::string path)
 	_response = response.str();
 }
 
-std::string Response::work_out_path()
-{
-	std::string res_path;
-
-	std::string common = common_path(_req.get_raw_uri(), _config.get_location_path(_req.get_raw_uri()));
-	size_t common_length = common.length();
-
-	
-	std::string program_path = server_path();
-	std::cout << "Program path: " << program_path << std::endl; //DEBUG
-	
-	std::string server_root_path = _config.get_token("/", "root");
-	std::cout << "Server root path: " << server_root_path << std::endl; //DEBUG
-
-	std::string location_root_path = _config.get_token(_req.get_raw_uri(), "root");
-	std::cout << "Location root path: " << location_root_path << std::endl; //DEBUG
-
-	std::string common2 = common_path(server_root_path, location_root_path);
-	size_t common2_length = common2.length();
-	std::string unique_part_of_location_path = location_root_path.substr(common2_length);
-	std::cout << "Unique part of location path: " << unique_part_of_location_path << std::endl; //DEBUG
-	
-	std::string unique_part_of_uri = _req.get_raw_uri().substr(common_length);
-	std::cout << "Unique part of URI: " << unique_part_of_uri << std::endl; //DEBUG
-
-	res_path = join_paths(program_path, server_root_path);
-	res_path = join_paths(res_path, unique_part_of_location_path);
-	res_path = join_paths(res_path, unique_part_of_uri);
-	std::cout << "Resulting path: " << res_path << std::endl; //DEBUG
-	
-	return res_path;
-}
-
 void Response::set_error_page(std::string nb, std::string name, std::string header)
 {
 	_status_line = nb + " " + name;
 	std::string err_page = "err_page_";
 	err_page += nb;
 	std::string err_path = _config.get_token(_req.get_uri(), err_page.c_str());
-	std::string webroot_path = _config.get_token(_req.get_uri(), "root");
-	std::string path = join_paths(server_path(), webroot_path);
+	//std::string webroot_path = _config.get_token(_req.get_uri(), "root");
+	//std::string path = join_paths(server_path(), webroot_path);
+	std::string path = _req.get_computed_path().substr(0, _req.get_computed_path().find_last_of('/') + 1);
 	path = join_paths(path, err_path);
 
 	std::fstream file_err(path.c_str(), std::ios::in | std::ios::binary);

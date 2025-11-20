@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:47:50 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/17 14:34:45 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/20 01:02:49 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,7 @@ private:
 	std::string _uri;
 	std::string _uri_query;    // ex: ?lang=php
 	std::string _uri_fragment; // ex: #anchor
+	std::string _computed_path;
 	bool _uri_is_directory;
 	bool _uri_is_regular_file;
 	std::string _version;
@@ -59,6 +60,7 @@ public:
 	const std::string& get_uri() const { return _uri; }
 	const std::string& get_uri_query() const { return _uri_query; }
 	const std::string& get_uri_fragment() const { return _uri_fragment; }
+	const std::string& get_computed_path() const { return _computed_path; }
 	const bool& get_uri_is_directory() const { return _uri_is_directory; }
 	const bool& get_uri_is_regular_file() const { return _uri_is_regular_file; }
 	// const std::string& get_version() const { return _version; }
@@ -101,4 +103,5 @@ private:
 	void extract_resource_info();
 	void parse_headers();
 	void parse_body();
+	std::string work_out_path();
 };

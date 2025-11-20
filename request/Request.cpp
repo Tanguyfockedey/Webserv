@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:48:10 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/17 15:47:27 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/20 03:56:21 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,17 +14,100 @@
 
 Request::Request(const int fd, const std::string raw_request, const Config &server_config)
 	: _fd(fd), _error_code(0), _headers_parsed(false), _timestamp(time(NULL)), _raw_request(raw_request), _actual_body_length(0), _config(server_config)
-{}
+{
+	//std::cerr << "Raw request received:\n" << _raw_request << std::endl; //DEBUG
+}
 
 Request::~Request()
 {}
+
+std::string Request::work_out_path()
+{
+	std::string res_path;
+
+	std::string common = common_path(_raw_uri, _config.get_location_path(_raw_uri));
+	size_t common_length = common.length();
+
+	
+	std::string program_path = server_path();
+	std::cout << "Program path: " << program_path << std::endl; //DEBUG
+	
+	std::string server_root_path = _config.get_token("/", "root");
+	server_root_path = join_paths("/", server_root_path); // to ensure it starts with '/'
+	server_root_path = join_paths(server_root_path, "/"); // to ensure it ends with '/'
+
+	std::cout << "Server root path: " << server_root_path << std::endl; //DEBUG
+
+	std::string location_root_path = _config.get_token(_raw_uri, "root");
+	location_root_path = join_paths("/", location_root_path); // to ensure it starts with '/'
+	location_root_path = join_paths(location_root_path, "/"); // to ensure it ends with '/
+	
+	std::cout << "Location root path: " << location_root_path << std::endl; //DEBUG
+
+	std::string common2 = common_path(server_root_path, location_root_path);
+	size_t common2_length = common2.length();
+	std::string unique_part_of_location_path = location_root_path.substr(common2_length);
+	std::cout << "Unique part of location path: " << unique_part_of_location_path << std::endl; //DEBUG
+	
+	std::string unique_part_of_uri = _raw_uri;
+	if (!unique_part_of_location_path.empty())
+		unique_part_of_uri = _raw_uri.substr(common_length);
+	std::cout << "Unique part of URI: " << unique_part_of_uri << std::endl; //DEBUG
+
+	res_path = join_paths(program_path, server_root_path);
+	res_path = join_paths(res_path, unique_part_of_location_path);
+	res_path = join_paths(res_path, unique_part_of_uri);
+	
+	if (is_directory(res_path))
+	{
+		//std::cout << "Index : " << _config.get_token(_uri, "index") << std::endl; //DEBUG
+		std::string location_index = _config.get_token(_uri, "index");
+		if (!location_index.empty())
+		{
+			_uri_is_directory = false;
+			_uri_is_regular_file = true;
+			res_path = join_paths(res_path, _config.get_token(_uri, "index"));
+		}
+		else if (_raw_uri.substr(0, _raw_uri.find_first_of('?')) == "/" || _raw_uri.substr(0, _raw_uri.find_first_of('?')).empty())
+		{
+			std::cout << "heho raw_uri: " << _raw_uri << std::endl; //DEBUG
+			_uri_is_directory = false;
+			_uri_is_regular_file = true;
+			res_path = join_paths(res_path, "index.html");
+		}
+		else if (_raw_uri.length() >= 1 && _raw_uri[_raw_uri.length() - 1] == '/')
+		{
+			if (is_regular_file(join_paths(res_path, "index.html")))
+			{
+				_uri_is_directory = false;
+				_uri_is_regular_file = true;
+				res_path = join_paths(res_path, "index.html");
+			}
+			else
+			{
+				_uri_is_directory = true;
+				_uri_is_regular_file = false;
+			}
+		}
+		else
+		{
+			_uri_is_directory = true;
+			_uri_is_regular_file = false;
+		}
+	}
+
+	std::cout << "Resulting path: " << res_path << std::endl; //DEBUG
+	return res_path;
+}
 
 void Request::parse_request_line()
 {
 	// std::string method, uri, version;
 
+	//std::cout << "this is raw request" << _raw_request << std::endl;//DEBUG
+
 	// Trim leading whitespaces/newlines
-	_raw_request = _raw_request.substr(_raw_request.find_first_not_of("\r\n\t "));
+	//_raw_request = _raw_request.substr(_raw_request.find_first_not_of("\r\n\t "));
 
 	if (_raw_request.empty())
 	{
@@ -38,12 +121,15 @@ void Request::parse_request_line()
 	{
 		if (_raw_request.find("\r\n") == std::string::npos)
 		{
+			//std::cout << "tuuut" << std::endl;//DEBUG
 			_request_line = _raw_request;
 			_one_line_request = 1;
 			//std::cout << "One line request detected." << std::endl;//DEBUG
 		}
 		else
 		{
+			//std::cout << "tip" << std::endl;//DEBUG
+
 			// Trim leading whitespaces/newlines
 			//_request_line = _raw_request.substr(_raw_request.find_first_not_of("\r\n\t "));
 			//_request_line = _request_line.substr(0, _raw_request.find("\r\n"));
@@ -51,6 +137,8 @@ void Request::parse_request_line()
 			_request_line = _raw_request.substr(0, _raw_request.find("\r\n"));
 			
 			_one_line_request = 0;
+
+			//std::cout << "request line" << _request_line << std::endl;//DEBUG
 			//std::cout << "Multi-line request detected." << std::endl;//DEBUG
 		}
 		// std::istringstream iss(_request_line);
@@ -161,24 +249,33 @@ void Request::parse_uri()
 
 void Request::normalize_uri()
 {
+	/*
 	std::string root;
 	// std::string uri, normalized_uri;
-
+	
 	root = _config.get_token(_uri, "root");
 	if (root.empty())
 	{
 		root = "/";
 	}
-
+	
 	_raw_uri = get_uri();
 	if (_method == "GET" && (_uri == "/" || _uri.empty()))
 	{
 		if (_config.get_token(_uri, "index").empty())
-			_uri = "/index.html";
+		_uri = "/index.html";
 		else
-			_uri = _config.get_token(_uri, "index");
+		_uri = _config.get_token(_uri, "index");
 	}
 	_uri = (join_paths(root, _uri));
+	*/
+	
+	//std::cout << "Base URI : " << _uri << std::endl; //DEBUG
+	
+	_raw_uri = get_uri();
+	_computed_path = work_out_path();
+
+
 }
 
 std::string Request::get_uri_type(std::string path)
@@ -533,6 +630,8 @@ bool Request::is_complete()
 			return false;
 		else
 		{
+			//std::cerr << "Raw request before parsing:\n" << _raw_request << std::endl; //DEBUG
+			
 			parse_request_line();
 			// if (_error_code != 0)//DEBUG
 			// 	return true;// DEBUG
@@ -542,12 +641,14 @@ bool Request::is_complete()
 			normalize_uri();
 			// if (_error_code != 0)//DEBUG
 			// 	return true;// DEBUG
-			if (get_uri_type(join_paths(server_path(), _uri)) == "directory")
+			//if (get_uri_type(join_paths(server_path(), _uri)) == "directory")
+			if (get_uri_type(_computed_path) == "directory")
 				set_uri_is_directory(true);
 			else
 			{
 				set_uri_is_directory(false);
-				if (get_uri_type(join_paths(server_path(), _uri)) == "regular_file")
+				//if (get_uri_type(join_paths(server_path(), _uri)) == "regular_file")
+				if (get_uri_type(_computed_path) == "regular_file")
 				{
 					set_uri_is_regular_file(true);
 					extract_resource_info();
