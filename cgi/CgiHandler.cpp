@@ -93,5 +93,9 @@ std::string	CgiHandler::executeCgi(const std::string scriptName)
 	close(fd_in); close(fd_out);
 	close(stdin_save); close(stdout_save);
 
+	for (int i = 0; env[i]; i++)
+		delete[] env[i];
+	delete[] env;
+
 	return body;
 }
