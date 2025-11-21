@@ -1,15 +1,16 @@
 405 Method not allowed
 408 Request Timeout Error
-413 Payload Too Large
+[DONE] 413 Payload Too Large
 [DONE] 414 URI Too Long
 415 Unsupported media type
 429 Too Many Requests
 [DONE] 431 Request Header Fields Too Large (total or individual, indicate which)
 500 Internal Error
-501 Not Implemented
+[DONE] 501 Not Implemented
 503 Service Unavailable
+505 HTTP Version Not Supported
 
-[414] --> [431] --> 501 --> 500 --> 405 --> 413 Payload too large --> 415 --> 400 --> 403 -->
+505? --> [414] --> [431] --> 501 --> 500 --> 405 --> 413 Payload too large --> 415 --> 400 --> 403 -->
 
 POST : remplacer les espaces du nom de fichier par %20 (ou par + ou par _)
 
