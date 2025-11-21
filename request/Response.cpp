@@ -6,7 +6,7 @@
 /*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/21 13:14:27 by mcygan           ###   ########.fr       */
+/*   Updated: 2025/11/21 13:33:42 by mcygan           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -300,7 +300,7 @@ void Response::process_delete_request()
 	if (!is_allowed_method("DELETE"))
 		return handle_405();
 		
-	std::string path = join_paths(server_path(), _req.get_uri());
+	std::string path = _req.get_computed_path();
 	if (access(path.c_str(), W_OK))
 	{
 		if (errno == EACCES)
@@ -321,26 +321,6 @@ void Response::process_delete_request()
 			return set_error_page("500", "Internal server error", "");
 		else
 			_response = delete_success_response("200 OK", path);
-	}
-
-	if (_req.get_uri_is_directory())
-	{
-		// temp
-		_status_line = "204 No content";
-		_response = "HTTP/1.1" +_status_line + "\r\n\r\n";
-	}
-	else
-	{
-		if (remove(path.c_str()))
-		{
-			_status_line = "204 No content";
-			_response = "HTTP/1.1" +_status_line + "\r\n\r\n";
-		}
-		else
-		{
-			_status_line = "200 OK";
-			build_response_delete(_req.get_uri());
-		}
 	}
 }
 
@@ -374,27 +354,6 @@ void Response::build_response(std::fstream &path)
 		std::cerr << "Failed to open file for reading." << std::endl;
 		set_error_page("500", "Internal Server Error", "");
 	}
-}
-
-void Response::build_response_delete(std::string path)
-{	
-	std::stringstream response;
-	
-	std::string	body;
-	if (_status_line == "200 OK")
-		body = "<html lang=\"en-US\">\n\t<body>\n\t\t<h1>File " + path + " deleted.</h1>\n\t</body>\n</html>";
-	else
-		body = "<html lang=\"en-US\">\n\t<body>\n\t\t<h1>File " + path + " not deleted.</h1>\n\t</body>\n</html>";
-
-	response << "HTTP/1.1 " << _status_line << "\r\n";
-	response << "Host: " << _config.get_token("", "server_name") << "\r\n";
-	response << "Date: " << get_http_date() << "\r\n";
-	response << "Content-Type:" << _req.get_resource_info().find("mime_type")->second << "\r\n";
-	response << "Content-Length: " << _body.length() << "\r\n";
-	_headers_string = response.str();
-	response << "\r\n";
-	response << _body;
-	_response = response.str();
 }
 
 void Response::handle_single_part_post()
