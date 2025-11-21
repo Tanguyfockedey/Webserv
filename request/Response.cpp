@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
+/*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/20 21:14:53 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/21 13:33:42 by mcygan           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,65 +68,23 @@ Response::Response(const int fd, Request &req): _fd(fd), _req(req)
 		set_error_page(error_code, error_name, "");
 		return ;
 	}
-
 	_file_error = false;
 	if (_req.get_method() == "GET")
 	{
 		process_get_request();
 	}
 	else if (_req.get_method() == "POST")
+	{
 		process_post_request();
+	}
 	else if (_req.get_method() == "DELETE")
+	{
 		process_delete_request();
+	}
 }
 
 Response::~Response()
 {}
-
-void Response::print_dir_listing(std::string &dir_path)
-{
-	std::vector<std::string> files;
-	
-	std::string body = "<html><head>"\
-	"<link rel=\"stylesheet\" type=\"text/css\" href=\"/styles.css\">" \
-	"<link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"/favicon.ico\">" \
-	"<meta charset=\"UTF-8\"><title>Index of " + _req.get_raw_uri() + "</title></head><body>";
-	if (get_dir_content(dir_path, files) != -1)
-	{
-		_status_line = "200 OK";
-		body += "<h1>Index of " + _req.get_raw_uri() + "</h1>\n";
-		for (size_t i = 0; i < files.size(); i++)
-		{
-			if (files[i] == ".")
-				continue ;
-			else if (files[i] == "..")
-			{
-				body += "<p><a href=\"..\">⬑ Parent Directory</a></p>\n";
-				continue ;
-			}
-			body += "<p><a href=\"" + files[i] + "\">" + files[i] + "</a></p>\n";
-		}
-	}
-	else
-	{
-		std::cerr << "Failed to open directory: " << dir_path << std::endl;
-		set_error_page("500", "Internal Server Error", "");
-		return;
-	}
-	body += "</body></html>\r\n\r\n";
-	_body = body;
-	std::string content_type = " text/html";
-	std::stringstream response;
-	response << "HTTP/1.1 " << _status_line << "\r\n";
-	response << "Host: " << _config.get_token("", "server_name") << "\r\n";
-	response << "Date: " << get_http_date() << "\r\n";
-	response << "Content-Type: " << content_type << "\r\n";
-	response << "Content-Length: " << _body.length() << "\r\n";
-	_headers_string = response.str();
-	response << "\r\n";
-	response << _body;
-	_response = response.str();
-}
 
 void Response::get_dir()
 {
@@ -154,15 +112,13 @@ void Response::get_dir()
 	std::string config_root_part = _config.get_token(_req.get_uri(), "root");
 	std::string raw_uri_part = _req.get_raw_uri();
 
-	// check if index or location-specific index
+	// check if default index or location-specific index
 	index = _config.get_token(_req.get_uri(), "index");
 	if (!index.empty())
 	{
 		index_path = dir_path;
-		//index_path = join_paths(dir_path, index);
 		if (get_file_type(index_path) == "nonexistent")
 		{
-			
 			// check for autoindex option
 			std::string option = _config.get_token(_req.get_uri(), "autoindex");
 			
@@ -200,16 +156,13 @@ void Response::get_dir()
 	}
 	else
 	{
-		// check if autoindex on
 		if (_config.get_token(_req.get_uri(), "autoindex") == "on")
 		{
-			// generate directory listing
 			print_dir_listing(dir_path);
 			_status_line = "200 OK";
 		}
 		else
 		{
-			// autoindex off, error 403
 			error_msg = "Autoindex is off for this directory: " + _req.get_uri() + "\n";
 			std::cerr << error_msg;
 			set_error_page("403", "Forbidden", "");
@@ -240,7 +193,7 @@ void Response::get_file(int error = 0)
 			set_error_page("403", "Forbidden", "");
 			return;
 		}
-		else if (errno == EISDIR) // Is a directory (ou tenter ENOTDIR, si c'est pas EISDIR)
+		else if (errno == EISDIR)
 		{
 			error_msg =  "Failed opening a directory";
 			set_error_page("500", "Internal Server Error", "");
@@ -271,36 +224,24 @@ void Response::process_get_request()
 	std::string allowed_methods = _config.get_token(_req.get_raw_uri(), "method");
 	
 	if (!is_allowed_method("GET"))
-	{
-		handle_405();
-		return ;
-	}
+		return handle_405();
 	
 	std::string computed_path = _req.get_computed_path();
-	
+
 	bool is_dir = _req.get_uri_is_directory();
 	bool is_file = _req.get_uri_is_regular_file();
 	if (is_dir)
-	{
 		get_dir();
-	}
 	else if (is_file)
 	{
 		std::string	uri = _req.get_uri();
 		if (uri.length() > 3 && uri.find("/cgi-bin/", 0) && uri.substr(uri.length() - 3) == ".py")
-		{
 			this->handle_cgi();
-		}
 		else
-		{
 			get_file();
-		}
 	}
 	else
-	{
 		set_error_page("404", "Not Found", "");
-		return;
-	}
 }
 
 void Response::process_post_request()
@@ -313,7 +254,7 @@ void Response::process_post_request()
 		return ;
 	}
 	std::string	uri = _req.get_uri();
-	if (!uri.rfind("./cgi-bin/", 0) && uri.substr(uri.length() - 3) == ".py")
+	if (uri.length() > 3 && uri.rfind("/cgi-bin/", 0) && uri.substr(uri.length() - 3) == ".py")
 		return this->handle_cgi();
 	if (_req.get_boundary().empty())
 	{
@@ -359,7 +300,7 @@ void Response::process_delete_request()
 	if (!is_allowed_method("DELETE"))
 		return handle_405();
 		
-	std::string path = join_paths(server_path(), _req.get_uri());
+	std::string path = _req.get_computed_path();
 	if (access(path.c_str(), W_OK))
 	{
 		if (errno == EACCES)
@@ -380,26 +321,6 @@ void Response::process_delete_request()
 			return set_error_page("500", "Internal server error", "");
 		else
 			_response = delete_success_response("200 OK", path);
-	}
-
-	if (_req.get_uri_is_directory())
-	{
-		// temp
-		_status_line = "204 No content";
-		_response = "HTTP/1.1" +_status_line + "\r\n\r\n";
-	}
-	else
-	{
-		if (remove(path.c_str()))
-		{
-			_status_line = "204 No content";
-			_response = "HTTP/1.1" +_status_line + "\r\n\r\n";
-		}
-		else
-		{
-			_status_line = "200 OK";
-			build_response_delete(_req.get_uri());
-		}
 	}
 }
 
@@ -433,27 +354,6 @@ void Response::build_response(std::fstream &path)
 		std::cerr << "Failed to open file for reading." << std::endl;
 		set_error_page("500", "Internal Server Error", "");
 	}
-}
-
-void Response::build_response_delete(std::string path)
-{	
-	std::stringstream response;
-	
-	std::string	body;
-	if (_status_line == "200 OK")
-		body = "<html lang=\"en-US\">\n\t<body>\n\t\t<h1>File " + path + " deleted.</h1>\n\t</body>\n</html>";
-	else
-		body = "<html lang=\"en-US\">\n\t<body>\n\t\t<h1>File " + path + " not deleted.</h1>\n\t</body>\n</html>";
-
-	response << "HTTP/1.1 " << _status_line << "\r\n";
-	response << "Host: " << _config.get_token("", "server_name") << "\r\n";
-	response << "Date: " << get_http_date() << "\r\n";
-	response << "Content-Type:" << _req.get_resource_info().find("mime_type")->second << "\r\n";
-	response << "Content-Length: " << _body.length() << "\r\n";
-	_headers_string = response.str();
-	response << "\r\n";
-	response << _body;
-	_response = response.str();
 }
 
 void Response::handle_single_part_post()
@@ -627,30 +527,6 @@ void Response::handle_multipart_post()
 	_response = response.str();
 }
 
-const std::string Response::get_http_date() {
-    const char* days[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
-    const char* months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-
-    std::time_t now = std::time(NULL);
-    std::tm* gmt = std::gmtime(&now);
-
-    std::ostringstream oss;
-    oss << days[gmt->tm_wday] << ", ";
-    if (gmt->tm_mday < 10) oss << '0';
-    oss << gmt->tm_mday << ' ';
-    oss << months[gmt->tm_mon] << ' ';
-    oss << (1900 + gmt->tm_year) << ' ';
-    if (gmt->tm_hour < 10) oss << '0';
-    oss << gmt->tm_hour << ':';
-    if (gmt->tm_min < 10) oss << '0';
-    oss << gmt->tm_min << ':';
-    if (gmt->tm_sec < 10) oss << '0';
-    oss << gmt->tm_sec << " GMT";
-
-    return oss.str();
-}
-
 void Response::redirect(std::string path)
 {
 	std::stringstream response;
@@ -794,4 +670,73 @@ void Response::handle_cgi()
 		response << _body;
 		_response = response.str();
 	}
+}
+
+void Response::print_dir_listing(std::string &dir_path)
+{
+	std::vector<std::string> files;
+	
+	std::string body = "<html><head>"\
+	"<link rel=\"stylesheet\" type=\"text/css\" href=\"/styles.css\">" \
+	"<link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"/favicon.ico\">" \
+	"<meta charset=\"UTF-8\"><title>Index of " + _req.get_raw_uri() + "</title></head><body>";
+	if (get_dir_content(dir_path, files) != -1)
+	{
+		_status_line = "200 OK";
+		body += "<h1>Index of " + _req.get_raw_uri() + "</h1>\n";
+		for (size_t i = 0; i < files.size(); i++)
+		{
+			if (files[i] == ".")
+				continue ;
+			else if (files[i] == "..")
+			{
+				body += "<p><a href=\"..\">⬑ Parent Directory</a></p>\n";
+				continue ;
+			}
+			body += "<p><a href=\"" + files[i] + "\">" + files[i] + "</a></p>\n";
+		}
+	}
+	else
+	{
+		std::cerr << "Failed to open directory: " << dir_path << std::endl;
+		set_error_page("500", "Internal Server Error", "");
+		return;
+	}
+	body += "</body></html>\r\n\r\n";
+	_body = body;
+	std::string content_type = " text/html";
+	std::stringstream response;
+	response << "HTTP/1.1 " << _status_line << "\r\n";
+	response << "Host: " << _config.get_token("", "server_name") << "\r\n";
+	response << "Date: " << get_http_date() << "\r\n";
+	response << "Content-Type: " << content_type << "\r\n";
+	response << "Content-Length: " << _body.length() << "\r\n";
+	_headers_string = response.str();
+	response << "\r\n";
+	response << _body;
+	_response = response.str();
+}
+
+const std::string Response::get_http_date() {
+    const char* days[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+    const char* months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
+    std::time_t now = std::time(NULL);
+    std::tm* gmt = std::gmtime(&now);
+
+    std::ostringstream oss;
+    oss << days[gmt->tm_wday] << ", ";
+    if (gmt->tm_mday < 10) oss << '0';
+    oss << gmt->tm_mday << ' ';
+    oss << months[gmt->tm_mon] << ' ';
+    oss << (1900 + gmt->tm_year) << ' ';
+    if (gmt->tm_hour < 10) oss << '0';
+    oss << gmt->tm_hour << ':';
+    if (gmt->tm_min < 10) oss << '0';
+    oss << gmt->tm_min << ':';
+    if (gmt->tm_sec < 10) oss << '0';
+    oss << gmt->tm_sec << " GMT";
+
+    return oss.str();
 }

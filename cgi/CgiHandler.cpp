@@ -20,9 +20,9 @@ void	CgiHandler::init_env(Request &request)
 
 	this->_env["REQUEST_METHOD"] = request.get_method();
 	if (_env["REQUEST_METHOD"] == "GET")
-		this->_env["QUERY_STRING"] = request.get_uri_query();
+		this->_env["QUERY STRING"] = request.get_uri_query();
 	else if (_env["REQUEST_METHOD"] == "POST")
-		this->_env["QUERY_STRING"] = request.get_body();
+		this->_env["QUERY STRING"] = request.get_body();
 }
 
 char**	CgiHandler::get_env_cstr()
@@ -68,7 +68,6 @@ std::string	CgiHandler::executeCgi(const std::string scriptName)
 		dup2(fd_in, STDIN_FILENO);
 		dup2(fd_out, STDOUT_FILENO);
 		execve(scriptName.c_str(), nll, env);
-		//std::cout << "HERE" + errno <<std::endl;
 		write(STDOUT_FILENO, "500 Internal server error\r\n\r\n", 29);
 	}
 	else // parent process
