@@ -1,6 +1,0 @@
-echo 'export PATH=$HOME/.local/bin:$PATH' >> ~/.bashrc
-source ~/.bashrc
-
-siege -c 50 -t 2m http://localhost:8080
-
-curl -i http://localhost:8085/test -X POST --data "123456789 longer than it should"
