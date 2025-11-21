@@ -6,7 +6,7 @@
 /*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/21 13:33:42 by mcygan           ###   ########.fr       */
+/*   Updated: 2025/11/21 13:40:59 by mcygan           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -288,7 +288,9 @@ std::string	Response::delete_success_response(std::string status_line, std::stri
 	response << "Host: " << _config.get_token("", "server_name") << "\r\n";
 	response << "Date: " << get_http_date() << "\r\n";
 	response << "Content-Type: " << "text/html" << "\r\n";
-	response << "Content-Length: " << body.length() << "\r\n\r\n";
+	response << "Content-Length: " << body.length() << "\r\n";
+	_headers_string = response.str();
+	response << "\r\n";
 	if (body != "")
 		response << "<html><body><center>" << body << " has been deleted</center></body></html>\r\n";
 
