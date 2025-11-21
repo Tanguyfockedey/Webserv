@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
+/*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/21 12:33:52 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/21 13:14:27 by mcygan           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -224,36 +224,24 @@ void Response::process_get_request()
 	std::string allowed_methods = _config.get_token(_req.get_raw_uri(), "method");
 	
 	if (!is_allowed_method("GET"))
-	{
-		handle_405();
-		return ;
-	}
+		return handle_405();
 	
 	std::string computed_path = _req.get_computed_path();
-	
+
 	bool is_dir = _req.get_uri_is_directory();
 	bool is_file = _req.get_uri_is_regular_file();
 	if (is_dir)
-	{
 		get_dir();
-	}
 	else if (is_file)
 	{
 		std::string	uri = _req.get_uri();
 		if (uri.length() > 3 && uri.find("/cgi-bin/", 0) && uri.substr(uri.length() - 3) == ".py")
-		{
 			this->handle_cgi();
-		}
 		else
-		{
 			get_file();
-		}
 	}
 	else
-	{
 		set_error_page("404", "Not Found", "");
-		return;
-	}
 }
 
 void Response::process_post_request()
@@ -266,7 +254,7 @@ void Response::process_post_request()
 		return ;
 	}
 	std::string	uri = _req.get_uri();
-	if (!uri.rfind("./cgi-bin/", 0) && uri.substr(uri.length() - 3) == ".py")
+	if (uri.length() > 3 && uri.rfind("/cgi-bin/", 0) && uri.substr(uri.length() - 3) == ".py")
 		return this->handle_cgi();
 	if (_req.get_boundary().empty())
 	{
