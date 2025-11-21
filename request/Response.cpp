@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
+/*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/21 13:40:59 by mcygan           ###   ########.fr       */
+/*   Updated: 2025/11/21 14:13:09 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -249,19 +249,12 @@ void Response::process_post_request()
 	std::string path, error_msg, error_page;
 	
 	if (!is_allowed_method("POST"))
-	{
-		handle_405();
-		return ;
-	}
+		return handle_405();
 	std::string	uri = _req.get_uri();
 	if (uri.length() > 3 && uri.rfind("/cgi-bin/", 0) && uri.substr(uri.length() - 3) == ".py")
 		return this->handle_cgi();
 	if (_req.get_boundary().empty())
-	{
-		handle_single_part_post();
-		return ;
-	}
-
+		return handle_single_part_post();
 	std::string boundary;
 	
 	boundary = _req.get_boundary();
@@ -275,9 +268,7 @@ void Response::process_post_request()
 		return ;
 	}
 	else if (boundary.length() > 0)
-	{
 		handle_multipart_post();
-	}
 }
 
 std::string	Response::delete_success_response(std::string status_line, std::string body = "")
@@ -372,20 +363,28 @@ void Response::handle_single_part_post()
 	
 	std::string length_string = _req.get_raw_request().substr(_req.get_raw_request().find("ength: ") + 7);
 	length_string = length_string.substr(0, length_string.find_first_of("\r\n"));
-	std::stringstream length_stream;
-	length_stream << length_string;
-	size_t content_length;
-	length_stream >> content_length;
-	std::string new_file_path = join_paths(server_path(), _config.get_token("/", "root"));
-	new_file_path = join_paths(new_file_path, UPLOAD_PATH);
-	new_file_path = join_paths(new_file_path, filename);
 
-	if (filename.empty()) // si l'URL est un directory
+	size_t content_length = uint_from_string(length_string);
+
+	std::string path = join_paths(server_path(), _config.get_token("/", "root"));
+	path = join_paths(path, UPLOAD_PATH);
+	
+	mkdir(path.c_str(), 0755);
+    DIR *dp;
+    if((dp  = opendir(path.c_str())) == NULL) {
+		set_error_page("403", "Forbidden", "");
+		return ;
+	}
+	else
+	{
+		closedir(dp);
+	}
+	path = join_paths(path, filename);
+	if (filename.empty())
 	{
 		handle_405();
 		return ;
 	}
-
 	if (content_length < 1)
 	{
 		content_length = _req.get_body().length();
@@ -398,7 +397,7 @@ void Response::handle_single_part_post()
 		}
 	}
 	
-	std::fstream filestream(new_file_path.c_str(), std::ios::out | std::ios::binary);
+	std::fstream filestream(path.c_str(), std::ios::out | std::ios::binary);
 	if (filestream.is_open())
 	{
 		for (size_t i = 0; i < content_length; ++i)
@@ -418,7 +417,7 @@ void Response::handle_single_part_post()
 	}
 	else
 	{
-		std::cerr << "Failed to open file for writing: " << new_file_path << std::endl;
+		std::cerr << "Failed to open file for writing: " << _req.get_computed_path() << std::endl;
 		_status_line = "500 Internal Server Error";
 		_response = "HTTP/1.1 " + _status_line + "\r\n\r\n";
 		return ;

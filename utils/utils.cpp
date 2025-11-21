@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/23 16:38:05 by jrichir           #+#    #+#             */
-/*   Updated: 2025/11/20 05:38:49 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/21 13:58:27 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -97,4 +97,13 @@ std::string get_file_type(const std::string path)
 		return "regular_file";
 	else
 		return "nonexistent";
+}
+
+size_t uint_from_string(const std::string &str)
+{
+	size_t result;
+	std::istringstream iss(str);
+
+	iss >> result;
+	return result;
 }
