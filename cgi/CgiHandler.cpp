@@ -10,8 +10,8 @@ CgiHandler::CgiHandler(Request &request)
 CgiHandler::~CgiHandler()
 {
 	for (int i = 0; _env_cstr[i]; i++)
-		delete _env_cstr[i];
-	delete _env_cstr;
+		delete[] _env_cstr[i];
+	delete[] _env_cstr;
 }
 
 void	CgiHandler::init_env(Request &request)

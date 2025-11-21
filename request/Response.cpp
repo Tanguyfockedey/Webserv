@@ -6,7 +6,7 @@
 /*   By: mcygan <mcygan@student.s19.be>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 18:08:26 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/21 13:40:59 by mcygan           ###   ########.fr       */
+/*   Updated: 2025/11/21 13:55:30 by mcygan           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -261,12 +261,7 @@ void Response::process_post_request()
 		handle_single_part_post();
 		return ;
 	}
-
-	std::string boundary;
-	
-	boundary = _req.get_boundary();
-	std::cerr << "boundary: " << boundary << std::endl;
-
+	std::string boundary = _req.get_boundary();
 	if (boundary.length() > 70)
 	{
 		std::cerr << "Boundary too long: " << boundary.length() << " characters" << std::endl;
@@ -653,7 +648,6 @@ void Response::handle_cgi()
 	std::stringstream	response;
 	
 	path = _req.get_computed_path();
-	std::cout << "CGI path: " << path << std::endl;
 	
 	if (access(path.c_str(), R_OK) || access(path.c_str(), X_OK))
 		return set_error_page("403", "Forbidden", "");
