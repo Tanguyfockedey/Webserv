@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 14:48:10 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/20 21:12:47 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/21 13:21:05 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -453,6 +453,7 @@ void Request::parse_headers()
 void Request::parse_body()
 {
 	size_t pos = _raw_request.find("\r\n\r\n");
+	
 	if (pos == std::string::npos)
 	{
 		std::cerr << "Malformed request: missing body" << std::endl;
@@ -577,16 +578,17 @@ bool Request::is_complete()
 			{
 				std::cerr << "Client body size limit: " << client_body_size << " bytes" << std::endl;
 				std::cerr << "Content-Length exceeds client_body_size limit: " << content_length << " bytes" << std::endl;
-				_error_code = 413;
+				set_error_code(413);
 				return true;
 			}
 			size_t body_length = body.size();
+
 			if (body_length < content_length)
 				return false;
 			else if (body_length > content_length)
 			{
-				std::cerr << "Request body too long: " << body_length << " bytes" << std::endl;
-				set_error_code(413);
+				std::cerr << "Request body longer than mentioned in Content-Length header: " << body_length << " bytes vs " << content_length << " bytes mentioned in Content-Length header" << std::endl;
+				set_error_code(400);
 				return true;
 			}
 			else
