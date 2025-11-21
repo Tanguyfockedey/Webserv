@@ -6,7 +6,7 @@
 /*   By: jrichir <jrichir@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/05 19:39:13 by tafocked          #+#    #+#             */
-/*   Updated: 2025/11/21 11:22:11 by jrichir          ###   ########.fr       */
+/*   Updated: 2025/11/21 11:43:24 by jrichir          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,6 @@
 #include <ctime>
 #include <cstdio>
 #include <string>
-//#include <cstdlib>
 
 // Network
 #include <sys/socket.h>
